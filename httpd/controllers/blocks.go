@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"
 )
@@ -30,12 +33,42 @@ func (block *Block) init(hash string, height int64, timestamp int64, transaction
 	block.Transactions = transactions
 }
 
-// GetCurrentBlock gets the current number of blocks in the longest chain.
-func GetCurrentBlock(client *rpcclient.Client) gin.HandlerFunc {
+// GetBlock gets the current block, or a block by height or hash.
+// Examples:
+//   - current    -> get number of blocks in longest blockchain
+//   - 0xdeadbeef -> get block(s) by hash
+//   - 626553     -> get block(s) by height
+//
+// Except for the case where the block reference is "current", the response is
+// a list of 1 element.
+func GetBlock(client *rpcclient.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		blockHashForeign, err := client.GetBestBlockHash()
-		if err != nil {
-			log.Fatal(err)
+		blockRef := ctx.Param("block")
+
+		var (
+			blockHashForeign *chainhash.Hash
+			err              error
+		)
+
+		if blockRef == "current" {
+			blockHashForeign, err = client.GetBestBlockHash()
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else if strings.HasPrefix(blockRef, "0x") {
+			blockHashForeign, err = chainhash.NewHashFromStr(strings.TrimLeft(blockRef, "0x"))
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			blockHeight, err := strconv.ParseInt(blockRef, 10, 64)
+			if err != nil {
+				log.Fatal(err)
+			}
+			blockHashForeign, err = client.GetBlockHash(blockHeight)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 
 		blockForeign, err := client.GetBlockVerbose(blockHashForeign)
@@ -52,5 +85,6 @@ func GetCurrentBlock(client *rpcclient.Client) gin.HandlerFunc {
 		)
 
 		ctx.JSON(http.StatusOK, block)
+
 	}
 }

@@ -28,7 +28,7 @@ func main() {
 	}
 	defer client.Shutdown()
 
-	engine.GET("/blockchain/v3/blocks/current", controllers.GetCurrentBlock(client))
+	engine.GET("/blockchain/v3/blocks/:block", controllers.GetBlock(client))
 
 	engine.Run()
 }
