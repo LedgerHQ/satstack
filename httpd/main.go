@@ -10,6 +10,13 @@ import (
 )
 
 func main() {
+	engine, client := Setup()
+	defer client.Shutdown()
+
+	engine.Run()
+}
+
+func Setup() (*gin.Engine, *rpcclient.Client) {
 	engine := gin.Default()
 
 	// Connect to local bitcoin core RPC server using HTTP POST mode.
@@ -26,9 +33,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer client.Shutdown()
 
 	engine.GET("/blockchain/v3/blocks/:block", controllers.GetBlock(client))
 
-	engine.Run()
+	return engine, client
 }
