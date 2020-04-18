@@ -64,7 +64,12 @@ func GetBlock(client *rpcclient.Client) gin.HandlerFunc {
 			blockForeign.Tx,
 		)
 
-		ctx.JSON(http.StatusOK, block)
+		switch blockRef {
+		case "current":
+			ctx.JSON(http.StatusOK, block)
+		default:
+			ctx.JSON(http.StatusOK, []*Block{block})
+		}
 
 	}
 }
