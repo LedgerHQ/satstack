@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -45,35 +44,16 @@ func GetBlock(client *rpcclient.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		blockRef := ctx.Param("block")
 
-		var (
-			blockHashForeign *chainhash.Hash
-			err              error
-		)
-
-		if blockRef == "current" {
-			blockHashForeign, err = client.GetBestBlockHash()
-			if err != nil {
-				log.Fatal(err)
-			}
-		} else if strings.HasPrefix(blockRef, "0x") {
-			blockHashForeign, err = chainhash.NewHashFromStr(strings.TrimLeft(blockRef, "0x"))
-			if err != nil {
-				log.Fatal(err)
-			}
-		} else {
-			blockHeight, err := strconv.ParseInt(blockRef, 10, 64)
-			if err != nil {
-				log.Fatal(err)
-			}
-			blockHashForeign, err = client.GetBlockHash(blockHeight)
-			if err != nil {
-				log.Fatal(err)
-			}
+		blockHashForeign, err := getBlockHashByReference(blockRef, client)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, err)
+			return
 		}
 
 		blockForeign, err := client.GetBlockVerbose(blockHashForeign)
 		if err != nil {
-			log.Fatal(err)
+			ctx.JSON(http.StatusNotFound, err)
+			return
 		}
 
 		block := new(Block)
@@ -85,6 +65,30 @@ func GetBlock(client *rpcclient.Client) gin.HandlerFunc {
 		)
 
 		ctx.JSON(http.StatusOK, block)
+
+	}
+}
+
+func getBlockHashByReference(blockRef string, client *rpcclient.Client) (*chainhash.Hash, error) {
+	switch {
+	case blockRef == "current":
+		return client.GetBestBlockHash()
+
+	case strings.HasPrefix(blockRef, "0x"):
+		return chainhash.NewHashFromStr(strings.TrimLeft(blockRef, "0x"))
+
+	default:
+		{
+			blockHeight, err := strconv.ParseInt(blockRef, 10, 64)
+
+			switch err {
+			case nil:
+				return client.GetBlockHash(blockHeight)
+
+			default:
+				return nil, fmt.Errorf("Invalid block '%s'", blockRef)
+			}
+		}
 
 	}
 }
