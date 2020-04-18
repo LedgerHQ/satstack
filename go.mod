@@ -1,4 +1,4 @@
-module ledger-sat-stack
+module ledger-sats-stack
 
 go 1.13
 
