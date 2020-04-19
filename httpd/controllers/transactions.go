@@ -135,28 +135,29 @@ func buildUtxoMap(client *rpcclient.Client, vin []btcjson.Vin) (utxoMapType, err
 			return nil, err
 		}
 		utxoRaw := txn.Vout[inputRaw.Vout]
-		addresses := utxoRaw.ScriptPubKey.Addresses
 
-		var utxo types.UTXO
-		switch len(addresses) {
-		case 0:
-			// TODO: Document when this happens
-			utxo = types.UTXO{
-				utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
-				"",                                // Will be omitted by the JSON serializer
+		utxo := func(addresses []string) types.UTXO {
+			switch len(addresses) {
+			case 0:
+				// TODO: Document when this happens
+				return types.UTXO{
+					utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
+					"",                                // Will be omitted by the JSON serializer
+				}
+			case 1:
+				return types.UTXO{
+					utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
+					addresses[0],                      // ?XXX: Investigate why we do this
+				}
+			default:
+				// TODO: Log an error
+				return types.UTXO{
+					utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
+					"",                                // Will be omitted by the JSON serializer
+				}
 			}
-		case 1:
-			utxo = types.UTXO{
-				utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
-				addresses[0],                      // ?XXX: Investigate why we do this
-			}
-		default:
-			// TODO: Log an error
-			utxo = types.UTXO{
-				utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
-				"",                                // Will be omitted by the JSON serializer
-			}
-		}
+		}(utxoRaw.ScriptPubKey.Addresses)
+
 		utxoMap[inputRaw.Txid] = make(utxoVoutMapType)
 		utxoMap[inputRaw.Txid][inputRaw.Vout] = utxo
 	}
