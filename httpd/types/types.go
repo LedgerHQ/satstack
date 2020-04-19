@@ -28,24 +28,31 @@ type Output struct {
 	Address     string `json:"address,omitempty"` // Address of the UTXO; can be empty
 }
 
-// SparseBlock models data corresponding to a block, but with limited information.
+// Block models data corresponding to a block, but with limited information.
 // It is used to represent minimal information of the block containing the given
 // transaction.
-type SparseBlock struct {
-	Hash   string `json:"hash"`
-	Height int64  `json:"height"`
-	Time   string `json:"time"`
+type Block struct {
+	Hash   string `json:"hash"`   // 0x prefixed
+	Height int64  `json:"height"` // integer
+	Time   string `json:"time"`   // RFC3339 format
+}
+
+// BlockWithTransactions is a struct that embeds Block, but also contains
+// transaction hashes.
+type BlockWithTransactions struct {
+	Block
+	Transactions []string `json:"txs"` // 0x prefixed
 }
 
 // Transaction represents the principal type to model the response of the GetTransaction handler.
 type Transaction struct {
-	ID            string      `json:"id"`
-	Hash          string      `json:"hash"`
-	ReceivedAt    string      `json:"received_at"`
-	LockTime      uint32      `json:"lock_time"`
-	Fees          int64       `json:"fees"`
-	Confirmations uint64      `json:"confirmations"`
-	Inputs        []Input     `json:"inputs"`
-	Outputs       []Output    `json:"outputs"`
-	Block         SparseBlock `json:"block"`
+	ID            string   `json:"id"`
+	Hash          string   `json:"hash"`
+	ReceivedAt    string   `json:"received_at"`
+	LockTime      uint32   `json:"lock_time"`
+	Fees          int64    `json:"fees"`
+	Confirmations uint64   `json:"confirmations"`
+	Inputs        []Input  `json:"inputs"`
+	Outputs       []Output `json:"outputs"`
+	Block         Block    `json:"block"`
 }

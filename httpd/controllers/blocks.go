@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"ledger-sats-stack/httpd/types"
 	"ledger-sats-stack/httpd/utils"
 
 	"github.com/btcsuite/btcd/btcjson"
@@ -14,15 +15,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Block is a struct representing blocks
-type Block struct {
-	Hash         string   `json:"hash"`   // 0x prefixed
-	Height       int64    `json:"height"` // integer
-	Time         string   `json:"time"`   // RFC3339 format
-	Transactions []string `json:"txs"`    // 0x prefixed
+type blockContainer struct {
+	types.BlockWithTransactions
 }
 
-func (block *Block) init(rawBlock *btcjson.GetBlockVerboseResult) {
+func (block *blockContainer) init(rawBlock *btcjson.GetBlockVerboseResult) {
 	block.Hash = fmt.Sprintf("0x%s", rawBlock.Hash)
 	block.Height = rawBlock.Height
 	block.Time = utils.ParseUnixTimestamp(rawBlock.Time)
@@ -57,14 +54,14 @@ func GetBlock(client *rpcclient.Client) gin.HandlerFunc {
 			return
 		}
 
-		block := new(Block)
+		block := new(blockContainer)
 		block.init(rawBlock)
 
 		switch blockRef {
 		case "current":
 			ctx.JSON(http.StatusOK, block)
 		default:
-			ctx.JSON(http.StatusOK, []*Block{block})
+			ctx.JSON(http.StatusOK, []*blockContainer{block})
 		}
 	}
 }

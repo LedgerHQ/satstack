@@ -79,7 +79,7 @@ func (txn *transactionContainer) init(rawTx *btcjson.TxRawResult, utxoMap utxoMa
 	}
 	txn.Outputs = vout
 
-	txn.Block = types.SparseBlock{
+	txn.Block = types.Block{
 		Hash:   rawTx.BlockHash,
 		Height: blockHeight,
 		Time:   utils.ParseUnixTimestamp(rawTx.Blocktime),
