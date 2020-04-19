@@ -128,88 +128,102 @@ func (txn *Transaction) init(rawTx *btcjson.TxRawResult, utxoMap map[string]map[
 	} else {
 		txn.Fees = sumVinValues - sumVoutValues
 	}
-
 }
 
 // GetTransaction gets the transaction with the given hash.
 // Supports transaction hashes with or without 0x prefix
 func GetTransaction(client *rpcclient.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		transactionHashString := ctx.Param("hash")
-		transactionHash, err := chainhash.NewHashFromStr(strings.TrimLeft(transactionHashString, "0x"))
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, err)
-			return
-		}
-
-		txRaw, err := client.GetRawTransactionVerbose(transactionHash)
+		txHash := ctx.Param("hash")
+		txRaw, err := getTransactionByHash(client, txHash)
 		if err != nil {
 			ctx.JSON(http.StatusNotFound, err)
 			return
 		}
 
-		utxoMap := make(map[string]map[uint32]UTXO)
-
-		for _, inputRaw := range txRaw.Vin {
-			if inputRaw.IsCoinBase() {
-				continue
-			}
-
-			utxoHash, err := chainhash.NewHashFromStr(inputRaw.Txid)
-			if err != nil {
-				ctx.JSON(http.StatusInternalServerError, err)
-				return
-			}
-
-			utxoTx, err := client.GetRawTransactionVerbose(utxoHash)
-			if err != nil {
-				ctx.JSON(http.StatusInternalServerError, err)
-				return
-			}
-			utxoRaw := utxoTx.Vout[inputRaw.Vout]
-			addresses := utxoRaw.ScriptPubKey.Addresses
-
-			var utxo UTXO
-			switch len(addresses) {
-			case 0:
-				// TODO: Document when this happens
-				utxo = UTXO{
-					utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
-					"",                                // Will be omitted by the JSON serializer
-				}
-			case 1:
-				utxo = UTXO{
-					utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
-					addresses[0],                      // ?XXX: Investigate why we do this
-				}
-			default:
-				// TODO: Log an error
-				utxo = UTXO{
-					utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
-					"",                                // Will be omitted by the JSON serializer
-				}
-			}
-			utxoMap[inputRaw.Txid] = make(map[uint32]UTXO)
-			utxoMap[inputRaw.Txid][inputRaw.Vout] = utxo
-		}
-
-		blockHash, err := chainhash.NewHashFromStr(txRaw.BlockHash)
+		utxoMap, err := buildUtxoMap(client, txRaw.Vin)
 		if err != nil {
-			// !FIXME: Handle the error appropriately
+			ctx.JSON(http.StatusInternalServerError, err)
+			return
 		}
 
-		rawBlock, err := client.GetBlockVerbose(blockHash)
-		var blockHeight int64
-		if err != nil {
-			blockHeight = -1
-			// TODO: Log an error here
-		} else {
-			blockHeight = rawBlock.Height
-		}
+		blockHeight := getBlockHeightByHash(client, txRaw.BlockHash)
 
 		transaction := new(Transaction)
 		transaction.init(txRaw, utxoMap, blockHeight)
 
 		ctx.JSON(http.StatusOK, []*Transaction{transaction})
 	}
+}
+
+func buildUtxoMap(client *rpcclient.Client, vin []btcjson.Vin) (map[string]map[uint32]UTXO, error) {
+	utxoMap := make(map[string]map[uint32]UTXO)
+
+	for _, inputRaw := range vin {
+		if inputRaw.IsCoinBase() {
+			continue
+		}
+
+		txn, err := getTransactionByHash(client, inputRaw.Txid)
+		if err != nil {
+			return nil, err
+		}
+		utxoRaw := txn.Vout[inputRaw.Vout]
+		addresses := utxoRaw.ScriptPubKey.Addresses
+
+		var utxo UTXO
+		switch len(addresses) {
+		case 0:
+			// TODO: Document when this happens
+			utxo = UTXO{
+				utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
+				"",                                // Will be omitted by the JSON serializer
+			}
+		case 1:
+			utxo = UTXO{
+				utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
+				addresses[0],                      // ?XXX: Investigate why we do this
+			}
+		default:
+			// TODO: Log an error
+			utxo = UTXO{
+				utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
+				"",                                // Will be omitted by the JSON serializer
+			}
+		}
+		utxoMap[inputRaw.Txid] = make(map[uint32]UTXO)
+		utxoMap[inputRaw.Txid][inputRaw.Vout] = utxo
+	}
+
+	return utxoMap, nil
+}
+
+func getBlockHeightByHash(client *rpcclient.Client, hash string) int64 {
+	hashRaw, err := chainhash.NewHashFromStr(hash)
+	if err != nil {
+		// TODO: Log an error here
+		return -1
+	}
+
+	rawBlock, err := client.GetBlockVerbose(hashRaw)
+
+	if err != nil {
+		// TODO: Log an error here
+		return -1
+
+	}
+	return rawBlock.Height
+}
+
+func getTransactionByHash(client *rpcclient.Client, hash string) (*btcjson.TxRawResult, error) {
+	txHashRaw, err := chainhash.NewHashFromStr(strings.TrimLeft(hash, "0x"))
+	if err != nil {
+		return nil, err
+	}
+
+	txRaw, err := client.GetRawTransactionVerbose(txHashRaw)
+	if err != nil {
+		return nil, err
+	}
+	return txRaw, nil
 }
