@@ -80,10 +80,14 @@ func getBlockHashByReference(blockRef string, client *rpcclient.Client) (*chainh
 		return client.GetBestBlockHash()
 
 	case strings.HasPrefix(blockRef, "0x"):
+		// 256-bit hex string with 0x prefix
 		return chainhash.NewHashFromStr(strings.TrimLeft(blockRef, "0x"))
-
+	case len(blockRef) == 64:
+		// 256-bit hex string WITHOUT 0x prefix
+		return chainhash.NewHashFromStr(blockRef)
 	default:
 		{
+			// Either an int64 block height, or garbage input
 			blockHeight, err := strconv.ParseInt(blockRef, 10, 64)
 
 			switch err {
