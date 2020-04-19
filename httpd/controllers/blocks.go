@@ -5,7 +5,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
+
+	"ledger-sats-stack/httpd/utils"
 
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -24,8 +25,7 @@ type Block struct {
 func (block *Block) init(rawBlock *btcjson.GetBlockVerboseResult) {
 	block.Hash = fmt.Sprintf("0x%s", rawBlock.Hash)
 	block.Height = rawBlock.Height
-	block.Time = time.Unix(rawBlock.Time, 0).Format(time.RFC3339)
-
+	block.Time = utils.ParseUnixTimestamp(rawBlock.Time)
 	transactions := make([]string, len(rawBlock.Tx))
 	for idx, transaction := range rawBlock.Tx {
 		transactions[idx] = fmt.Sprintf("0x%s", transaction)

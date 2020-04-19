@@ -3,7 +3,8 @@ package controllers
 import (
 	"net/http"
 	"strings"
-	"time"
+
+	"ledger-sats-stack/httpd/utils"
 
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -56,7 +57,7 @@ type Transaction struct {
 func (txn *Transaction) init(rawTx *btcjson.TxRawResult, utxoMap map[string]map[uint32]UTXO, blockHeight int64) {
 	txn.ID = rawTx.Txid
 	txn.Hash = rawTx.Hash // Differs from ID for witness transactions
-	txn.ReceivedAt = time.Unix(rawTx.Time, 0).Format(time.RFC3339)
+	txn.ReceivedAt = utils.ParseUnixTimestamp(rawTx.Time)
 	txn.LockTime = rawTx.LockTime
 
 	vin := make([]Input, len(rawTx.Vin))
@@ -115,7 +116,7 @@ func (txn *Transaction) init(rawTx *btcjson.TxRawResult, utxoMap map[string]map[
 	txn.Block = BlockInTransaction{
 		Hash:   rawTx.BlockHash,
 		Height: blockHeight,
-		Time:   time.Unix(rawTx.Blocktime, 0).Format(time.RFC3339),
+		Time:   utils.ParseUnixTimestamp(rawTx.Blocktime),
 	}
 
 	// ?XXX: Confirmations in Ledger Blockchain Explorer are always off by 1
