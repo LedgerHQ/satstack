@@ -7,3 +7,9 @@ import "time"
 func ParseUnixTimestamp(timestamp int64) string {
 	return time.Unix(timestamp, 0).UTC().Format(time.RFC3339)
 }
+
+// ParseSatoshi converts a float64 bitcoin value to satoshis.
+// Named after ParseInt function.
+func ParseSatoshi(float64 value) int64 {
+	return int64(value * 100000000)
+}

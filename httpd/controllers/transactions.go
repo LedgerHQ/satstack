@@ -97,7 +97,7 @@ func (txn *Transaction) init(rawTx *btcjson.TxRawResult, utxoMap map[string]map[
 	for idx, rawVout := range rawTx.Vout {
 		vout[idx] = Output{
 			OutputIndex: rawVout.N,
-			Value:       int64(rawVout.Value * 100000000), // !FIXME: Can panic
+			Value:       utils.ParseSatoshi(rawVout.Value), // !FIXME: Can panic
 			ScriptHex:   rawVout.ScriptPubKey.Hex,
 		}
 
@@ -133,7 +133,6 @@ func (txn *Transaction) init(rawTx *btcjson.TxRawResult, utxoMap map[string]map[
 
 // GetTransaction gets the transaction with the given hash.
 // Supports transaction hashes with or without 0x prefix
-
 func GetTransaction(client *rpcclient.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		transactionHashString := ctx.Param("hash")
@@ -175,19 +174,19 @@ func GetTransaction(client *rpcclient.Client) gin.HandlerFunc {
 			case 0:
 				// TODO: Document when this happens
 				utxo = UTXO{
-					int64(utxoRaw.Value * 100000000), // !FIXME: Can panic
-					"",                               // Will be omitted by the JSON serializer
+					utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
+					"",                                // Will be omitted by the JSON serializer
 				}
 			case 1:
 				utxo = UTXO{
-					int64(utxoRaw.Value * 100000000), // !FIXME: Can panic
-					addresses[0],                     // ?XXX: Investigate why we do this
+					utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
+					addresses[0],                      // ?XXX: Investigate why we do this
 				}
 			default:
 				// TODO: Log an error
 				utxo = UTXO{
-					int64(utxoRaw.Value * 100000000), // !FIXME: Can panic
-					"",                               // Will be omitted by the JSON serializer
+					utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
+					"",                                // Will be omitted by the JSON serializer
 				}
 			}
 			utxoMap[inputRaw.Txid] = make(map[uint32]UTXO)
