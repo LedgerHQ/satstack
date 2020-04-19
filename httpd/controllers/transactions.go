@@ -12,46 +12,54 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// UTXO models the data corresponding to unspent transaction outputs.
+// Convenience type; for limited use only.
 type UTXO struct {
 	Value   int64
 	Address string
 }
 
+// Input models data corresponding to transaction inputs.
 type Input struct {
-	Coinbase    string   `json:"coinbase,omitempty"`         // coinbase
-	OutputHash  string   `json:"output_hash,omitempty"`      // non-coinbase
-	OutputIndex uint32   `json:"output_index,omitempty"`     // non-coinbase
-	Value       int64    `json:"value,omitempty"`            // non-coinbase
-	Address     string   `json:"address,omitempty"`          // non-coinbase
-	ScriptSig   string   `json:"script_signature,omitempty"` // non-coinbase
-	TxInWitness []string `json:"txinwitness,omitempty"`      // non-coinbase
-	InputIndex  int      `json:"input_index"`                // common
-	Sequence    uint32   `json:"sequence"`                   // common
+	Coinbase    string   `json:"coinbase,omitempty"`         // [coinbase] The coinbase encoded as hex
+	OutputHash  string   `json:"output_hash,omitempty"`      // [non-coinbase] Same as transaction ID of vin
+	OutputIndex uint32   `json:"output_index,omitempty"`     // [non-coinbase] Index of the corresponding UTXO
+	Value       int64    `json:"value,omitempty"`            // [non-coinbase] Value of the corresponding UTXO in satoshis
+	Address     string   `json:"address,omitempty"`          // [non-coinbase] Address of the corresponding UTXO; can be empty
+	ScriptSig   string   `json:"script_signature,omitempty"` // [non-coinbase] Hex-encoded signature script
+	Witness     []string `json:"txinwitness,omitempty"`      // [non-coinbase] Array of hex-encoded witness data
+	InputIndex  int      `json:"input_index"`                // [all] Non-standard data required by Ledger Blockchain Explorer
+	Sequence    uint32   `json:"sequence"`                   // [all] Input sequence number, used to track unconfirmed txns
 }
 
+// Output models data corresponding to transaction outputs.
 type Output struct {
-	OutputIndex uint32 `json:"output_index"`      // common
-	Value       int64  `json:"value"`             // common
-	ScriptHex   string `json:"script_hex"`        // common
-	Address     string `json:"address,omitempty"` // non-coinbase
+	OutputIndex uint32 `json:"output_index"`      // Used to uniquely identify an output in a transaction
+	Value       int64  `json:"value"`             // Value of output in satoshis
+	ScriptHex   string `json:"script_hex"`        // Hex-encoded script
+	Address     string `json:"address,omitempty"` // Address of the UTXO; can be empty
 }
 
-type BlockInTransaction struct {
+// SparseBlock models data corresponding to a block, but with limited information.
+// It is used to represent minimal information of the block containing the given
+// transaction.
+type SparseBlock struct {
 	Hash   string `json:"hash"`
 	Height int64  `json:"height"`
 	Time   string `json:"time"`
 }
 
+// Transaction represents the principal type to model the response of the GetTransaction handler.
 type Transaction struct {
-	ID            string             `json:"id"`
-	Hash          string             `json:"hash"`
-	ReceivedAt    string             `json:"received_at"`
-	LockTime      uint32             `json:"lock_time"`
-	Fees          int64              `json:"fees"`
-	Confirmations uint64             `json:"confirmations"`
-	Inputs        []Input            `json:"inputs"`
-	Outputs       []Output           `json:"outputs"`
-	Block         BlockInTransaction `json:"block"`
+	ID            string      `json:"id"`
+	Hash          string      `json:"hash"`
+	ReceivedAt    string      `json:"received_at"`
+	LockTime      uint32      `json:"lock_time"`
+	Fees          int64       `json:"fees"`
+	Confirmations uint64      `json:"confirmations"`
+	Inputs        []Input     `json:"inputs"`
+	Outputs       []Output    `json:"outputs"`
+	Block         SparseBlock `json:"block"`
 }
 
 func (txn *Transaction) init(rawTx *btcjson.TxRawResult, utxoMap map[string]map[uint32]UTXO, blockHeight int64) {
@@ -76,14 +84,14 @@ func (txn *Transaction) init(rawTx *btcjson.TxRawResult, utxoMap map[string]map[
 		} else {
 			utxo := utxoMap[rawVin.Txid][rawVin.Vout]
 			vin[idx] = Input{
-				OutputHash:  rawVin.Txid, // Same as transaction ID of vin
-				OutputIndex: rawVin.Vout, // UTXO index in the list of outputs of OutputHash
-				InputIndex:  idx,         // TODO: Find out if the order matters
+				OutputHash:  rawVin.Txid,
+				OutputIndex: rawVin.Vout,
+				InputIndex:  idx, // TODO: Find out if the order matters
 				Value:       utxo.Value,
 				Address:     utxo.Address,
 				ScriptSig:   rawVin.ScriptSig.Hex,
 				Sequence:    rawVin.Sequence,
-				TxInWitness: rawVin.Witness,
+				Witness:     rawVin.Witness, // !FIXME: Coinbase txn can also have witness
 			}
 
 			sumVinValues += vin[idx].Value
@@ -113,7 +121,7 @@ func (txn *Transaction) init(rawTx *btcjson.TxRawResult, utxoMap map[string]map[
 	}
 	txn.Outputs = vout
 
-	txn.Block = BlockInTransaction{
+	txn.Block = SparseBlock{
 		Hash:   rawTx.BlockHash,
 		Height: blockHeight,
 		Time:   utils.ParseUnixTimestamp(rawTx.Blocktime),
@@ -130,8 +138,8 @@ func (txn *Transaction) init(rawTx *btcjson.TxRawResult, utxoMap map[string]map[
 	}
 }
 
-// GetTransaction gets the transaction with the given hash.
-// Supports transaction hashes with or without 0x prefix
+// GetTransaction is a gin handler (factory) to query transaction details
+// by hash parameter.
 func GetTransaction(client *rpcclient.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		txHash := ctx.Param("hash")
@@ -215,6 +223,8 @@ func getBlockHeightByHash(client *rpcclient.Client, hash string) int64 {
 	return rawBlock.Height
 }
 
+// getTransactionByHash gets the transaction with the given hash.
+// Supports transaction hashes with or without 0x prefix.
 func getTransactionByHash(client *rpcclient.Client, hash string) (*btcjson.TxRawResult, error) {
 	txHashRaw, err := chainhash.NewHashFromStr(strings.TrimLeft(hash, "0x"))
 	if err != nil {
