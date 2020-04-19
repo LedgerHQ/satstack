@@ -13,11 +13,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type utxoVoutMapType map[uint32]types.UTXO
+type utxoMapType map[string]utxoVoutMapType
+
 type transactionContainer struct {
 	types.Transaction
 }
 
-func (txn *transactionContainer) init(rawTx *btcjson.TxRawResult, utxoMap map[string]map[uint32]types.UTXO, blockHeight int64) {
+func (txn *transactionContainer) init(rawTx *btcjson.TxRawResult, utxoMap utxoMapType, blockHeight int64) {
 	txn.ID = rawTx.Txid
 	txn.Hash = rawTx.Hash // Differs from ID for witness transactions
 	txn.ReceivedAt = utils.ParseUnixTimestamp(rawTx.Time)
@@ -119,8 +122,8 @@ func GetTransaction(client *rpcclient.Client) gin.HandlerFunc {
 	}
 }
 
-func buildUtxoMap(client *rpcclient.Client, vin []btcjson.Vin) (map[string]map[uint32]types.UTXO, error) {
-	utxoMap := make(map[string]map[uint32]types.UTXO)
+func buildUtxoMap(client *rpcclient.Client, vin []btcjson.Vin) (utxoMapType, error) {
+	utxoMap := make(utxoMapType)
 
 	for _, inputRaw := range vin {
 		if inputRaw.IsCoinBase() {
@@ -154,7 +157,7 @@ func buildUtxoMap(client *rpcclient.Client, vin []btcjson.Vin) (map[string]map[u
 				"",                                // Will be omitted by the JSON serializer
 			}
 		}
-		utxoMap[inputRaw.Txid] = make(map[uint32]types.UTXO)
+		utxoMap[inputRaw.Txid] = make(utxoVoutMapType)
 		utxoMap[inputRaw.Txid][inputRaw.Vout] = utxo
 	}
 
