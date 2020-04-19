@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type utxoData struct {
+type UTXO struct {
 	Value   int64
 	Address string
 }
@@ -35,25 +35,25 @@ type Output struct {
 	Address     string `json:"address,omitempty"` // non-coinbase
 }
 
-type block struct {
+type BlockInTransaction struct {
 	Hash   string `json:"hash"`
 	Height int64  `json:"height"`
 	Time   string `json:"time"`
 }
 
 type Transaction struct {
-	ID            string   `json:"id"`
-	Hash          string   `json:"hash"`
-	ReceivedAt    string   `json:"received_at"`
-	LockTime      uint32   `json:"lock_time"`
-	Fees          int64    `json:"fees"`
-	Confirmations uint64   `json:"confirmations"`
-	Inputs        []Input  `json:"inputs"`
-	Outputs       []Output `json:"outputs"`
-	Block         block    `json:"block"`
+	ID            string             `json:"id"`
+	Hash          string             `json:"hash"`
+	ReceivedAt    string             `json:"received_at"`
+	LockTime      uint32             `json:"lock_time"`
+	Fees          int64              `json:"fees"`
+	Confirmations uint64             `json:"confirmations"`
+	Inputs        []Input            `json:"inputs"`
+	Outputs       []Output           `json:"outputs"`
+	Block         BlockInTransaction `json:"block"`
 }
 
-func (txn *Transaction) init(rawTx *btcjson.TxRawResult, utxoMap map[string]map[uint32]utxoData, blockHeight int64) {
+func (txn *Transaction) init(rawTx *btcjson.TxRawResult, utxoMap map[string]map[uint32]UTXO, blockHeight int64) {
 	txn.ID = rawTx.Txid
 	txn.Hash = rawTx.Hash // Differs from ID for witness transactions
 	txn.ReceivedAt = time.Unix(rawTx.Time, 0).Format(time.RFC3339)
@@ -112,7 +112,7 @@ func (txn *Transaction) init(rawTx *btcjson.TxRawResult, utxoMap map[string]map[
 	}
 	txn.Outputs = vout
 
-	txn.Block = block{
+	txn.Block = BlockInTransaction{
 		Hash:   rawTx.BlockHash,
 		Height: blockHeight,
 		Time:   time.Unix(rawTx.Blocktime, 0).Format(time.RFC3339),
@@ -148,7 +148,7 @@ func GetTransaction(client *rpcclient.Client) gin.HandlerFunc {
 			return
 		}
 
-		utxoMap := make(map[string]map[uint32]utxoData)
+		utxoMap := make(map[string]map[uint32]UTXO)
 
 		for _, inputRaw := range txRaw.Vin {
 			if inputRaw.IsCoinBase() {
@@ -169,27 +169,27 @@ func GetTransaction(client *rpcclient.Client) gin.HandlerFunc {
 			utxoRaw := utxoTx.Vout[inputRaw.Vout]
 			addresses := utxoRaw.ScriptPubKey.Addresses
 
-			var utxo utxoData
+			var utxo UTXO
 			switch len(addresses) {
 			case 0:
 				// TODO: Document when this happens
-				utxo = utxoData{
+				utxo = UTXO{
 					int64(utxoRaw.Value * 100000000), // !FIXME: Can panic
 					"",                               // Will be omitted by the JSON serializer
 				}
 			case 1:
-				utxo = utxoData{
+				utxo = UTXO{
 					int64(utxoRaw.Value * 100000000), // !FIXME: Can panic
 					addresses[0],                     // ?XXX: Investigate why we do this
 				}
 			default:
 				// TODO: Log an error
-				utxo = utxoData{
+				utxo = UTXO{
 					int64(utxoRaw.Value * 100000000), // !FIXME: Can panic
 					"",                               // Will be omitted by the JSON serializer
 				}
 			}
-			utxoMap[inputRaw.Txid] = make(map[uint32]utxoData)
+			utxoMap[inputRaw.Txid] = make(map[uint32]UTXO)
 			utxoMap[inputRaw.Txid][inputRaw.Vout] = utxo
 		}
 

@@ -66,7 +66,6 @@ func GetBlock(client *rpcclient.Client) gin.HandlerFunc {
 		default:
 			ctx.JSON(http.StatusOK, []*Block{block})
 		}
-
 	}
 }
 
