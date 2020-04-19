@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"
@@ -20,15 +21,15 @@ type Block struct {
 	Transactions []string `json:"txs"`    // 0x prefixed
 }
 
-func (block *Block) init(hash string, height int64, timestamp int64, transactions []string) {
-	block.Hash = fmt.Sprintf("0x%s", hash)
-	block.Height = height
-	block.Time = time.Unix(timestamp, 0).Format(time.RFC3339)
+func (block *Block) init(rawBlock *btcjson.GetBlockVerboseResult) {
+	block.Hash = fmt.Sprintf("0x%s", rawBlock.Hash)
+	block.Height = rawBlock.Height
+	block.Time = time.Unix(rawBlock.Time, 0).Format(time.RFC3339)
 
-	for idx, transaction := range transactions {
+	transactions := make([]string, len(rawBlock.Tx))
+	for idx, transaction := range rawBlock.Tx {
 		transactions[idx] = fmt.Sprintf("0x%s", transaction)
 	}
-
 	block.Transactions = transactions
 }
 
@@ -44,25 +45,20 @@ func GetBlock(client *rpcclient.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		blockRef := ctx.Param("block")
 
-		blockHashForeign, err := getBlockHashByReference(blockRef, client)
+		rawBlockHash, err := getBlockHashByReference(blockRef, client)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, err)
 			return
 		}
 
-		blockForeign, err := client.GetBlockVerbose(blockHashForeign)
+		rawBlock, err := client.GetBlockVerbose(rawBlockHash)
 		if err != nil {
 			ctx.JSON(http.StatusNotFound, err)
 			return
 		}
 
 		block := new(Block)
-		block.init(
-			blockForeign.Hash,
-			blockForeign.Height,
-			blockForeign.Time,
-			blockForeign.Tx,
-		)
+		block.init(rawBlock)
 
 		switch blockRef {
 		case "current":
