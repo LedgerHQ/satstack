@@ -36,6 +36,7 @@ func Setup() (*gin.Engine, *rpcclient.Client) {
 
 	engine.GET("/blockchain/v3/blocks/:block", controllers.GetBlock(client))
 	engine.GET("/blockchain/v3/transactions/:hash", controllers.GetTransaction(client))
+	engine.GET("/blockchain/v3/transactions/:hash/hex", controllers.GetTransactionHex(client))
 
 	return engine, client
 }

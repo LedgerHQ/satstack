@@ -122,6 +122,26 @@ func GetTransaction(client *rpcclient.Client) gin.HandlerFunc {
 	}
 }
 
+// GetTransactionHex is a gin handler (factory) to query transaction hex
+// by hash parameter.
+func GetTransactionHex(client *rpcclient.Client) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		txHash := ctx.Param("hash")
+		txRaw, err := getTransactionByHash(client, txHash)
+		if err != nil {
+			ctx.JSON(http.StatusNotFound, err)
+			return
+		}
+
+		response := gin.H{
+			"transaction_hash": txHash,
+			"hex":              txRaw.Hex,
+		}
+
+		ctx.JSON(http.StatusOK, []gin.H{response})
+	}
+}
+
 func buildUtxoMap(client *rpcclient.Client, vin []btcjson.Vin) (utxoMapType, error) {
 	utxoMap := make(utxoMapType)
 
