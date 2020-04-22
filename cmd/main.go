@@ -10,16 +10,23 @@ import (
 )
 
 func main() {
-	engine, client := Setup()
+	client := getRPCClient()
+	engine := getRouter(client)
 	defer client.Shutdown()
-
 	engine.Run()
 }
 
-func Setup() (*gin.Engine, *rpcclient.Client) {
+func getRouter(client *rpcclient.Client) *gin.Engine {
 	engine := gin.Default()
 
-	// Connect to local bitcoin core RPC server using HTTP POST mode.
+	engine.GET("/blockchain/v3/blocks/:block", controllers.GetBlock(client))
+	engine.GET("/blockchain/v3/transactions/:hash", controllers.GetTransaction(client))
+	engine.GET("/blockchain/v3/transactions/:hash/hex", controllers.GetTransactionHex(client))
+
+	return engine
+}
+
+func getRPCClient() *rpcclient.Client {
 	connCfg := &rpcclient.ConnConfig{
 		Host:         os.Getenv("BITCOIND_RPC_HOST"),
 		User:         os.Getenv("BITCOIND_RPC_USER"),
@@ -33,10 +40,5 @@ func Setup() (*gin.Engine, *rpcclient.Client) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	engine.GET("/blockchain/v3/blocks/:block", controllers.GetBlock(client))
-	engine.GET("/blockchain/v3/transactions/:hash", controllers.GetTransaction(client))
-	engine.GET("/blockchain/v3/transactions/:hash/hex", controllers.GetTransactionHex(client))
-
-	return engine, client
+	return client
 }
