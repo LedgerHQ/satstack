@@ -1,25 +1,25 @@
-package controllers
+package services
 
 import (
 	"fmt"
-	"net/http"
 	"strconv"
 	"strings"
 
-	"ledger-sats-stack/httpd/types"
-	"ledger-sats-stack/httpd/utils"
+	"ledger-sats-stack/app/types"
+	"ledger-sats-stack/app/utils"
 
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
-	"github.com/gin-gonic/gin"
 )
 
-type blockContainer struct {
+// BlockContainer is a wrapper type to define an init method for
+// BlockWithTransactions
+type BlockContainer struct {
 	types.BlockWithTransactions
 }
 
-func (block *blockContainer) init(rawBlock *btcjson.GetBlockVerboseResult) {
+func (block *BlockContainer) init(rawBlock *btcjson.GetBlockVerboseResult) {
 	block.Hash = fmt.Sprintf("0x%s", rawBlock.Hash)
 	block.Height = rawBlock.Height
 	block.Time = utils.ParseUnixTimestamp(rawBlock.Time)
@@ -30,40 +30,30 @@ func (block *blockContainer) init(rawBlock *btcjson.GetBlockVerboseResult) {
 	block.Transactions = transactions
 }
 
-// GetBlock gets the current block, or a block by height or hash.
-// Examples:
-//   - current    -> get number of blocks in longest blockchain
-//   - 0xdeadbeef -> get block(s) by hash
-//   - 626553     -> get block(s) by height
-//
-// Except for the case where the block reference is "current", the response is
-// a list of 1 element.
-func GetBlock(client *rpcclient.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		blockRef := ctx.Param("block")
-
-		rawBlockHash, err := getBlockHashByReference(blockRef, client)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, err)
-			return
-		}
-
-		rawBlock, err := client.GetBlockVerbose(rawBlockHash)
-		if err != nil {
-			ctx.JSON(http.StatusNotFound, err)
-			return
-		}
-
-		block := new(blockContainer)
-		block.init(rawBlock)
-
-		switch blockRef {
-		case "current":
-			ctx.JSON(http.StatusOK, block)
-		default:
-			ctx.JSON(http.StatusOK, []*blockContainer{block})
-		}
+// GetBlock is a service method to get a Block by blockRef
+func GetBlock(blockRef string, client *rpcclient.Client) (*BlockContainer, error) {
+	rawBlockHash, err := getBlockHashByReference(blockRef, client)
+	if err != nil {
+		return nil, err
 	}
+
+	block, err := getBlockByHash(rawBlockHash, client)
+	if err != nil {
+		return nil, err
+	}
+
+	return block, nil
+}
+
+func getBlockByHash(hash *chainhash.Hash, client *rpcclient.Client) (*BlockContainer, error) {
+	rawBlock, err := client.GetBlockVerbose(hash)
+	if err != nil {
+		return nil, err
+	}
+
+	block := new(BlockContainer)
+	block.init(rawBlock)
+	return block, nil
 }
 
 func getBlockHashByReference(blockRef string, client *rpcclient.Client) (*chainhash.Hash, error) {
@@ -92,4 +82,21 @@ func getBlockHashByReference(blockRef string, client *rpcclient.Client) (*chainh
 		}
 
 	}
+}
+
+func GetBlockHeightByHash(client *rpcclient.Client, hash string) int64 {
+	hashRaw, err := chainhash.NewHashFromStr(hash)
+	if err != nil {
+		// TODO: Log an error here
+		return -1
+	}
+
+	rawBlock, err := client.GetBlockVerbose(hashRaw)
+
+	if err != nil {
+		// TODO: Log an error here
+		return -1
+
+	}
+	return rawBlock.Height
 }

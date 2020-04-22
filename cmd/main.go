@@ -1,7 +1,7 @@
 package main
 
 import (
-	"ledger-sats-stack/httpd/controllers"
+	"ledger-sats-stack/app/controllers"
 	"log"
 	"os"
 

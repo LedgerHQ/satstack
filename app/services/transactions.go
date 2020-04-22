@@ -1,26 +1,26 @@
-package controllers
+package services
 
 import (
-	"net/http"
 	"strings"
 
-	"ledger-sats-stack/httpd/types"
-	"ledger-sats-stack/httpd/utils"
+	"ledger-sats-stack/app/types"
+	"ledger-sats-stack/app/utils"
 
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
-	"github.com/gin-gonic/gin"
 )
 
 type utxoVoutMapType map[uint32]types.UTXO
 type utxoMapType map[string]utxoVoutMapType
 
-type transactionContainer struct {
+// TransactionContainer is a wrapper type to define an init method for
+// Transaction
+type TransactionContainer struct {
 	types.Transaction
 }
 
-func (txn *transactionContainer) init(rawTx *btcjson.TxRawResult, utxoMap utxoMapType, blockHeight int64) {
+func (txn *TransactionContainer) init(rawTx *btcjson.TxRawResult, utxoMap utxoMapType, blockHeight int64) {
 	txn.ID = rawTx.Txid
 	txn.Hash = rawTx.Hash // Differs from ID for witness transactions
 	txn.ReceivedAt = utils.ParseUnixTimestamp(rawTx.Time)
@@ -96,52 +96,6 @@ func (txn *transactionContainer) init(rawTx *btcjson.TxRawResult, utxoMap utxoMa
 	}
 }
 
-// GetTransaction is a gin handler (factory) to query transaction details
-// by hash parameter.
-func GetTransaction(client *rpcclient.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		txHash := ctx.Param("hash")
-		txRaw, err := getTransactionByHash(client, txHash)
-		if err != nil {
-			ctx.JSON(http.StatusNotFound, err)
-			return
-		}
-
-		utxoMap, err := buildUtxoMap(client, txRaw.Vin)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, err)
-			return
-		}
-
-		blockHeight := getBlockHeightByHash(client, txRaw.BlockHash)
-
-		transaction := new(transactionContainer)
-		transaction.init(txRaw, utxoMap, blockHeight)
-
-		ctx.JSON(http.StatusOK, []*transactionContainer{transaction})
-	}
-}
-
-// GetTransactionHex is a gin handler (factory) to query transaction hex
-// by hash parameter.
-func GetTransactionHex(client *rpcclient.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		txHash := ctx.Param("hash")
-		txRaw, err := getTransactionByHash(client, txHash)
-		if err != nil {
-			ctx.JSON(http.StatusNotFound, err)
-			return
-		}
-
-		response := gin.H{
-			"transaction_hash": txHash,
-			"hex":              txRaw.Hex,
-		}
-
-		ctx.JSON(http.StatusOK, []gin.H{response})
-	}
-}
-
 func buildUtxoMap(client *rpcclient.Client, vin []btcjson.Vin) (utxoMapType, error) {
 	utxoMap := make(utxoMapType)
 
@@ -169,7 +123,6 @@ func buildUtxoMap(client *rpcclient.Client, vin []btcjson.Vin) (utxoMapType, err
 					Value:   utils.ParseSatoshi(utxoRaw.Value),
 					Address: addresses[0], // ?XXX: Investigate why we do this
 				}
-
 			default:
 				// TODO: Log an error
 				return types.UTXO{
@@ -186,27 +139,10 @@ func buildUtxoMap(client *rpcclient.Client, vin []btcjson.Vin) (utxoMapType, err
 	return utxoMap, nil
 }
 
-func getBlockHeightByHash(client *rpcclient.Client, hash string) int64 {
-	hashRaw, err := chainhash.NewHashFromStr(hash)
-	if err != nil {
-		// TODO: Log an error here
-		return -1
-	}
-
-	rawBlock, err := client.GetBlockVerbose(hashRaw)
-
-	if err != nil {
-		// TODO: Log an error here
-		return -1
-
-	}
-	return rawBlock.Height
-}
-
 // getTransactionByHash gets the transaction with the given hash.
 // Supports transaction hashes with or without 0x prefix.
-func getTransactionByHash(client *rpcclient.Client, hash string) (*btcjson.TxRawResult, error) {
-	txHashRaw, err := chainhash.NewHashFromStr(strings.TrimLeft(hash, "0x"))
+func getTransactionByHash(client *rpcclient.Client, txHash string) (*btcjson.TxRawResult, error) {
+	txHashRaw, err := chainhash.NewHashFromStr(strings.TrimLeft(txHash, "0x"))
 	if err != nil {
 		return nil, err
 	}
@@ -216,4 +152,34 @@ func getTransactionByHash(client *rpcclient.Client, hash string) (*btcjson.TxRaw
 		return nil, err
 	}
 	return txRaw, nil
+}
+
+// GetTransaction is a service function to query transaction details
+// by hash parameter.
+func GetTransaction(txHash string, client *rpcclient.Client) (*TransactionContainer, error) {
+	txRaw, err := getTransactionByHash(client, txHash)
+	if err != nil {
+		return nil, err
+	}
+
+	utxoMap, err := buildUtxoMap(client, txRaw.Vin)
+	if err != nil {
+		return nil, err
+	}
+
+	blockHeight := GetBlockHeightByHash(client, txRaw.BlockHash)
+
+	transaction := new(TransactionContainer)
+	transaction.init(txRaw, utxoMap, blockHeight)
+	return transaction, nil
+}
+
+// GetTransactionHexByHash is a service function to get hex encoded raw
+// transaction by hash.
+func GetTransactionHexByHash(client *rpcclient.Client, txHash string) (string, error) {
+	txRaw, err := getTransactionByHash(client, txHash)
+	if err != nil {
+		return "", err
+	}
+	return txRaw.Hex, nil
 }
