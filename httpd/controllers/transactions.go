@@ -161,19 +161,20 @@ func buildUtxoMap(client *rpcclient.Client, vin []btcjson.Vin) (utxoMapType, err
 			case 0:
 				// TODO: Document when this happens
 				return types.UTXO{
-					utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
-					"",                                // Will be omitted by the JSON serializer
+					Value:   utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
+					Address: "",                                // Will be omitted by the JSON serializer
 				}
 			case 1:
 				return types.UTXO{
-					utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
-					addresses[0],                      // ?XXX: Investigate why we do this
+					Value:   utils.ParseSatoshi(utxoRaw.Value),
+					Address: addresses[0], // ?XXX: Investigate why we do this
 				}
+
 			default:
 				// TODO: Log an error
 				return types.UTXO{
-					utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
-					"",                                // Will be omitted by the JSON serializer
+					Value:   utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
+					Address: "",                                // Will be omitted by the JSON serializer
 				}
 			}
 		}(utxoRaw.ScriptPubKey.Addresses)
