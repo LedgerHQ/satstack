@@ -1,8 +1,9 @@
-package services
+package transactions
 
 import (
 	"strings"
 
+	blocksRPC "ledger-sats-stack/app/rpc/blocks"
 	"ledger-sats-stack/app/types"
 	"ledger-sats-stack/app/utils"
 
@@ -167,7 +168,7 @@ func GetTransaction(txHash string, client *rpcclient.Client) (*TransactionContai
 		return nil, err
 	}
 
-	blockHeight := GetBlockHeightByHash(client, txRaw.BlockHash)
+	blockHeight := blocksRPC.GetBlockHeightByHash(client, txRaw.BlockHash)
 
 	transaction := new(TransactionContainer)
 	transaction.init(txRaw, utxoMap, blockHeight)
