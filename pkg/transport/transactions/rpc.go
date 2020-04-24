@@ -3,9 +3,9 @@ package transactions
 import (
 	"strings"
 
-	blocksRPC "ledger-sats-stack/app/rpc/blocks"
-	"ledger-sats-stack/app/types"
-	"ledger-sats-stack/app/utils"
+	blocksRPC "ledger-sats-stack/pkg/transport/blocks"
+	"ledger-sats-stack/pkg/types"
+	"ledger-sats-stack/pkg/utils"
 
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"

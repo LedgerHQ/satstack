@@ -1,9 +1,9 @@
-package controllers
+package handlers
 
 import (
 	"net/http"
 
-	blocksRPC "ledger-sats-stack/app/rpc/blocks"
+	blocksRPC "ledger-sats-stack/pkg/transport/blocks"
 
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"

@@ -1,9 +1,10 @@
 package main
 
 import (
-	"ledger-sats-stack/app/controllers"
 	"log"
 	"os"
+
+	"ledger-sats-stack/pkg/handlers"
 
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"
@@ -19,9 +20,9 @@ func main() {
 func getRouter(client *rpcclient.Client) *gin.Engine {
 	engine := gin.Default()
 
-	engine.GET("/blockchain/v3/blocks/:block", controllers.GetBlock(client))
-	engine.GET("/blockchain/v3/transactions/:hash", controllers.GetTransaction(client))
-	engine.GET("/blockchain/v3/transactions/:hash/hex", controllers.GetTransactionHex(client))
+	engine.GET("/blockchain/v3/blocks/:block", handlers.GetBlock(client))
+	engine.GET("/blockchain/v3/transactions/:hash", handlers.GetTransaction(client))
+	engine.GET("/blockchain/v3/transactions/:hash/hex", handlers.GetTransactionHex(client))
 
 	return engine
 }

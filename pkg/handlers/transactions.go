@@ -1,9 +1,9 @@
-package controllers
+package handlers
 
 import (
 	"net/http"
 
-	transactionsRPC "ledger-sats-stack/app/rpc/transactions"
+	transactionsRPC "ledger-sats-stack/pkg/transport/transactions"
 
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"

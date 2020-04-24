@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"ledger-sats-stack/app/types"
-	"ledger-sats-stack/app/utils"
+	"ledger-sats-stack/pkg/types"
+	"ledger-sats-stack/pkg/utils"
 
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
