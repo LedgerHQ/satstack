@@ -46,7 +46,11 @@ func (txn *TransactionContainer) init(rawTx *btcjson.TxRawResult, utxoMap utxoMa
 				Address:     utxo.Address,
 				ScriptSig:   rawVin.ScriptSig.Hex,
 				Sequence:    rawVin.Sequence,
-				Witness:     rawVin.Witness, // !FIXME: Coinbase txn can also have witness
+			}
+			if rawVin.HasWitness() {
+				vin[idx].Witness = rawVin.Witness
+			} else {
+				vin[idx].Witness = []string{} // !FIXME: Coinbase txn can also have witness
 			}
 
 			sumVinValues += vin[idx].Value
