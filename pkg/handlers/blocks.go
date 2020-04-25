@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	blocksRPC "ledger-sats-stack/pkg/transport/blocks"
+	"ledger-sats-stack/pkg/transport"
 
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"
@@ -21,7 +21,9 @@ func GetBlock(client *rpcclient.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		blockRef := ctx.Param("block")
 
-		block, err := blocksRPC.GetBlock(blockRef, client)
+		wire := transport.Wire{client}
+
+		block, err := wire.GetBlock(blockRef)
 		if err != nil {
 			ctx.JSON(http.StatusNotFound, err)
 			return
@@ -31,7 +33,7 @@ func GetBlock(client *rpcclient.Client) gin.HandlerFunc {
 		case "current":
 			ctx.JSON(http.StatusOK, block)
 		default:
-			ctx.JSON(http.StatusOK, []*blocksRPC.BlockContainer{block})
+			ctx.JSON(http.StatusOK, []*transport.BlockContainer{block})
 		}
 	}
 }

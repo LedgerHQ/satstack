@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	transactionsRPC "ledger-sats-stack/pkg/transport/transactions"
+	"ledger-sats-stack/pkg/transport"
 
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"
@@ -14,12 +14,15 @@ import (
 func GetTransaction(client *rpcclient.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		txHash := ctx.Param("hash")
-		transaction, err := transactionsRPC.GetTransaction(txHash, client)
+		wire := transport.Wire{client}
+
+		transaction, err := wire.GetTransaction(txHash)
 		if err != nil {
 			ctx.JSON(http.StatusNotFound, err)
 			return
 		}
-		ctx.JSON(http.StatusOK, []*transactionsRPC.TransactionContainer{transaction})
+
+		ctx.JSON(http.StatusOK, []*transport.TransactionContainer{transaction})
 	}
 }
 
@@ -28,7 +31,9 @@ func GetTransaction(client *rpcclient.Client) gin.HandlerFunc {
 func GetTransactionHex(client *rpcclient.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		txHash := ctx.Param("hash")
-		txHex, err := transactionsRPC.GetTransactionHexByHash(client, txHash)
+		wire := transport.Wire{client}
+
+		txHex, err := wire.GetTransactionHexByHash(txHash)
 		if err != nil {
 			ctx.JSON(http.StatusNotFound, err)
 			return
