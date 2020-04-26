@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 
 	"ledger-sats-stack/pkg/handlers"
@@ -9,9 +8,18 @@ import (
 
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
+	prefixed "github.com/x-cray/logrus-prefixed-formatter"
 )
 
 func main() {
+	log.SetFormatter(&prefixed.TextFormatter{
+		TimestampFormat:  "2006/01/02 - 15:04:05",
+		FullTimestamp:    true,
+		QuoteEmptyFields: true,
+		SpacePadding:     45,
+	})
+
 	wire := GetWire(
 		os.Getenv("BITCOIND_RPC_HOST"),
 		os.Getenv("BITCOIND_RPC_USER"),
@@ -50,8 +58,29 @@ func GetWire(host string, user string, pass string, tls bool) transport.Wire {
 	// supported in HTTP POST mode.
 	client, err := rpcclient.New(connCfg, nil)
 	if err != nil {
-		log.Fatal(err)
+		log.WithFields(log.Fields{
+			"host": host,
+			"user": user,
+			"TLS":  tls,
+		}).Fatal("Failed to initialize RPC client.")
+
 	}
+
+	info, err := client.GetBlockChainInfo()
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"host": host,
+			"user": user,
+			"TLS":  tls,
+		}).Fatal("Failed to connect to RPC server.")
+	}
+
+	log.WithFields(log.Fields{
+		"chain":         info.Chain,
+		"blocks":        info.Blocks,
+		"bestblockhash": info.BestBlockHash,
+	}).Info("RPC connection established.")
 
 	return transport.Wire{Client: client}
 }
