@@ -24,6 +24,8 @@ func getRouter(client *rpcclient.Client) *gin.Engine {
 	engine.GET("/blockchain/v3/transactions/:hash", handlers.GetTransaction(client))
 	engine.GET("/blockchain/v3/transactions/:hash/hex", handlers.GetTransactionHex(client))
 
+	engine.GET("/blockchain/v3/explorer/_health", handlers.GetHealth(client))
+
 	return engine
 }
 
