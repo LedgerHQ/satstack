@@ -5,7 +5,6 @@ import (
 
 	"ledger-sats-stack/pkg/transport"
 
-	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,11 +16,9 @@ import (
 //
 // Except for the case where the block reference is "current", the response is
 // a list of 1 element.
-func GetBlock(client *rpcclient.Client) gin.HandlerFunc {
+func GetBlock(wire transport.Wire) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		blockRef := ctx.Param("block")
-
-		wire := transport.Wire{client}
 
 		block, err := wire.GetBlock(blockRef)
 		if err != nil {

@@ -5,16 +5,14 @@ import (
 
 	"ledger-sats-stack/pkg/transport"
 
-	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"
 )
 
 // GetTransaction is a gin handler (factory) to query transaction details
 // by hash parameter.
-func GetTransaction(client *rpcclient.Client) gin.HandlerFunc {
+func GetTransaction(wire transport.Wire) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		txHash := ctx.Param("hash")
-		wire := transport.Wire{client}
 
 		transaction, err := wire.GetTransaction(txHash)
 		if err != nil {
@@ -28,10 +26,9 @@ func GetTransaction(client *rpcclient.Client) gin.HandlerFunc {
 
 // GetTransactionHex is a gin handler (factory) to query transaction hex
 // by hash parameter.
-func GetTransactionHex(client *rpcclient.Client) gin.HandlerFunc {
+func GetTransactionHex(wire transport.Wire) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		txHash := ctx.Param("hash")
-		wire := transport.Wire{client}
 
 		txHex, err := wire.GetTransactionHexByHash(txHash)
 		if err != nil {

@@ -5,37 +5,46 @@ import (
 	"os"
 
 	"ledger-sats-stack/pkg/handlers"
+	"ledger-sats-stack/pkg/transport"
 
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	client := getRPCClient()
-	engine := getRouter(client)
-	defer client.Shutdown()
+	wire := GetWire(
+		os.Getenv("BITCOIND_RPC_HOST"),
+		os.Getenv("BITCOIND_RPC_USER"),
+		os.Getenv("BITCOIND_RPC_PASSWORD"),
+		os.Getenv("BITCOIND_RPC_ENABLE_TLS") == "true",
+	)
+	defer wire.Shutdown()
+
+	engine := getRouter(wire)
 	engine.Run()
 }
 
-func getRouter(client *rpcclient.Client) *gin.Engine {
+func getRouter(wire transport.Wire) *gin.Engine {
 	engine := gin.Default()
 
-	engine.GET("/blockchain/v3/blocks/:block", handlers.GetBlock(client))
-	engine.GET("/blockchain/v3/transactions/:hash", handlers.GetTransaction(client))
-	engine.GET("/blockchain/v3/transactions/:hash/hex", handlers.GetTransactionHex(client))
+	engine.GET("/blockchain/v3/blocks/:block", handlers.GetBlock(wire))
 
-	engine.GET("/blockchain/v3/explorer/_health", handlers.GetHealth(client))
+	engine.GET("/blockchain/v3/transactions/:hash", handlers.GetTransaction(wire))
+	engine.GET("/blockchain/v3/transactions/:hash/hex", handlers.GetTransactionHex(wire))
+
+	engine.GET("/blockchain/v3/explorer/_health", handlers.GetHealth(wire))
 
 	return engine
 }
 
-func getRPCClient() *rpcclient.Client {
+// GetWire initializes a Wire stuct that embeds an RPC client.
+func GetWire(host string, user string, pass string, tls bool) transport.Wire {
 	connCfg := &rpcclient.ConnConfig{
-		Host:         os.Getenv("BITCOIND_RPC_HOST"),
-		User:         os.Getenv("BITCOIND_RPC_USER"),
-		Pass:         os.Getenv("BITCOIND_RPC_PASSWORD"),
+		Host:         host,
+		User:         user,
+		Pass:         pass,
 		HTTPPostMode: true,
-		DisableTLS:   os.Getenv("BITCOIND_RPC_ENABLE_TLS") != "true",
+		DisableTLS:   !tls,
 	}
 	// The notification parameter is nil since notifications are not
 	// supported in HTTP POST mode.
@@ -43,5 +52,6 @@ func getRPCClient() *rpcclient.Client {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return client
+
+	return transport.Wire{Client: client}
 }

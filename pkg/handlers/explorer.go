@@ -6,14 +6,11 @@ import (
 
 	"ledger-sats-stack/pkg/transport"
 
-	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"
 )
 
-func GetHealth(client *rpcclient.Client) gin.HandlerFunc {
+func GetHealth(wire transport.Wire) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		wire := transport.Wire{client}
-
 		err := wire.GetHealth()
 		if err != nil {
 			log.Fatal(err)
