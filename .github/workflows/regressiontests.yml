@@ -28,4 +28,10 @@ jobs:
         fi
 
     - name: Run regression tests
+      env:
+        BITCOIND_RPC_HOST: ${{ secrets.BITCOIND_RPC_HOST }}
+        BITCOIND_RPC_USER: ${{ secrets.BITCOIND_RPC_USER }}
+        BITCOIND_RPC_PASSWORD: ${{ secrets.BITCOIND_RPC_PASSWORD }}
+        BITCOIND_RPC_ENABLE_TLS: ${{ secrets.BITCOIND_RPC_ENABLE_TLS }}
+
       run: make regtest
