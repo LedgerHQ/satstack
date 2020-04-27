@@ -1,11 +1,14 @@
 package tests
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"ledger-sats-stack/pkg/httpd"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"reflect"
 	"testing"
 )
 
@@ -62,8 +65,25 @@ func TestRegression(t *testing.T) {
 			t.Fatalf("Expected status code %v, got %v", remoteResponse.StatusCode, localResponse.StatusCode)
 		}
 
+		var localResponseJSON interface{}
+		var remoteResponseJSON interface{}
+
+		localResponseBytes, _ := ioutil.ReadAll(localResponse.Body)
+		remoteResponseBytes, _ := ioutil.ReadAll(remoteResponse.Body)
+
+		json.Unmarshal([]byte(localResponseBytes), &localResponseJSON)
+		json.Unmarshal([]byte(remoteResponseBytes), &remoteResponseJSON)
+
+		if !reflect.DeepEqual(localResponseJSON, remoteResponseJSON) {
+			fmt.Printf(WarningColor, fmt.Sprintf("\t%s\n", string(localResponseBytes)))
+			fmt.Printf(WarningColor, fmt.Sprintf("\t%s\n", string(remoteResponseBytes)))
+			fmt.Printf(ErrorColor, fmt.Sprintf("[FAIL]\t%sRegression found\n", endpoint))
+			t.Fatalf("Regression found")
+		}
+
 		fmt.Printf(SuccessColor, fmt.Sprintf("[OK]\t%s\n", endpoint))
 	}
 
 	check("blockchain/v3/explorer/_health")
+	check("blockchain/v3/blocks/current")
 }
