@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/btcsuite/btcd v0.20.1-beta
-	github.com/btcsuite/btcutil v1.0.2 // indirect
+	github.com/btcsuite/btcutil v1.0.2
 	github.com/gin-gonic/gin v1.6.2
 	github.com/golang/protobuf v1.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.6 // indirect
