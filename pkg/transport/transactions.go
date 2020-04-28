@@ -5,6 +5,7 @@ import (
 	"ledger-sats-stack/pkg/utils"
 
 	"github.com/btcsuite/btcd/btcjson"
+	"github.com/btcsuite/btcutil"
 )
 
 // !FIXME: Move to types package
@@ -19,52 +20,58 @@ type TransactionContainer struct {
 
 func (txn *TransactionContainer) init(rawTx *btcjson.TxRawResult, utxoMap utxoMapType, blockHeight int64) {
 	txn.ID = rawTx.Txid
-	txn.Hash = rawTx.Hash // Differs from ID for witness transactions
+	txn.Hash = rawTx.Txid // !FIXME: Use rawTx.Hash, which can differ for witness transactions
 	txn.ReceivedAt = utils.ParseUnixTimestamp(rawTx.Time)
 	txn.LockTime = rawTx.LockTime
 
 	vin := make([]types.Input, len(rawTx.Vin))
-	sumVinValues := int64(0)
+	sumVinValues := btcutil.Amount(0)
 	vinHasCoinbase := false
 
 	for idx, rawVin := range rawTx.Vin {
+		inputIndex := idx
 		if rawVin.IsCoinBase() {
 			vin[idx] = types.Input{
 				Coinbase:   rawVin.Coinbase,
-				InputIndex: idx,
+				InputIndex: &inputIndex,
 				Sequence:   rawVin.Sequence,
 			}
 
 			vinHasCoinbase = true
 		} else {
 			utxo := utxoMap[rawVin.Txid][rawVin.Vout]
+			outputIndex := rawVin.Vout
+
 			vin[idx] = types.Input{
 				OutputHash:  rawVin.Txid,
-				OutputIndex: rawVin.Vout,
-				InputIndex:  idx, // TODO: Find out if the order matters
-				Value:       utxo.Value,
+				OutputIndex: &outputIndex,
+				InputIndex:  &inputIndex, // TODO: Find out if the order matters
+				Value:       &utxo.Value,
 				Address:     utxo.Address,
 				ScriptSig:   rawVin.ScriptSig.Hex,
 				Sequence:    rawVin.Sequence,
 			}
 			if rawVin.HasWitness() {
-				vin[idx].Witness = rawVin.Witness
+				witness := rawVin.Witness
+				vin[idx].Witness = &witness
 			} else {
-				vin[idx].Witness = []string{} // !FIXME: Coinbase txn can also have witness
+				vin[idx].Witness = &[]string{} // !FIXME: Coinbase txn can also have witness
 			}
 
-			sumVinValues += vin[idx].Value
+			sumVinValues += *vin[idx].Value
 		}
 	}
 	txn.Inputs = vin
 
 	vout := make([]types.Output, len(rawTx.Vout))
-	sumVoutValues := int64(0)
+	sumVoutValues := btcutil.Amount(0)
 
 	for idx, rawVout := range rawTx.Vout {
+		outputValue := utils.ParseSatoshi(rawVout.Value) // !FIXME: Can panic
+		outputIndex := rawVout.N
 		vout[idx] = types.Output{
-			OutputIndex: rawVout.N,
-			Value:       utils.ParseSatoshi(rawVout.Value), // !FIXME: Can panic
+			OutputIndex: &outputIndex,
+			Value:       &outputValue,
 			ScriptHex:   rawVout.ScriptPubKey.Hex,
 		}
 
@@ -76,7 +83,7 @@ func (txn *TransactionContainer) init(rawTx *btcjson.TxRawResult, utxoMap utxoMa
 			// TODO: Document when this happens
 		}
 
-		sumVoutValues += vout[idx].Value
+		sumVoutValues += *vout[idx].Value
 	}
 	txn.Outputs = vout
 
@@ -89,12 +96,15 @@ func (txn *TransactionContainer) init(rawTx *btcjson.TxRawResult, utxoMap utxoMa
 	// ?XXX: Confirmations in Ledger Blockchain Explorer are always off by 1
 	txn.Confirmations = rawTx.Confirmations - uint64(1)
 
+	var fees btcutil.Amount
+
 	if vinHasCoinbase {
 		// Coinbase transaction have no fees
-		txn.Fees = int64(0)
+		fees = btcutil.Amount(0)
 	} else {
-		txn.Fees = sumVinValues - sumVoutValues
+		fees = sumVinValues - sumVoutValues
 	}
+	txn.Fees = &fees
 }
 
 // GetTransaction is a service function to query transaction details
