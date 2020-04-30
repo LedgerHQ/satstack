@@ -34,18 +34,17 @@ func GetWire(host string, user string, pass string, tls bool) transport.Wire {
 	// The notification parameter is nil since notifications are not
 	// supported in HTTP POST mode.
 	client, err := rpcclient.New(connCfg, nil)
-	if err != nil {
+	if client == nil || err != nil {
 		log.WithFields(log.Fields{
 			"host": host,
 			"user": user,
 			"TLS":  tls,
 		}).Fatal("Failed to initialize RPC client.")
-
 	}
 
 	info, err := client.GetBlockChainInfo()
 
-	if err != nil {
+	if info == nil || err != nil {
 		log.WithFields(log.Fields{
 			"host": host,
 			"user": user,
