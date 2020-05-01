@@ -18,7 +18,7 @@ type Input struct {
 	OutputIndex *uint32         `json:"output_index,omitempty"`     // [non-coinbase] Index of the corresponding UTXO
 	Value       *btcutil.Amount `json:"value,omitempty"`            // [non-coinbase] Value of the corresponding UTXO in satoshis
 	Address     string          `json:"address,omitempty"`          // [non-coinbase] Address of the corresponding UTXO; can be empty
-	ScriptSig   string          `json:"script_signature,omitempty"` // [non-coinbase] Hex-encoded signature script
+	ScriptSig   *string         `json:"script_signature,omitempty"` // [non-coinbase] Hex-encoded signature script
 	Witness     *[]string       `json:"txinwitness,omitempty"`      // [non-coinbase] Array of hex-encoded witness data
 	InputIndex  *int            `json:"input_index,omitempty"`      // [all] Non-standard data required by Ledger Blockchain Explorer
 	Sequence    uint32          `json:"sequence"`                   // [all] Input sequence number, used to track unconfirmed txns

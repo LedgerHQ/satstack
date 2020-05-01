@@ -48,7 +48,7 @@ func (txn *TransactionContainer) init(rawTx *btcjson.TxRawResult, utxoMap utxoMa
 				InputIndex:  &inputIndex, // TODO: Find out if the order matters
 				Value:       &utxo.Value,
 				Address:     utxo.Address,
-				ScriptSig:   rawVin.ScriptSig.Hex,
+				ScriptSig:   &rawVin.ScriptSig.Hex,
 				Sequence:    rawVin.Sequence,
 			}
 			if rawVin.HasWitness() {
