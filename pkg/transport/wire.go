@@ -2,7 +2,7 @@ package transport
 
 import (
 	"fmt"
-	"ledger-sats-stack/pkg/types"
+	. "ledger-sats-stack/pkg/types"
 	"ledger-sats-stack/pkg/utils"
 	"strconv"
 	"strings"
@@ -56,8 +56,8 @@ func (w Wire) getBlockHashByReference(blockRef string) (*chainhash.Hash, error) 
 	}
 }
 
-func (w Wire) buildUtxoMap(vin []btcjson.Vin) (utxoMapType, error) {
-	utxoMap := make(utxoMapType)
+func (w Wire) buildUTXOs(vin []btcjson.Vin) (UTXOs, error) {
+	utxos := make(UTXOs)
 
 	for _, inputRaw := range vin {
 		if inputRaw.IsCoinBase() {
@@ -70,33 +70,31 @@ func (w Wire) buildUtxoMap(vin []btcjson.Vin) (utxoMapType, error) {
 		}
 		utxoRaw := txn.Vout[inputRaw.Vout]
 
-		utxo := func(addresses []string) types.UTXO {
+		utxo := func(addresses []string) UTXOData {
 			switch len(addresses) {
 			case 0:
 				// TODO: Document when this happens
-				return types.UTXO{
+				return UTXOData{
 					Value:   utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
 					Address: "",                                // Will be omitted by the JSON serializer
 				}
 			case 1:
-				return types.UTXO{
+				return UTXOData{
 					Value:   utils.ParseSatoshi(utxoRaw.Value),
 					Address: addresses[0], // ?XXX: Investigate why we do this
 				}
 			default:
 				// TODO: Log an error
-				return types.UTXO{
+				return UTXOData{
 					Value:   utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
 					Address: "",                                // Will be omitted by the JSON serializer
 				}
 			}
 		}(utxoRaw.ScriptPubKey.Addresses)
-
-		utxoMap[inputRaw.Txid] = make(utxoVoutMapType)
-		utxoMap[inputRaw.Txid][inputRaw.Vout] = utxo
+		utxos[OutputIdentifier{inputRaw.Txid, inputRaw.Vout}] = utxo
 	}
 
-	return utxoMap, nil
+	return utxos, nil
 }
 
 // getTransactionByHash gets the transaction with the given hash.

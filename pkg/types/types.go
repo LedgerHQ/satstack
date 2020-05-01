@@ -4,12 +4,18 @@ import (
 	"github.com/btcsuite/btcutil"
 )
 
-// UTXO models the data corresponding to unspent transaction outputs.
-// Convenience type; for limited use only.
-type UTXO struct {
+type OutputIdentifier struct {
+	Hash  string
+	Index uint32
+}
+type UTXOData struct {
 	Value   btcutil.Amount
 	Address string
 }
+
+// UTXO models the data corresponding to unspent transaction outputs.
+// Convenience type; for limited use only.
+type UTXOs map[OutputIdentifier]UTXOData
 
 // Input models data corresponding to transaction inputs.
 type Input struct {
