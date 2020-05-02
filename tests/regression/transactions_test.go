@@ -35,7 +35,8 @@ func TestTransactionsRegression(t *testing.T) {
 			}
 			localResponseJSON, err := LoadJSONArray(localResponseBytes)
 			if err != nil {
-				t.Fatalf("Expected no error, got %v", err)
+				errorJSON, _ := LoadJSON(localResponseBytes)
+				t.Fatalf("Expected no error, got %v", errorJSON)
 			}
 
 			remoteResponseBytes, err := GetResponseBytes(remoteEndpoint)
