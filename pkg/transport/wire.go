@@ -2,6 +2,7 @@ package transport
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	. "ledger-sats-stack/pkg/types"
 	"ledger-sats-stack/pkg/utils"
 	"strconv"
@@ -84,10 +85,16 @@ func (w Wire) buildUTXOs(vin []btcjson.Vin) (UTXOs, error) {
 					Address: addresses[0], // ?XXX: Investigate why we do this
 				}
 			default:
-				// TODO: Log an error
+				value := utils.ParseSatoshi(utxoRaw.Value) // !FIXME: Can panic
+				log.WithFields(log.Fields{
+					"addresses":   addresses,
+					"value":       value,
+					"outputIndex": inputRaw.Vout,
+				}).Warnf("Multisig transaction detected.")
+
 				return UTXOData{
-					Value:   utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
-					Address: "",                                // Will be omitted by the JSON serializer
+					Value:   value,
+					Address: addresses[0],
 				}
 			}
 		}(utxoRaw.ScriptPubKey.Addresses)
@@ -106,6 +113,7 @@ func (w Wire) getTransactionByHash(txHash string) (*btcjson.TxRawResult, error) 
 	}
 
 	txRaw, err := w.GetRawTransactionVerbose(txHashRaw)
+
 	if err != nil {
 		return nil, err
 	}

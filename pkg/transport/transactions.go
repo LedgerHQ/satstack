@@ -1,6 +1,7 @@
 package transport
 
 import (
+	log "github.com/sirupsen/logrus"
 	. "ledger-sats-stack/pkg/types"
 	"ledger-sats-stack/pkg/utils"
 
@@ -71,10 +72,15 @@ func (txn *TransactionContainer) init(rawTx *btcjson.TxRawResult, utxos UTXOs, b
 			ScriptHex:   rawVout.ScriptPubKey.Hex,
 		}
 
-		if len(rawVout.ScriptPubKey.Addresses) == 1 {
+		if len(rawVout.ScriptPubKey.Addresses) >= 1 {
+			// ScriptPubKey can have multiple addresses for a multisig
+			// transaction.
+			log.WithFields(log.Fields{
+				"addresses":   rawVout.ScriptPubKey.Addresses,
+				"value":       outputValue,
+				"outputIndex": rawVout.N,
+			}).Warnf("Multisig transaction detected.")
 			vout[idx].Address = rawVout.ScriptPubKey.Addresses[0]
-		} else if len(rawVout.ScriptPubKey.Addresses) > 1 {
-			// TODO: Log an error / warning
 		} else {
 			// TODO: Document when this happens
 		}
