@@ -444,7 +444,15 @@ var TransactionTestCases = [...]string{
 	"0x8a86658c87ff956f027e577a31988652d068d994aded6939bdb69735f8857511",
 	"0x22fcd3920f2f8470f6ed9f308146736b633374ff5a98c940e9a16b53c51fa053",
 	"0x3d6264cb1a4e0a9dd21a77d3dad33c24a58549400f3122a5a416c6f1ad735d36",
-	"0x5a33bac12d39b43bddd55b08c6dc4864ecfd3696a78c79dea8d1914d8634604c",
+
+	// XXX: This transaction contains inputs that use the P2PK script format.
+	//      Since bitcoind v0.19.0.1, the scriptPubKey.addresses field has
+	//      been removed from the RPC spec. Since Ledger Blockchain Explorer
+	//      currently uses an old(er) version of bitcoind, this test will
+	//      fail.
+	//      Ref: https://github.com/bitcoin/bitcoin/pull/16725
+	// "0x5a33bac12d39b43bddd55b08c6dc4864ecfd3696a78c79dea8d1914d8634604c",
+
 	"0xfd496c0ffc7257c32c680ad8e2e4b5e7d2a6e7a3f5d2e3e1aac0620327cf67b8",
 	"0xb187fc5d7088c9dfdc5ecb9e36def45ee9c43d0bc96932d067a0177c401889f9",
 	"0xc9aed47b76f83260c203d1d7676ffba2dfabf932c91b5963d916f7b08a07e419",
