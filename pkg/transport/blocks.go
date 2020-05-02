@@ -2,6 +2,7 @@ package transport
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 
 	"ledger-sats-stack/pkg/types"
 	"ledger-sats-stack/pkg/utils"
@@ -45,16 +46,21 @@ func (w Wire) GetBlock(blockRef string) (*BlockContainer, error) {
 func (w Wire) GetBlockHeightByHash(hash string) int64 {
 	hashRaw, err := chainhash.NewHashFromStr(hash)
 	if err != nil {
-		// TODO: Log an error here
+		log.WithFields(log.Fields{
+			"hash":  hash,
+			"error": err,
+		}).Errorf("Failed to parse block hash")
 		return -1
 	}
 
 	rawBlock, err := w.GetBlockVerbose(hashRaw)
 
 	if err != nil {
-		// TODO: Log an error here
+		log.WithFields(log.Fields{
+			"hash":  hash,
+			"error": err,
+		}).Errorf("Failed to get block")
 		return -1
-
 	}
 	return rawBlock.Height
 }
