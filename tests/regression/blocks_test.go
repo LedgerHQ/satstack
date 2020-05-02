@@ -41,6 +41,12 @@ func TestBlocksRegression(t *testing.T) {
 			if testCase == "current" {
 				localResponseJSON, localErr = LoadJSON(localResponseBytes)
 				remoteResponseJSON, remoteErr = LoadJSON(remoteResponseBytes)
+
+				localCurrentHeight := localResponseJSON.(map[string]interface{})["height"]
+				remoteCurrentHeight := remoteResponseJSON.(map[string]interface{})["height"]
+				if localCurrentHeight != remoteCurrentHeight {
+					return
+				}
 			} else {
 				localResponseJSON, localErr = LoadJSONArray(localResponseBytes)
 				remoteResponseJSON, remoteErr = LoadJSONArray(remoteResponseBytes)
