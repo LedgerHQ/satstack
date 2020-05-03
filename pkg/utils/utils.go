@@ -1,8 +1,10 @@
 package utils
 
 import (
+	"strings"
 	"time"
 
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcutil"
 )
 
@@ -22,4 +24,8 @@ func ParseSatoshi(value float64) btcutil.Amount {
 		return -1
 	}
 	return amount
+}
+
+func ParseChainHash(hash string) (*chainhash.Hash, error) {
+	return chainhash.NewHashFromStr(strings.TrimLeft(hash, "0x"))
 }

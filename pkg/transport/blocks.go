@@ -8,7 +8,6 @@ import (
 	"ledger-sats-stack/pkg/utils"
 
 	"github.com/btcsuite/btcd/btcjson"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
 // BlockContainer is a wrapper type to define an init method for
@@ -44,7 +43,7 @@ func (w Wire) GetBlock(blockRef string) (*BlockContainer, error) {
 }
 
 func (w Wire) GetBlockHeightByHash(hash string) int64 {
-	hashRaw, err := chainhash.NewHashFromStr(hash)
+	chainHash, err := utils.ParseChainHash(hash)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"hash":  hash,
@@ -53,7 +52,7 @@ func (w Wire) GetBlockHeightByHash(hash string) int64 {
 		return -1
 	}
 
-	rawBlock, err := w.GetBlockVerbose(hashRaw)
+	rawBlock, err := w.GetBlockVerbose(chainHash)
 
 	if err != nil {
 		log.WithFields(log.Fields{

@@ -36,10 +36,10 @@ func (w Wire) getBlockHashByReference(blockRef string) (*chainhash.Hash, error) 
 
 	case strings.HasPrefix(blockRef, "0x"):
 		// 256-bit hex string with 0x prefix
-		return chainhash.NewHashFromStr(strings.TrimLeft(blockRef, "0x"))
+		return utils.ParseChainHash(blockRef)
 	case len(blockRef) == 64:
 		// 256-bit hex string WITHOUT 0x prefix
-		return chainhash.NewHashFromStr(blockRef)
+		return utils.ParseChainHash(blockRef)
 	default:
 		{
 			// Either an int64 block height, or garbage input
@@ -107,12 +107,12 @@ func (w Wire) buildUTXOs(vin []btcjson.Vin) (UTXOs, error) {
 // getTransactionByHash gets the transaction with the given hash.
 // Supports transaction hashes with or without 0x prefix.
 func (w Wire) getTransactionByHash(txHash string) (*btcjson.TxRawResult, error) {
-	txHashRaw, err := chainhash.NewHashFromStr(strings.TrimLeft(txHash, "0x"))
+	chainHash, err := utils.ParseChainHash(txHash)
 	if err != nil {
 		return nil, err
 	}
 
-	txRaw, err := w.GetRawTransactionVerbose(txHashRaw)
+	txRaw, err := w.GetRawTransactionVerbose(chainHash)
 
 	if err != nil {
 		return nil, err
