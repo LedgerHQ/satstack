@@ -34,11 +34,8 @@ func (w Wire) getBlockHashByReference(blockRef string) (*chainhash.Hash, error) 
 	case blockRef == "current":
 		return w.GetBestBlockHash()
 
-	case strings.HasPrefix(blockRef, "0x"):
-		// 256-bit hex string with 0x prefix
-		return utils.ParseChainHash(blockRef)
-	case len(blockRef) == 64:
-		// 256-bit hex string WITHOUT 0x prefix
+	case strings.HasPrefix(blockRef, "0x"), len(blockRef) == 64:
+		// 256-bit hex string with or without 0x prefix
 		return utils.ParseChainHash(blockRef)
 	default:
 		{
