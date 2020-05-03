@@ -18,6 +18,7 @@ func GetRouter(wire transport.Wire) *gin.Engine {
 	engine.GET("/blockchain/v3/transactions/:hash/hex", handlers.GetTransactionHex(wire))
 
 	engine.GET("/blockchain/v3/explorer/_health", handlers.GetHealth(wire))
+	engine.GET("/blockchain/v3/fees", handlers.GetFees(wire))
 
 	return engine
 }
