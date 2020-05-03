@@ -36,7 +36,7 @@ func (txn *TransactionContainer) init(rawTx *btcjson.TxRawResult, utxos UTXOs, b
 
 			vinHasCoinbase = true
 		} else {
-			utxo := utxos[OutputIdentifier{rawVin.Txid, rawVin.Vout}]
+			utxo := utxos[OutputIdentifier{Hash: rawVin.Txid, Index: rawVin.Vout}]
 			outputIndex := rawVin.Vout
 
 			vin[idx] = Input{
