@@ -1,4 +1,4 @@
-package regression
+package tests
 
 import (
 	"encoding/json"

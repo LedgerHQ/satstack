@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"ledger-sats-stack/pkg/httpd"
+	utils "ledger-sats-stack/tests"
 	"net/http/httptest"
 	"os"
 	"reflect"
@@ -27,11 +28,11 @@ func TestBlocksRegression(t *testing.T) {
 			localEndpoint := fmt.Sprintf("%s/%s", ts.URL, baseEndpoint)
 			remoteEndpoint := fmt.Sprintf("http://bitcoin-mainnet.explorers.prod.aws.ledger.fr/%s", baseEndpoint)
 
-			localResponseBytes, err := GetResponseBytes(localEndpoint)
+			localResponseBytes, err := utils.GetResponseBytes(localEndpoint)
 			if err != nil {
 				t.Fatalf("Expected no error, got %v", err)
 			}
-			remoteResponseBytes, err := GetResponseBytes(remoteEndpoint)
+			remoteResponseBytes, err := utils.GetResponseBytes(remoteEndpoint)
 			if err != nil {
 				t.Fatalf("Expected no error, got %v", err)
 			}
@@ -39,8 +40,8 @@ func TestBlocksRegression(t *testing.T) {
 			var localResponseJSON, remoteResponseJSON interface{}
 			var localErr, remoteErr error
 			if testCase == "current" {
-				localResponseJSON, localErr = LoadJSON(localResponseBytes)
-				remoteResponseJSON, remoteErr = LoadJSON(remoteResponseBytes)
+				localResponseJSON, localErr = utils.LoadJSON(localResponseBytes)
+				remoteResponseJSON, remoteErr = utils.LoadJSON(remoteResponseBytes)
 
 				localCurrentHeight := localResponseJSON.(map[string]interface{})["height"]
 				remoteCurrentHeight := remoteResponseJSON.(map[string]interface{})["height"]
@@ -48,8 +49,8 @@ func TestBlocksRegression(t *testing.T) {
 					return
 				}
 			} else {
-				localResponseJSON, localErr = LoadJSONArray(localResponseBytes)
-				remoteResponseJSON, remoteErr = LoadJSONArray(remoteResponseBytes)
+				localResponseJSON, localErr = utils.LoadJSONArray(localResponseBytes)
+				remoteResponseJSON, remoteErr = utils.LoadJSONArray(remoteResponseBytes)
 			}
 			if localErr != nil {
 				t.Fatalf("Expected no error, got %v", err)
@@ -61,9 +62,9 @@ func TestBlocksRegression(t *testing.T) {
 			if !reflect.DeepEqual(localResponseJSON, remoteResponseJSON) {
 				localOutput, _ := json.Marshal(localResponseJSON)
 				remoteOutput, _ := json.Marshal(remoteResponseJSON)
-				fmt.Printf(WarningColor, fmt.Sprintf("\tLocal  -> %s\n", string(localOutput)))
-				fmt.Printf(WarningColor, fmt.Sprintf("\tRemote -> %s\n", string(remoteOutput)))
-				fmt.Printf(ErrorColor, fmt.Sprintf("[FAIL]\t%s\n", baseEndpoint))
+				fmt.Printf(utils.WarningColor, fmt.Sprintf("\tLocal  -> %s\n", string(localOutput)))
+				fmt.Printf(utils.WarningColor, fmt.Sprintf("\tRemote -> %s\n", string(remoteOutput)))
+				fmt.Printf(utils.ErrorColor, fmt.Sprintf("[FAIL]\t%s\n", baseEndpoint))
 				t.Errorf("Regression found\n")
 			}
 		})

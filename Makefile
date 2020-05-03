@@ -6,3 +6,6 @@ build:
 
 regtest:
 	go test -v -timeout 0 ./tests/regression/...
+
+it:
+	go test -v -timeout 0 ./tests/integration/...
