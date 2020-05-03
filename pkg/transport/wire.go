@@ -95,7 +95,7 @@ func (w Wire) buildUTXOs(vin []btcjson.Vin) (UTXOs, error) {
 				}
 			}
 		}(utxoRaw.ScriptPubKey.Addresses)
-		utxos[OutputIdentifier{inputRaw.Txid, inputRaw.Vout}] = utxo
+		utxos[OutputIdentifier{Hash: inputRaw.Txid, Index: inputRaw.Vout}] = utxo
 	}
 
 	return utxos, nil
