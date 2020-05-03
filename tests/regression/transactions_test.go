@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"ledger-sats-stack/pkg/httpd"
+	utils "ledger-sats-stack/tests"
 	"net/http/httptest"
 	"os"
 	"path"
@@ -29,27 +30,27 @@ func TestTransactionsRegression(t *testing.T) {
 			localEndpoint := fmt.Sprintf("%s/%s", ts.URL, baseEndpoint)
 			remoteEndpoint := fmt.Sprintf("http://bitcoin-mainnet.explorers.prod.aws.ledger.fr/%s", baseEndpoint)
 
-			localResponseBytes, err := GetResponseBytes(localEndpoint)
+			localResponseBytes, err := utils.GetResponseBytes(localEndpoint)
 			if err != nil {
-				fmt.Printf(ErrorColor, fmt.Sprintf("Could not fetch local endpoint: %v", err))
+				fmt.Printf(utils.ErrorColor, fmt.Sprintf("Could not fetch local endpoint: %v", err))
 				t.Skip()
 			}
-			localResponseJSON, err := LoadJSONArray(localResponseBytes)
+			localResponseJSON, err := utils.LoadJSONArray(localResponseBytes)
 			if err != nil {
-				errorJSON, _ := LoadJSON(localResponseBytes)
-				fmt.Printf(ErrorColor, fmt.Sprintf("Could not parse local response: %v", errorJSON))
+				errorJSON, _ := utils.LoadJSON(localResponseBytes)
+				fmt.Printf(utils.ErrorColor, fmt.Sprintf("Could not parse local response: %v", errorJSON))
 				t.Skip()
 			}
 
-			remoteResponseBytes, err := GetResponseBytes(remoteEndpoint)
+			remoteResponseBytes, err := utils.GetResponseBytes(remoteEndpoint)
 			if err != nil {
-				fmt.Printf(ErrorColor, fmt.Sprintf("Could not fetch remote endpoint: %v", err))
+				fmt.Printf(utils.ErrorColor, fmt.Sprintf("Could not fetch remote endpoint: %v", err))
 				t.Skip()
 			}
-			remoteResponseJSON, err := LoadJSONArray(remoteResponseBytes)
+			remoteResponseJSON, err := utils.LoadJSONArray(remoteResponseBytes)
 			if err != nil {
-				errorJSON, _ := LoadJSON(remoteResponseBytes)
-				fmt.Printf(ErrorColor, fmt.Sprintf("Could not parse remote response: %v", errorJSON))
+				errorJSON, _ := utils.LoadJSON(remoteResponseBytes)
+				fmt.Printf(utils.ErrorColor, fmt.Sprintf("Could not parse remote response: %v", errorJSON))
 				t.Skip()
 			}
 
@@ -69,9 +70,9 @@ func TestTransactionsRegression(t *testing.T) {
 			if !reflect.DeepEqual(localResponseJSON, remoteResponseJSON) {
 				localOutput, _ := json.Marshal(localResponseJSON)
 				remoteOutput, _ := json.Marshal(remoteResponseJSON)
-				fmt.Printf(WarningColor, fmt.Sprintf("\tLocal  -> %s\n", string(localOutput)))
-				fmt.Printf(WarningColor, fmt.Sprintf("\tRemote -> %s\n", string(remoteOutput)))
-				fmt.Printf(ErrorColor, fmt.Sprintf("[FAIL]\t%s\n", baseEndpoint))
+				fmt.Printf(utils.WarningColor, fmt.Sprintf("\tLocal  -> %s\n", string(localOutput)))
+				fmt.Printf(utils.WarningColor, fmt.Sprintf("\tRemote -> %s\n", string(remoteOutput)))
+				fmt.Printf(utils.ErrorColor, fmt.Sprintf("[FAIL]\t%s\n", baseEndpoint))
 				t.Errorf("Regression found\n")
 			}
 		})
@@ -124,13 +125,13 @@ func loadRecordingOrGetUrl(transactionHash string) ([]byte, error) {
 	if _, err := os.Stat(cassette); os.IsNotExist(err) {
 		baseEndpoint := fmt.Sprintf("blockchain/v3/transactions/%s", transactionHash)
 		endpoint := fmt.Sprintf("http://bitcoin-mainnet.explorers.prod.aws.ledger.fr/%s", baseEndpoint)
-		responseBytes, err := GetResponseBytes(endpoint)
+		responseBytes, err := utils.GetResponseBytes(endpoint)
 		if err != nil {
 			return nil, err
 		}
 
 		// prettify JSON
-		jsonArray, err := LoadJSONArray(responseBytes)
+		jsonArray, err := utils.LoadJSONArray(responseBytes)
 		if err != nil {
 			return nil, err
 		}
