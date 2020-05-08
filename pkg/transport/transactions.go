@@ -27,6 +27,7 @@ func (txn *TransactionContainer) init(rawTx *btcjson.TxRawResult, utxos UTXOs, b
 
 	for idx, rawVin := range rawTx.Vin {
 		inputIndex := idx
+
 		if rawVin.IsCoinBase() {
 			vin[idx] = Input{
 				Coinbase:   rawVin.Coinbase,

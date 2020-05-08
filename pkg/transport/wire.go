@@ -61,44 +61,49 @@ func (w Wire) buildUTXOs(vin []btcjson.Vin) (UTXOs, error) {
 		if inputRaw.IsCoinBase() {
 			continue
 		}
-
-		txn, err := w.getTransactionByHash(inputRaw.Txid)
+		tx, err := w.getTransactionByHash(inputRaw.Txid)
 		if err != nil {
 			return nil, err
 		}
-		utxoRaw := txn.Vout[inputRaw.Vout]
+		utxo, err := parseUTXO(tx, inputRaw.Vout)
+		if err != nil {
+			return nil, err
+		}
 
-		utxo := func(addresses []string) UTXOData {
-			switch len(addresses) {
-			case 0:
-				// TODO: Document when this happens
-				return UTXOData{
-					Value:   utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
-					Address: "",                                // Will be omitted by the JSON serializer
-				}
-			case 1:
-				return UTXOData{
-					Value:   utils.ParseSatoshi(utxoRaw.Value),
-					Address: addresses[0], // ?XXX: Investigate why we do this
-				}
-			default:
-				value := utils.ParseSatoshi(utxoRaw.Value) // !FIXME: Can panic
-				log.WithFields(log.Fields{
-					"addresses":   addresses,
-					"value":       value,
-					"outputIndex": inputRaw.Vout,
-				}).Warnf("Multisig transaction detected.")
-
-				return UTXOData{
-					Value:   value,
-					Address: addresses[0],
-				}
-			}
-		}(utxoRaw.ScriptPubKey.Addresses)
-		utxos[OutputIdentifier{Hash: inputRaw.Txid, Index: inputRaw.Vout}] = utxo
+		utxos[OutputIdentifier{Hash: inputRaw.Txid, Index: inputRaw.Vout}] = *utxo
 	}
 
 	return utxos, nil
+}
+
+func parseUTXO(tx *btcjson.TxRawResult, outputIndex uint32) (*UTXOData, error) {
+	utxoRaw := tx.Vout[outputIndex]
+
+	switch addresses := utxoRaw.ScriptPubKey.Addresses; len(addresses) {
+	case 0:
+		// TODO: Document when this happens
+		return &UTXOData{
+			Value:   utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
+			Address: "",                                // Will be omitted by the JSON serializer
+		}, nil
+	case 1:
+		return &UTXOData{
+			Value:   utils.ParseSatoshi(utxoRaw.Value),
+			Address: addresses[0], // ?XXX: Investigate why we do this
+		}, nil
+	default:
+		value := utils.ParseSatoshi(utxoRaw.Value) // !FIXME: Can panic
+		log.WithFields(log.Fields{
+			"addresses":   addresses,
+			"value":       value,
+			"outputIndex": outputIndex,
+		}).Warnf("Multisig transaction detected.")
+
+		return &UTXOData{
+			Value:   value,
+			Address: addresses[0],
+		}, nil
+	}
 }
 
 // getTransactionByHash gets the transaction with the given hash.

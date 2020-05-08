@@ -22,16 +22,17 @@ func (w Wire) GetHealth() error {
 func (w Wire) GetSmartFeeEstimates(targets []int64, mode string) (map[string]interface{}, error) {
 	result := make(map[string]interface{})
 	for _, target := range targets {
-
 		fee, err := w.EstimateSmartFee(target, getMode(mode))
 		if err != nil {
 			return nil, err
 		}
+
 		if len(fee.Errors) > 0 {
 			return nil, errors.New(fmt.Sprint(fee.Errors))
 		}
 		result[strconv.FormatInt(target, 10)] = utils.ParseSatoshi(*fee.FeeRate)
 	}
+
 	return result, nil
 }
 
