@@ -16,3 +16,6 @@ require (
 	golang.org/x/crypto v0.0.0-20200414173820-0848c9571904 // indirect
 	golang.org/x/sys v0.0.0-20200413165638-669c56c373c4 // indirect
 )
+
+// Uncomment the line below to enable experimental batched JSON-RPC feature.
+// replace github.com/btcsuite/btcd v0.20.1-beta.0.20200414114020-8b54b0b96418 => github.com/onyb/btcd v0.20.1-beta.0.20200508213858-3114cfbabae7

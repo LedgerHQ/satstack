@@ -56,21 +56,33 @@ func (w Wire) getBlockHashByReference(blockRef string) (*chainhash.Hash, error) 
 
 func (w Wire) buildUTXOs(vin []btcjson.Vin) (UTXOs, error) {
 	utxos := make(UTXOs)
+	utxoResults := make(map[OutputIdentifier]rpcclient.FutureGetRawTransactionVerboseResult)
 
 	for _, inputRaw := range vin {
 		if inputRaw.IsCoinBase() {
 			continue
 		}
-		tx, err := w.getTransactionByHash(inputRaw.Txid)
-		if err != nil {
-			return nil, err
-		}
-		utxo, err := parseUTXO(tx, inputRaw.Vout)
+
+		chainHash, err := utils.ParseChainHash(inputRaw.Txid)
 		if err != nil {
 			return nil, err
 		}
 
-		utxos[OutputIdentifier{Hash: inputRaw.Txid, Index: inputRaw.Vout}] = *utxo
+		utxoResults[OutputIdentifier{Hash: inputRaw.Txid, Index: inputRaw.Vout}] = w.GetRawTransactionVerboseAsync(chainHash)
+	}
+
+	for utxoID, utxoResult := range utxoResults {
+		tx, err := utxoResult.Receive()
+		if err != nil {
+			return nil, err
+		}
+
+		utxo, err := parseUTXO(tx, utxoID.Index)
+		if err != nil {
+			return nil, err
+		}
+
+		utxos[utxoID] = *utxo
 	}
 
 	return utxos, nil
@@ -97,7 +109,7 @@ func parseUTXO(tx *btcjson.TxRawResult, outputIndex uint32) (*UTXOData, error) {
 			"addresses":   addresses,
 			"value":       value,
 			"outputIndex": outputIndex,
-		}).Warnf("Multisig transaction detected.")
+		}).Warn("Multisig transaction detected.")
 
 		return &UTXOData{
 			Value:   value,
