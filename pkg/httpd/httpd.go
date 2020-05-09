@@ -1,6 +1,7 @@
 package httpd
 
 import (
+	bolt "go.etcd.io/bbolt"
 	"ledger-sats-stack/pkg/handlers"
 	"ledger-sats-stack/pkg/transport"
 
@@ -9,7 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func GetRouter(wire transport.Wire) *gin.Engine {
+func GetRouter(wire transport.Wire, db *bolt.DB) *gin.Engine {
 	engine := gin.Default()
 
 	engine.GET("/blockchain/v3/blocks/:block", handlers.GetBlock(wire))
@@ -19,6 +20,8 @@ func GetRouter(wire transport.Wire) *gin.Engine {
 
 	engine.GET("/blockchain/v3/explorer/_health", handlers.GetHealth(wire))
 	engine.GET("/blockchain/v3/fees", handlers.GetFees(wire))
+	engine.GET("/blockchain/v3/syncToken", handlers.GetSyncToken(wire, db))
+	engine.DELETE("/blockchain/v3/syncToken", handlers.DeleteSyncToken(wire, db))
 
 	return engine
 }

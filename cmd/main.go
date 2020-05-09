@@ -7,6 +7,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	prefixed "github.com/x-cray/logrus-prefixed-formatter"
+	bolt "go.etcd.io/bbolt"
 )
 
 func main() {
@@ -25,6 +26,12 @@ func main() {
 	)
 	defer wire.Shutdown()
 
-	engine := httpd.GetRouter(wire)
+	db, err := bolt.Open("sats.db", 0666, nil)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	engine := httpd.GetRouter(wire, db)
 	engine.Run()
 }
