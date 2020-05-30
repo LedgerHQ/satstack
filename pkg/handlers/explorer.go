@@ -48,7 +48,7 @@ func GetFees(wire transport.Wire) gin.HandlerFunc {
 
 		fees, err := wire.GetSmartFeeEstimates(blockCountsIntegers, mode)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, err)
+			ctx.String(http.StatusInternalServerError, err.Error())
 			return
 		}
 		fees["last_updated"] = int32(time.Now().Unix())
