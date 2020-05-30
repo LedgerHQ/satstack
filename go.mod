@@ -15,9 +15,8 @@ require (
 	github.com/sirupsen/logrus v1.5.0
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	go.etcd.io/bbolt v1.3.4
-	golang.org/x/crypto v0.0.0-20200414173820-0848c9571904 // indirect
 	golang.org/x/sys v0.0.0-20200413165638-669c56c373c4 // indirect
 )
 
-// Uncomment the line below to enable experimental batched JSON-RPC feature.
-// replace github.com/btcsuite/btcd v0.20.1-beta.0.20200414114020-8b54b0b96418 => github.com/onyb/btcd v0.20.1-beta.0.20200508213858-3114cfbabae7
+// Uncomment the line below to enable experimental JSON-RPC features.
+replace github.com/btcsuite/btcd v0.20.1-beta.0.20200414114020-8b54b0b96418 => github.com/onyb/btcd v0.20.1-beta.0.20200525154529-e30a38b3b08d
