@@ -3,16 +3,15 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	uuid2 "github.com/google/uuid"
-	bolt "go.etcd.io/bbolt"
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"ledger-sats-stack/pkg/transport"
 
 	"github.com/gin-gonic/gin"
+	uuid2 "github.com/google/uuid"
+	bolt "go.etcd.io/bbolt"
 )
 
 func GetHealth(wire transport.Wire) gin.HandlerFunc {
@@ -46,13 +45,7 @@ func GetFees(wire transport.Wire) gin.HandlerFunc {
 			blockCountsIntegers = append(blockCountsIntegers, 2, 3, 6)
 		}
 
-		fees, err := wire.GetSmartFeeEstimates(blockCountsIntegers, mode)
-		if err != nil {
-			ctx.String(http.StatusInternalServerError, err.Error())
-			return
-		}
-		fees["last_updated"] = int32(time.Now().Unix())
-
+		fees := wire.GetSmartFeeEstimates(blockCountsIntegers, mode)
 		ctx.JSON(http.StatusOK, fees)
 	}
 }

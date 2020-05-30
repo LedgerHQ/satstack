@@ -16,6 +16,7 @@ require (
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	go.etcd.io/bbolt v1.3.4
 	golang.org/x/sys v0.0.0-20200413165638-669c56c373c4 // indirect
+	golang.org/x/tools v0.0.0-20200529172331-a64b76657301 // indirect
 )
 
 // Uncomment the line below to enable experimental JSON-RPC features.
