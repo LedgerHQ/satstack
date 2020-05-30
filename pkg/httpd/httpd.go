@@ -12,19 +12,29 @@ import (
 
 func GetRouter(wire transport.Wire, db *bolt.DB) *gin.Engine {
 	engine := gin.Default()
-	baseRouter := engine.Group("/blockchain/v3")
 
-	baseRouter.GET("/explorer/_health", handlers.GetHealth(wire))
-	baseRouter.GET("/fees", handlers.GetFees(wire))
-	baseRouter.GET("/syncToken", handlers.GetSyncToken(wire, db))
-	baseRouter.DELETE("/syncToken", handlers.DeleteSyncToken(wire, db))
+	baseRouter := engine.Group("blockchain/v3")
+	baseRouter.GET("explorer/_health", handlers.GetHealth(wire))
+	baseRouter.GET("syncToken", handlers.GetSyncToken(wire, db))
+	baseRouter.DELETE("syncToken", handlers.DeleteSyncToken(wire, db))
 
-	blocksRouter := baseRouter.Group("/blocks")
-	blocksRouter.GET("/:block", handlers.GetBlock(wire))
+	var currency string
+	info, _ := wire.GetBlockChainInfo()
+	switch info.Chain {
+	case "regtest", "test":
+		currency = "btc_testnet"
+	case "main":
+		currency = "btc"
+	}
+	currencyRouter := baseRouter.Group(currency)
+	currencyRouter.GET("fees", handlers.GetFees(wire))
 
-	transactionsRouter := baseRouter.Group("/transactions")
-	transactionsRouter.GET("/:hash", handlers.GetTransaction(wire))
-	transactionsRouter.GET("/:hash/hex", handlers.GetTransactionHex(wire))
+	blocksRouter := currencyRouter.Group("/blocks")
+	blocksRouter.GET(":block", handlers.GetBlock(wire))
+
+	transactionsRouter := currencyRouter.Group("/transactions")
+	transactionsRouter.GET(":hash", handlers.GetTransaction(wire))
+	transactionsRouter.GET(":hash/hex", handlers.GetTransactionHex(wire))
 
 	return engine
 }
