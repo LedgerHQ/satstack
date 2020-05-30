@@ -12,16 +12,19 @@ import (
 
 func GetRouter(wire transport.Wire, db *bolt.DB) *gin.Engine {
 	engine := gin.Default()
+	baseRouter := engine.Group("/blockchain/v3")
 
-	engine.GET("/blockchain/v3/blocks/:block", handlers.GetBlock(wire))
+	baseRouter.GET("/explorer/_health", handlers.GetHealth(wire))
+	baseRouter.GET("/fees", handlers.GetFees(wire))
+	baseRouter.GET("/syncToken", handlers.GetSyncToken(wire, db))
+	baseRouter.DELETE("/syncToken", handlers.DeleteSyncToken(wire, db))
 
-	engine.GET("/blockchain/v3/transactions/:hash", handlers.GetTransaction(wire))
-	engine.GET("/blockchain/v3/transactions/:hash/hex", handlers.GetTransactionHex(wire))
+	blocksRouter := baseRouter.Group("/blocks")
+	blocksRouter.GET("/:block", handlers.GetBlock(wire))
 
-	engine.GET("/blockchain/v3/explorer/_health", handlers.GetHealth(wire))
-	engine.GET("/blockchain/v3/fees", handlers.GetFees(wire))
-	engine.GET("/blockchain/v3/syncToken", handlers.GetSyncToken(wire, db))
-	engine.DELETE("/blockchain/v3/syncToken", handlers.DeleteSyncToken(wire, db))
+	transactionsRouter := baseRouter.Group("/transactions")
+	transactionsRouter.GET("/:hash", handlers.GetTransaction(wire))
+	transactionsRouter.GET("/:hash/hex", handlers.GetTransactionHex(wire))
 
 	return engine
 }
