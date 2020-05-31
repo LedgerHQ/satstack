@@ -1,10 +1,13 @@
 package transport
 
 import (
+	"bytes"
+	"encoding/hex"
 	"ledger-sats-stack/pkg/types"
 	"ledger-sats-stack/pkg/utils"
 
 	"github.com/btcsuite/btcd/btcjson"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	log "github.com/sirupsen/logrus"
 )
@@ -138,4 +141,37 @@ func (x XRPC) GetTransactionHexByHash(txHash string) (string, error) {
 		return "", err
 	}
 	return txRaw.Hex, nil
+}
+
+func (x XRPC) SendTransaction(tx string) (*string, error) {
+	// Decode the serialized transaction hex to raw bytes.
+	serializedTx, err := hex.DecodeString(tx)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"hex":   tx,
+			"error": err,
+		}).Error("Could not decode transaction hex")
+		return nil, err
+	}
+
+	// Deserialize the transaction and return it.
+	var msgTx wire.MsgTx
+	if err := msgTx.Deserialize(bytes.NewReader(serializedTx)); err != nil {
+		log.WithFields(log.Fields{
+			"hex":   tx,
+			"error": err,
+		}).Error("Could not deserialize to wire.MsgTx")
+		return nil, err
+	}
+
+	txHash, err := x.SendRawTransaction(&msgTx, true)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"hex":   tx,
+			"error": err,
+		}).Error("sendrawtransaction RPC failed")
+		return nil, err
+	}
+
+	return btcjson.String(txHash.String()), nil
 }

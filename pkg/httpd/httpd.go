@@ -42,6 +42,7 @@ func GetRouter(xrpc transport.XRPC, db *bolt.DB) *gin.Engine {
 	{
 		transactionsRouter.GET(":hash", handlers.GetTransaction(xrpc))
 		transactionsRouter.GET(":hash/hex", handlers.GetTransactionHex(xrpc))
+		transactionsRouter.POST("send", handlers.SendTransaction(xrpc))
 	}
 
 	addressesRouter := currencyRouter.Group("/addresses")
