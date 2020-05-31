@@ -1,27 +1,27 @@
 package transport
 
 import (
-	log "github.com/sirupsen/logrus"
-	. "ledger-sats-stack/pkg/types"
+	"ledger-sats-stack/pkg/types"
 	"ledger-sats-stack/pkg/utils"
 
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcutil"
+	log "github.com/sirupsen/logrus"
 )
 
 // TransactionContainer is a wrapper type to define an init method for
 // Transaction
 type TransactionContainer struct {
-	Transaction
+	types.Transaction
 }
 
-func (txn *TransactionContainer) init(rawTx *btcjson.TxRawResult, utxos UTXOs, blockHeight int64) {
+func (txn *TransactionContainer) init(rawTx *btcjson.TxRawResult, utxos types.UTXOs, blockHeight int64) {
 	txn.ID = rawTx.Txid
 	txn.Hash = rawTx.Txid // !FIXME: Use rawTx.Hash, which can differ for witness transactions
 	txn.ReceivedAt = utils.ParseUnixTimestamp(rawTx.Time)
 	txn.LockTime = rawTx.LockTime
 
-	vin := make([]Input, len(rawTx.Vin))
+	vin := make([]types.Input, len(rawTx.Vin))
 	sumVinValues := btcutil.Amount(0)
 	vinHasCoinbase := false
 
@@ -29,7 +29,7 @@ func (txn *TransactionContainer) init(rawTx *btcjson.TxRawResult, utxos UTXOs, b
 		inputIndex := idx
 
 		if rawVin.IsCoinBase() {
-			vin[idx] = Input{
+			vin[idx] = types.Input{
 				Coinbase:   rawVin.Coinbase,
 				InputIndex: &inputIndex,
 				Sequence:   rawVin.Sequence,
@@ -37,10 +37,10 @@ func (txn *TransactionContainer) init(rawTx *btcjson.TxRawResult, utxos UTXOs, b
 
 			vinHasCoinbase = true
 		} else {
-			utxo := utxos[OutputIdentifier{Hash: rawVin.Txid, Index: rawVin.Vout}]
+			utxo := utxos[types.OutputIdentifier{Hash: rawVin.Txid, Index: rawVin.Vout}]
 			outputIndex := rawVin.Vout
 
-			vin[idx] = Input{
+			vin[idx] = types.Input{
 				OutputHash:  rawVin.Txid,
 				OutputIndex: &outputIndex,
 				InputIndex:  &inputIndex, // TODO: Find out if the order matters
@@ -61,13 +61,13 @@ func (txn *TransactionContainer) init(rawTx *btcjson.TxRawResult, utxos UTXOs, b
 	}
 	txn.Inputs = vin
 
-	vout := make([]Output, len(rawTx.Vout))
+	vout := make([]types.Output, len(rawTx.Vout))
 	sumVoutValues := btcutil.Amount(0)
 
 	for idx, rawVout := range rawTx.Vout {
 		outputValue := utils.ParseSatoshi(rawVout.Value) // !FIXME: Can panic
 		outputIndex := rawVout.N
-		vout[idx] = Output{
+		vout[idx] = types.Output{
 			OutputIndex: &outputIndex,
 			Value:       &outputValue,
 			ScriptHex:   rawVout.ScriptPubKey.Hex,
@@ -90,7 +90,7 @@ func (txn *TransactionContainer) init(rawTx *btcjson.TxRawResult, utxos UTXOs, b
 	}
 	txn.Outputs = vout
 
-	txn.Block = Block{
+	txn.Block = types.Block{
 		Hash:   rawTx.BlockHash,
 		Height: blockHeight,
 		Time:   utils.ParseUnixTimestamp(rawTx.Blocktime),

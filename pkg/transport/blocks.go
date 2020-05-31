@@ -2,12 +2,12 @@ package transport
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 
 	"ledger-sats-stack/pkg/types"
 	"ledger-sats-stack/pkg/utils"
 
 	"github.com/btcsuite/btcd/btcjson"
+	log "github.com/sirupsen/logrus"
 )
 
 // BlockContainer is a wrapper type to define an init method for

@@ -3,6 +3,7 @@ package transport
 import (
 	"errors"
 	"fmt"
+
 	"github.com/btcsuite/btcd/btcjson"
 	log "github.com/sirupsen/logrus"
 )
