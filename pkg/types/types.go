@@ -66,3 +66,8 @@ type Transaction struct {
 	Outputs       []Output        `json:"outputs"`
 	Block         Block           `json:"block"`
 }
+
+type Addresses struct {
+	Truncated    bool          `json:"truncated"`
+	Transactions []Transaction `json:"txs"`
+}

@@ -36,6 +36,9 @@ func GetRouter(wire transport.Wire, db *bolt.DB) *gin.Engine {
 	transactionsRouter.GET(":hash", handlers.GetTransaction(wire))
 	transactionsRouter.GET(":hash/hex", handlers.GetTransactionHex(wire))
 
+	addressesRouter := currencyRouter.Group("/addresses")
+	addressesRouter.GET(":addresses/transactions", handlers.GetAddresses(wire))
+
 	return engine
 }
 
