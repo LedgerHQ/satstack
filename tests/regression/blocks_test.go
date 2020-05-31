@@ -13,14 +13,14 @@ import (
 
 func TestBlocksRegression(t *testing.T) {
 	// Setup phase
-	wire := httpd.GetWire(
+	xrpc := httpd.GetXRPC(
 		os.Getenv("BITCOIND_RPC_HOST"),
 		os.Getenv("BITCOIND_RPC_USER"),
 		os.Getenv("BITCOIND_RPC_PASSWORD"),
 		os.Getenv("BITCOIND_RPC_ENABLE_TLS") == "true",
 	)
 	// Inject Gin router into an HTTP server
-	ts := httptest.NewServer(httpd.GetRouter(wire, nil))
+	ts := httptest.NewServer(httpd.GetRouter(xrpc, nil))
 
 	for _, testCase := range BlocksTestCases {
 		t.Run(testCase, func(t *testing.T) {
@@ -70,6 +70,6 @@ func TestBlocksRegression(t *testing.T) {
 		})
 	}
 	// Teardown phase
-	wire.Shutdown()
+	xrpc.Shutdown()
 	ts.Close()
 }

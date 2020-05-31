@@ -16,11 +16,11 @@ import (
 //
 // Except for the case where the block reference is "current", the response is
 // a list of 1 element.
-func GetBlock(wire transport.Wire) gin.HandlerFunc {
+func GetBlock(xrpc transport.XRPC) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		blockRef := ctx.Param("block")
 
-		block, err := wire.GetBlock(blockRef)
+		block, err := xrpc.GetBlock(blockRef)
 		if err != nil {
 			ctx.JSON(http.StatusNotFound, err)
 			return

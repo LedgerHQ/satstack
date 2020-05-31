@@ -10,18 +10,18 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
-func GetRouter(wire transport.Wire, db *bolt.DB) *gin.Engine {
+func GetRouter(xrpc transport.XRPC, db *bolt.DB) *gin.Engine {
 	engine := gin.Default()
 
 	baseRouter := engine.Group("blockchain/v3")
 	{
-		baseRouter.GET("explorer/_health", handlers.GetHealth(wire))
-		baseRouter.GET("syncToken", handlers.GetSyncToken(wire, db))
-		baseRouter.DELETE("syncToken", handlers.DeleteSyncToken(wire, db))
+		baseRouter.GET("explorer/_health", handlers.GetHealth(xrpc))
+		baseRouter.GET("syncToken", handlers.GetSyncToken(xrpc, db))
+		baseRouter.DELETE("syncToken", handlers.DeleteSyncToken(xrpc, db))
 	}
 
 	var currency string
-	info, _ := wire.GetBlockChainInfo()
+	info, _ := xrpc.GetBlockChainInfo()
 	switch info.Chain {
 	case "regtest", "test":
 		currency = "btc_testnet"
@@ -30,30 +30,30 @@ func GetRouter(wire transport.Wire, db *bolt.DB) *gin.Engine {
 	}
 	currencyRouter := baseRouter.Group(currency)
 	{
-		currencyRouter.GET("fees", handlers.GetFees(wire))
+		currencyRouter.GET("fees", handlers.GetFees(xrpc))
 	}
 
 	blocksRouter := currencyRouter.Group("/blocks")
 	{
-		blocksRouter.GET(":block", handlers.GetBlock(wire))
+		blocksRouter.GET(":block", handlers.GetBlock(xrpc))
 	}
 
 	transactionsRouter := currencyRouter.Group("/transactions")
 	{
-		transactionsRouter.GET(":hash", handlers.GetTransaction(wire))
-		transactionsRouter.GET(":hash/hex", handlers.GetTransactionHex(wire))
+		transactionsRouter.GET(":hash", handlers.GetTransaction(xrpc))
+		transactionsRouter.GET(":hash/hex", handlers.GetTransactionHex(xrpc))
 	}
 
 	addressesRouter := currencyRouter.Group("/addresses")
 	{
-		addressesRouter.GET(":addresses/transactions", handlers.GetAddresses(wire))
+		addressesRouter.GET(":addresses/transactions", handlers.GetAddresses(xrpc))
 	}
 
 	return engine
 }
 
-// GetWire initializes a Wire stuct that embeds an RPC client.
-func GetWire(host string, user string, pass string, tls bool) transport.Wire {
+// GetXRPC initializes an XRPC stuct that embeds a btcd RPC client.
+func GetXRPC(host string, user string, pass string, tls bool) transport.XRPC {
 	connCfg := &rpcclient.ConnConfig{
 		Host:         host,
 		User:         user,
@@ -88,5 +88,5 @@ func GetWire(host string, user string, pass string, tls bool) transport.Wire {
 		"bestblockhash": info.BestBlockHash,
 	}).Info("RPC connection established.")
 
-	return transport.Wire{Client: client}
+	return transport.XRPC{Client: client}
 }

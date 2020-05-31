@@ -8,12 +8,12 @@ import (
 
 const listTransactionsBatchSize = 1000
 
-func (w Wire) GetAddresses(addresses []string) (types.Addresses, error) {
-	txIDs := w.getWalletTransactions(addresses)
+func (x XRPC) GetAddresses(addresses []string) (types.Addresses, error) {
+	txIDs := x.getWalletTransactions(addresses)
 
 	var txs []types.Transaction
 	for _, txID := range txIDs {
-		tx, err := w.GetTransaction(txID)
+		tx, err := x.GetTransaction(txID)
 		if err != nil {
 			log.Error(err)
 			continue
@@ -27,12 +27,12 @@ func (w Wire) GetAddresses(addresses []string) (types.Addresses, error) {
 	}, nil
 }
 
-func (w Wire) getWalletTransactions(addresses []string) []string {
+func (x XRPC) getWalletTransactions(addresses []string) []string {
 	var result []string
 
 	offset := 0
 	for {
-		partialTxs, err := w.ListTransactionsCountFrom("*", listTransactionsBatchSize, offset)
+		partialTxs, err := x.ListTransactionsCountFrom("*", listTransactionsBatchSize, offset)
 		if err != nil {
 			log.Error(err)
 		}

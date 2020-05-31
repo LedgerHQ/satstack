@@ -18,13 +18,13 @@ func main() {
 		SpacePadding:     45,
 	})
 
-	wire := httpd.GetWire(
+	xrpc := httpd.GetXRPC(
 		os.Getenv("BITCOIND_RPC_HOST"),
 		os.Getenv("BITCOIND_RPC_USER"),
 		os.Getenv("BITCOIND_RPC_PASSWORD"),
 		os.Getenv("BITCOIND_RPC_ENABLE_TLS") == "true",
 	)
-	defer wire.Shutdown()
+	defer xrpc.Shutdown()
 
 	db, err := bolt.Open("sats.db", 0666, nil)
 	if err != nil {
@@ -32,6 +32,6 @@ func main() {
 	}
 	defer db.Close()
 
-	engine := httpd.GetRouter(wire, db)
+	engine := httpd.GetRouter(xrpc, db)
 	engine.Run(":20000")
 }

@@ -28,13 +28,13 @@ func (block *BlockContainer) init(rawBlock *btcjson.GetBlockVerboseResult) {
 }
 
 // GetBlock is a service method to get a Block by blockRef
-func (w Wire) GetBlock(blockRef string) (*BlockContainer, error) {
-	rawBlockHash, err := w.getBlockHashByReference(blockRef)
+func (x XRPC) GetBlock(blockRef string) (*BlockContainer, error) {
+	rawBlockHash, err := x.getBlockHashByReference(blockRef)
 	if err != nil {
 		return nil, err
 	}
 
-	block, err := w.getBlockByHash(rawBlockHash)
+	block, err := x.getBlockByHash(rawBlockHash)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (w Wire) GetBlock(blockRef string) (*BlockContainer, error) {
 	return block, nil
 }
 
-func (w Wire) GetBlockHeightByHash(hash string) int64 {
+func (x XRPC) GetBlockHeightByHash(hash string) int64 {
 	chainHash, err := utils.ParseChainHash(hash)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -52,7 +52,7 @@ func (w Wire) GetBlockHeightByHash(hash string) int64 {
 		return -1
 	}
 
-	rawBlock, err := w.GetBlockVerbose(chainHash)
+	rawBlock, err := x.GetBlockVerbose(chainHash)
 
 	if err != nil {
 		log.WithFields(log.Fields{

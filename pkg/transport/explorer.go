@@ -13,8 +13,8 @@ import (
 
 const fallbackFee = btcutil.Amount(1)
 
-func (w Wire) GetHealth() error {
-	_, err := w.GetBlockChainInfo()
+func (x XRPC) GetHealth() error {
+	_, err := x.GetBlockChainInfo()
 	if err != nil {
 		return err
 	}
@@ -24,10 +24,10 @@ func (w Wire) GetHealth() error {
 	return nil
 }
 
-func (w Wire) GetSmartFeeEstimates(targets []int64, mode string) map[string]interface{} {
+func (x XRPC) GetSmartFeeEstimates(targets []int64, mode string) map[string]interface{} {
 	result := make(map[string]interface{})
 	for _, target := range targets {
-		fee := w.getFeeForTarget(target, mode)
+		fee := x.getFeeForTarget(target, mode)
 		result[strconv.FormatInt(target, 10)] = fee
 	}
 
@@ -35,8 +35,8 @@ func (w Wire) GetSmartFeeEstimates(targets []int64, mode string) map[string]inte
 	return result
 }
 
-func (w Wire) getFeeForTarget(target int64, mode string) btcutil.Amount {
-	fee, err := w.EstimateSmartFee(target, getMode(mode))
+func (x XRPC) getFeeForTarget(target int64, mode string) btcutil.Amount {
+	fee, err := x.EstimateSmartFee(target, getMode(mode))
 
 	// If failed to get smart fee estimate, fallback to fallbackFee.
 	// Example: if the full-node is a regtest chain, there are normally

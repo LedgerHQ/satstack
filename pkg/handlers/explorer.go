@@ -14,9 +14,9 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
-func GetHealth(wire transport.Wire) gin.HandlerFunc {
+func GetHealth(xrpc transport.XRPC) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		err := wire.GetHealth()
+		err := xrpc.GetHealth()
 		if err != nil {
 			ctx.JSON(http.StatusServiceUnavailable, err)
 			return
@@ -26,7 +26,7 @@ func GetHealth(wire transport.Wire) gin.HandlerFunc {
 	}
 }
 
-func GetFees(wire transport.Wire) gin.HandlerFunc {
+func GetFees(xrpc transport.XRPC) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		blockCounts := ctx.QueryArray("block_count")
 		mode := strings.ToUpper(ctx.Param("mode"))
@@ -45,12 +45,12 @@ func GetFees(wire transport.Wire) gin.HandlerFunc {
 			blockCountsIntegers = append(blockCountsIntegers, 2, 3, 6)
 		}
 
-		fees := wire.GetSmartFeeEstimates(blockCountsIntegers, mode)
+		fees := xrpc.GetSmartFeeEstimates(blockCountsIntegers, mode)
 		ctx.JSON(http.StatusOK, fees)
 	}
 }
 
-func GetSyncToken(wire transport.Wire, db *bolt.DB) gin.HandlerFunc {
+func GetSyncToken(xrpc transport.XRPC, db *bolt.DB) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		uuid, err := uuid2.NewRandom()
 		if err != nil {
@@ -76,7 +76,7 @@ func GetSyncToken(wire transport.Wire, db *bolt.DB) gin.HandlerFunc {
 	}
 }
 
-func DeleteSyncToken(wire transport.Wire, db *bolt.DB) gin.HandlerFunc {
+func DeleteSyncToken(xrpc transport.XRPC, db *bolt.DB) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		token := ctx.GetHeader("X-LedgerWallet-SyncToken")
 

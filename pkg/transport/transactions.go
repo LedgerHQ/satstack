@@ -112,18 +112,18 @@ func (txn *TransactionContainer) init(rawTx *btcjson.TxRawResult, utxos types.UT
 
 // GetTransaction is a service function to query transaction details
 // by hash parameter.
-func (w Wire) GetTransaction(txHash string) (*TransactionContainer, error) {
-	txRaw, err := w.getTransactionByHash(txHash)
+func (x XRPC) GetTransaction(txHash string) (*TransactionContainer, error) {
+	txRaw, err := x.getTransactionByHash(txHash)
 	if err != nil {
 		return nil, err
 	}
 
-	utxos, err := w.buildUTXOs(txRaw.Vin)
+	utxos, err := x.buildUTXOs(txRaw.Vin)
 	if err != nil {
 		return nil, err
 	}
 
-	blockHeight := w.GetBlockHeightByHash(txRaw.BlockHash)
+	blockHeight := x.GetBlockHeightByHash(txRaw.BlockHash)
 
 	transaction := new(TransactionContainer)
 	transaction.init(txRaw, utxos, blockHeight)
@@ -132,8 +132,8 @@ func (w Wire) GetTransaction(txHash string) (*TransactionContainer, error) {
 
 // GetTransactionHexByHash is a service function to get hex encoded raw
 // transaction by hash.
-func (w Wire) GetTransactionHexByHash(txHash string) (string, error) {
-	txRaw, err := w.getTransactionByHash(txHash)
+func (x XRPC) GetTransactionHexByHash(txHash string) (string, error) {
+	txRaw, err := x.getTransactionByHash(txHash)
 	if err != nil {
 		return "", err
 	}

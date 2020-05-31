@@ -14,13 +14,18 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Wire is a copper wire
-type Wire struct {
+// XRPC stands for eXtended RPC. It extends the btcd RPC client.
+//
+// TODO: Use a separate namespace for the Client, in order to separate
+//       the btcd layer from this project.
+//
+// Not an endorsement for XRP Classic (XRP) / Ripple (XRP).
+type XRPC struct {
 	*rpcclient.Client
 }
 
-func (w Wire) getBlockByHash(hash *chainhash.Hash) (*BlockContainer, error) {
-	rawBlock, err := w.GetBlockVerbose(hash)
+func (x XRPC) getBlockByHash(hash *chainhash.Hash) (*BlockContainer, error) {
+	rawBlock, err := x.GetBlockVerbose(hash)
 	if err != nil {
 		return nil, err
 	}
@@ -30,10 +35,10 @@ func (w Wire) getBlockByHash(hash *chainhash.Hash) (*BlockContainer, error) {
 	return block, nil
 }
 
-func (w Wire) getBlockHashByReference(blockRef string) (*chainhash.Hash, error) {
+func (x XRPC) getBlockHashByReference(blockRef string) (*chainhash.Hash, error) {
 	switch {
 	case blockRef == "current":
-		return w.GetBestBlockHash()
+		return x.GetBestBlockHash()
 
 	case strings.HasPrefix(blockRef, "0x"), len(blockRef) == 64:
 		// 256-bit hex string with or without 0x prefix
@@ -45,7 +50,7 @@ func (w Wire) getBlockHashByReference(blockRef string) (*chainhash.Hash, error) 
 
 			switch err {
 			case nil:
-				return w.GetBlockHash(blockHeight)
+				return x.GetBlockHash(blockHeight)
 
 			default:
 				return nil, fmt.Errorf("Invalid block '%s'", blockRef)
@@ -55,7 +60,7 @@ func (w Wire) getBlockHashByReference(blockRef string) (*chainhash.Hash, error) 
 	}
 }
 
-func (w Wire) buildUTXOs(vin []btcjson.Vin) (types.UTXOs, error) {
+func (x XRPC) buildUTXOs(vin []btcjson.Vin) (types.UTXOs, error) {
 	utxos := make(types.UTXOs)
 	utxoResults := make(map[types.OutputIdentifier]rpcclient.FutureGetRawTransactionVerboseResult)
 
@@ -69,7 +74,7 @@ func (w Wire) buildUTXOs(vin []btcjson.Vin) (types.UTXOs, error) {
 			return nil, err
 		}
 
-		utxoResults[types.OutputIdentifier{Hash: inputRaw.Txid, Index: inputRaw.Vout}] = w.GetRawTransactionVerboseAsync(chainHash)
+		utxoResults[types.OutputIdentifier{Hash: inputRaw.Txid, Index: inputRaw.Vout}] = x.GetRawTransactionVerboseAsync(chainHash)
 	}
 
 	for utxoID, utxoResult := range utxoResults {
@@ -121,13 +126,13 @@ func parseUTXO(tx *btcjson.TxRawResult, outputIndex uint32) (*types.UTXOData, er
 
 // getTransactionByHash gets the transaction with the given hash.
 // Supports transaction hashes with or without 0x prefix.
-func (w Wire) getTransactionByHash(txHash string) (*btcjson.TxRawResult, error) {
+func (x XRPC) getTransactionByHash(txHash string) (*btcjson.TxRawResult, error) {
 	chainHash, err := utils.ParseChainHash(txHash)
 	if err != nil {
 		return nil, err
 	}
 
-	txRaw, err := w.GetRawTransactionVerbose(chainHash)
+	txRaw, err := x.GetRawTransactionVerbose(chainHash)
 
 	if err != nil {
 		return nil, err

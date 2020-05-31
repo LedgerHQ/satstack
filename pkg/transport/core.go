@@ -10,15 +10,15 @@ import (
 
 // GetCanonicalDescriptor returns the descriptor in canonical form, along with
 // its computed checksum.
-func (w Wire) GetCanonicalDescriptor(descriptor string) (*string, error) {
-	info, err := w.GetDescriptorInfo(descriptor)
+func (x XRPC) GetCanonicalDescriptor(descriptor string) (*string, error) {
+	info, err := x.GetDescriptorInfo(descriptor)
 	if err != nil {
 		return nil, err
 	}
 	return &info.Descriptor, nil
 }
 
-func (w Wire) getDescriptorsFromXpub(xpub string) ([]string, error) {
+func (x XRPC) getDescriptorsFromXpub(xpub string) ([]string, error) {
 	var ret []string
 	for _, desc := range []string{
 		fmt.Sprintf("pkh(%s/0/*)", xpub),
@@ -26,7 +26,7 @@ func (w Wire) getDescriptorsFromXpub(xpub string) ([]string, error) {
 		fmt.Sprintf("wpkh(%s/0/*)", xpub),
 		fmt.Sprintf("wpkh(%s/1/*)", xpub),
 	} {
-		canonicalDescriptor, err := w.GetCanonicalDescriptor(desc)
+		canonicalDescriptor, err := x.GetCanonicalDescriptor(desc)
 		if err != nil {
 			return nil, err
 		}
@@ -35,10 +35,10 @@ func (w Wire) getDescriptorsFromXpub(xpub string) ([]string, error) {
 	return ret, nil
 }
 
-func (w Wire) ImportXpubs(xpubs []string) error {
+func (x XRPC) ImportXpubs(xpubs []string) error {
 	var allDescriptors []string
 	for _, xpub := range xpubs {
-		xpubDescriptors, err := w.getDescriptorsFromXpub(xpub)
+		xpubDescriptors, err := x.getDescriptorsFromXpub(xpub)
 		if err != nil {
 			return err
 		}
@@ -65,7 +65,7 @@ func (w Wire) ImportXpubs(xpubs []string) error {
 		return err
 	}
 
-	results, err := w.ImportMulti(requests, &btcjson.ImportMultiOptions{Rescan: true})
+	results, err := x.ImportMulti(requests, &btcjson.ImportMultiOptions{Rescan: true})
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,

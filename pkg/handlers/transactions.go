@@ -10,11 +10,11 @@ import (
 
 // GetTransaction is a gin handler (factory) to query transaction details
 // by hash parameter.
-func GetTransaction(wire transport.Wire) gin.HandlerFunc {
+func GetTransaction(xrpc transport.XRPC) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		txHash := ctx.Param("hash")
 
-		transaction, err := wire.GetTransaction(txHash)
+		transaction, err := xrpc.GetTransaction(txHash)
 		if err != nil {
 			ctx.JSON(http.StatusNotFound, err)
 			return
@@ -26,11 +26,11 @@ func GetTransaction(wire transport.Wire) gin.HandlerFunc {
 
 // GetTransactionHex is a gin handler (factory) to query transaction hex
 // by hash parameter.
-func GetTransactionHex(wire transport.Wire) gin.HandlerFunc {
+func GetTransactionHex(xrpc transport.XRPC) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		txHash := ctx.Param("hash")
 
-		txHex, err := wire.GetTransactionHexByHash(txHash)
+		txHex, err := xrpc.GetTransactionHexByHash(txHash)
 		if err != nil {
 			ctx.JSON(http.StatusNotFound, err)
 			return
