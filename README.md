@@ -2,7 +2,7 @@
   <a href="ledger.com"><img width="100" src="https://i.pinimg.com/originals/12/5c/e0/125ce0baff3271761ca61843eccf7985.jpg" alt="ledger Sats Stack logo" /></a>
 </h1>
 
-<h3 align="center">Lightweight bridge to connect Ledger Live with your personal Bitcoin full-node.</h3>
+<h4 align="center">Lightweight bridge to connect Ledger Live with your personal Bitcoin full node.</h4>
 
 <p align="center">
   <img src="https://github.com/onyb/ledger-sats-stack/workflows/Build/badge.svg" />
