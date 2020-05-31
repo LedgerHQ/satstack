@@ -1,22 +1,24 @@
 package httpd
 
 import (
-	bolt "go.etcd.io/bbolt"
 	"ledger-sats-stack/pkg/handlers"
 	"ledger-sats-stack/pkg/transport"
 
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
+	bolt "go.etcd.io/bbolt"
 )
 
 func GetRouter(wire transport.Wire, db *bolt.DB) *gin.Engine {
 	engine := gin.Default()
 
 	baseRouter := engine.Group("blockchain/v3")
-	baseRouter.GET("explorer/_health", handlers.GetHealth(wire))
-	baseRouter.GET("syncToken", handlers.GetSyncToken(wire, db))
-	baseRouter.DELETE("syncToken", handlers.DeleteSyncToken(wire, db))
+	{
+		baseRouter.GET("explorer/_health", handlers.GetHealth(wire))
+		baseRouter.GET("syncToken", handlers.GetSyncToken(wire, db))
+		baseRouter.DELETE("syncToken", handlers.DeleteSyncToken(wire, db))
+	}
 
 	var currency string
 	info, _ := wire.GetBlockChainInfo()
@@ -27,17 +29,25 @@ func GetRouter(wire transport.Wire, db *bolt.DB) *gin.Engine {
 		currency = "btc"
 	}
 	currencyRouter := baseRouter.Group(currency)
-	currencyRouter.GET("fees", handlers.GetFees(wire))
+	{
+		currencyRouter.GET("fees", handlers.GetFees(wire))
+	}
 
 	blocksRouter := currencyRouter.Group("/blocks")
-	blocksRouter.GET(":block", handlers.GetBlock(wire))
+	{
+		blocksRouter.GET(":block", handlers.GetBlock(wire))
+	}
 
 	transactionsRouter := currencyRouter.Group("/transactions")
-	transactionsRouter.GET(":hash", handlers.GetTransaction(wire))
-	transactionsRouter.GET(":hash/hex", handlers.GetTransactionHex(wire))
+	{
+		transactionsRouter.GET(":hash", handlers.GetTransaction(wire))
+		transactionsRouter.GET(":hash/hex", handlers.GetTransactionHex(wire))
+	}
 
 	addressesRouter := currencyRouter.Group("/addresses")
-	addressesRouter.GET(":addresses/transactions", handlers.GetAddresses(wire))
+	{
+		addressesRouter.GET(":addresses/transactions", handlers.GetAddresses(wire))
+	}
 
 	return engine
 }
