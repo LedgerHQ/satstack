@@ -4,9 +4,17 @@ import (
 	"errors"
 	"fmt"
 
+	"ledger-sats-stack/pkg/types"
+
 	"github.com/btcsuite/btcd/btcjson"
 	log "github.com/sirupsen/logrus"
 )
+
+const masterKeyFingerprint = "d34db33f"
+
+const legacyDerivationPath = "44'/60'"
+const segwitDerivationPath = "49'/1'"
+const nativeSegwitDerivationPath = "84'/1'"
 
 // GetCanonicalDescriptor returns the descriptor in canonical form, along with
 // its computed checksum.
@@ -18,31 +26,59 @@ func (x XRPC) GetCanonicalDescriptor(descriptor string) (*string, error) {
 	return &info.Descriptor, nil
 }
 
-func (x XRPC) getDescriptorsFromXpub(xpub string) ([]string, error) {
+func (x XRPC) getAccountDescriptors(account types.Account) ([]string, error) {
 	var ret []string
-	for _, desc := range []string{
-		fmt.Sprintf("pkh(%s/0/*)", xpub),
-		fmt.Sprintf("pkh(%s/1/*)", xpub),
-		fmt.Sprintf("wpkh(%s/0/*)", xpub),
-		fmt.Sprintf("wpkh(%s/1/*)", xpub),
-	} {
+
+	rawDescriptors := func() []string {
+		switch account.Type {
+		case "legacy":
+			return []string{
+				fmt.Sprintf("sh(pkh([%s/%s/%d']%s/0/*))",
+					masterKeyFingerprint, legacyDerivationPath, account.Index, account.XPub),
+				fmt.Sprintf("sh(pkh([%s/%s/%d']%s/1/*))",
+					masterKeyFingerprint, legacyDerivationPath, account.Index, account.XPub),
+			}
+
+		case "segwit":
+			return []string{
+				fmt.Sprintf("sh(wpkh([%s/%s/%d']%s/0/*))",
+					masterKeyFingerprint, segwitDerivationPath, account.Index, account.XPub),
+				fmt.Sprintf("sh(wpkh([%s/%s/%d']%s/1/*))",
+					masterKeyFingerprint, segwitDerivationPath, account.Index, account.XPub),
+			}
+
+		case "native_segwit":
+			return []string{
+				fmt.Sprintf("sh(wpkh([%s/%s/%d']%s/0/*))",
+					masterKeyFingerprint, nativeSegwitDerivationPath, account.Index, account.XPub),
+				fmt.Sprintf("sh(wpkh([%s/%s/%d']%s/1/*))",
+					masterKeyFingerprint, nativeSegwitDerivationPath, account.Index, account.XPub),
+			}
+
+		default:
+			return []string{}
+		}
+	}()
+
+	for _, desc := range rawDescriptors {
 		canonicalDescriptor, err := x.GetCanonicalDescriptor(desc)
 		if err != nil {
 			return nil, err
 		}
 		ret = append(ret, *canonicalDescriptor)
 	}
+
 	return ret, nil
 }
 
-func (x XRPC) ImportXpubs(xpubs []string) error {
+func (x XRPC) ImportAccounts(accounts []types.Account) error {
 	var allDescriptors []string
-	for _, xpub := range xpubs {
-		xpubDescriptors, err := x.getDescriptorsFromXpub(xpub)
+	for _, account := range accounts {
+		accountDescriptors, err := x.getAccountDescriptors(account)
 		if err != nil {
 			return err
 		}
-		allDescriptors = append(allDescriptors, xpubDescriptors...)
+		allDescriptors = append(allDescriptors, accountDescriptors...)
 	}
 
 	var requests []btcjson.ImportMultiRequest
