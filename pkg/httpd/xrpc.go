@@ -2,60 +2,14 @@ package httpd
 
 import (
 	"fmt"
-	"ledger-sats-stack/pkg/handlers"
 	"ledger-sats-stack/pkg/transport"
 	"ledger-sats-stack/pkg/utils"
 	"time"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
-	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
-	bolt "go.etcd.io/bbolt"
 )
-
-func GetRouter(xrpc transport.XRPC, db *bolt.DB) *gin.Engine {
-	engine := gin.Default()
-
-	baseRouter := engine.Group("blockchain/v3")
-	{
-		baseRouter.GET("explorer/_health", handlers.GetHealth(xrpc))
-		baseRouter.GET("syncToken", handlers.GetSyncToken(xrpc, db))
-		baseRouter.DELETE("syncToken", handlers.DeleteSyncToken(xrpc, db))
-	}
-
-	var currency string
-	info, _ := xrpc.GetBlockChainInfo()
-	switch info.Chain {
-	case "regtest", "test":
-		currency = "btc_testnet"
-	case "main":
-		currency = "btc"
-	}
-	currencyRouter := baseRouter.Group(currency)
-	{
-		currencyRouter.GET("fees", handlers.GetFees(xrpc))
-	}
-
-	blocksRouter := currencyRouter.Group("/blocks")
-	{
-		blocksRouter.GET(":block", handlers.GetBlock(xrpc))
-	}
-
-	transactionsRouter := currencyRouter.Group("/transactions")
-	{
-		transactionsRouter.GET(":hash", handlers.GetTransaction(xrpc))
-		transactionsRouter.GET(":hash/hex", handlers.GetTransactionHex(xrpc))
-		transactionsRouter.POST("send", handlers.SendTransaction(xrpc))
-	}
-
-	addressesRouter := currencyRouter.Group("/addresses")
-	{
-		addressesRouter.GET(":addresses/transactions", handlers.GetAddresses(xrpc))
-	}
-
-	return engine
-}
 
 // GetXRPC initializes an XRPC stuct that embeds a btcd RPC client.
 func GetXRPC(host string, user string, pass string, tls bool) transport.XRPC {
@@ -93,8 +47,6 @@ func GetXRPC(host string, user string, pass string, tls bool) transport.XRPC {
 		"pruned":  info.Pruned,
 		"txindex": txIndex,
 	}).Info("RPC connection established")
-
-	waitForNodeSync(client)
 
 	return transport.XRPC{
 		Client:  client,
@@ -140,9 +92,9 @@ func getBlockOneTransaction(client *rpcclient.Client) *chainhash.Hash {
 	return coinbaseTxHash
 }
 
-func waitForNodeSync(client *rpcclient.Client) {
+func WaitForNodeSync(xrpc transport.XRPC) {
 	for {
-		info, err := client.GetBlockChainInfo()
+		info, err := xrpc.Client.GetBlockChainInfo()
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
