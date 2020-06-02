@@ -89,7 +89,7 @@ func (x XRPC) ImportAccounts(accounts []types.Account) error {
 			Timestamp:  btcjson.Timestamp{Value: 0},
 			WatchOnly:  btcjson.Bool(true),
 			KeyPool:    btcjson.Bool(false),
-			Internal:   btcjson.Bool(true),
+			Internal:   btcjson.Bool(false),
 		})
 	}
 
