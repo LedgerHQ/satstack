@@ -1,9 +1,13 @@
 package httpd
 
 import (
+	"fmt"
 	"ledger-sats-stack/pkg/handlers"
 	"ledger-sats-stack/pkg/transport"
+	"ledger-sats-stack/pkg/utils"
+	"time"
 
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -70,24 +74,93 @@ func GetXRPC(host string, user string, pass string, tls bool) transport.XRPC {
 			"host": host,
 			"user": user,
 			"TLS":  tls,
-		}).Fatal("Failed to initialize RPC client.")
+		}).Fatal("Failed to initialize RPC client")
 	}
 
 	info, err := client.GetBlockChainInfo()
-
 	if info == nil || err != nil {
 		log.WithFields(log.Fields{
 			"host": host,
 			"user": user,
 			"TLS":  tls,
-		}).Fatal("Failed to connect to RPC server.")
+		}).Fatal("Failed to connect to RPC server")
 	}
 
-	log.WithFields(log.Fields{
-		"chain":         info.Chain,
-		"blocks":        info.Blocks,
-		"bestblockhash": info.BestBlockHash,
-	}).Info("RPC connection established.")
+	txIndex := isTxIndexEnabled(client)
 
-	return transport.XRPC{Client: client}
+	log.WithFields(log.Fields{
+		"chain":   info.Chain,
+		"pruned":  info.Pruned,
+		"txindex": txIndex,
+	}).Info("RPC connection established")
+
+	waitForNodeSync(client)
+
+	return transport.XRPC{
+		Client:  client,
+		Pruned:  info.Pruned,
+		Chain:   info.Chain,
+		TxIndex: txIndex,
+	}
+}
+
+func isTxIndexEnabled(client *rpcclient.Client) bool {
+	tx := getBlockOneTransaction(client)
+
+	if _, err := client.GetRawTransaction(tx); err != nil {
+		return false
+	}
+
+	return true
+}
+
+func getBlockOneTransaction(client *rpcclient.Client) *chainhash.Hash {
+	// Genesis coinbase is not part of transaction index, so use block 1
+	blockHash, err := client.GetBlockHash(1)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Fatal("Failed to get block 1 hash")
+	}
+
+	block, err := client.GetBlockVerbose(blockHash)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Fatal("Failed to get block 1")
+	}
+
+	coinbaseTxHash, err := utils.ParseChainHash(block.Tx[0])
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Fatal("Failed to get coinbase tx in block 1")
+	}
+
+	return coinbaseTxHash
+}
+
+func waitForNodeSync(client *rpcclient.Client) {
+	for {
+		info, err := client.GetBlockChainInfo()
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).Fatal("Failed to connect to RPC server")
+		}
+
+		if info.Blocks == info.Headers {
+			log.WithFields(log.Fields{
+				"blocks":        info.Blocks,
+				"bestblockhash": info.BestBlockHash,
+			}).Info("Sychronization completed")
+			return
+		}
+
+		log.WithFields(log.Fields{
+			"progress": fmt.Sprintf("%.2f %%", info.VerificationProgress*100),
+		}).Info("Sychronizing")
+
+		time.Sleep(2 * time.Second)
+	}
 }
