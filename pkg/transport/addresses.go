@@ -32,7 +32,7 @@ func (x XRPC) getWalletTransactions(addresses []string) []string {
 
 	offset := 0
 	for {
-		partialTxs, err := x.ListTransactionsCountFrom("*", listTransactionsBatchSize, offset)
+		partialTxs, err := x.ListTransactionsCountFromWatchOnly("*", listTransactionsBatchSize, offset)
 		if err != nil {
 			log.Error(err)
 		}

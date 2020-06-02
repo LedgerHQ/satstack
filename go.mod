@@ -21,4 +21,4 @@ require (
 )
 
 // Uncomment the line below to enable experimental JSON-RPC features.
-replace github.com/btcsuite/btcd v0.20.1-beta.0.20200414114020-8b54b0b96418 => github.com/onyb/btcd v0.20.1-beta.0.20200525154529-e30a38b3b08d
+replace github.com/btcsuite/btcd v0.20.1-beta.0.20200414114020-8b54b0b96418 => github.com/onyb/btcd v0.20.1-beta.0.20200602052231-7916ea795749
