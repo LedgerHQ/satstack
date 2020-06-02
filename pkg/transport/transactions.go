@@ -164,7 +164,7 @@ func (x XRPC) SendTransaction(tx string) (*string, error) {
 		return nil, err
 	}
 
-	txHash, err := x.SendRawTransaction(&msgTx, true)
+	chainHash, err := x.SendRawTransaction(&msgTx, true)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"hex":   tx,
@@ -173,5 +173,11 @@ func (x XRPC) SendTransaction(tx string) (*string, error) {
 		return nil, err
 	}
 
-	return btcjson.String(txHash.String()), nil
+	txHash := chainHash.String()
+	log.WithFields(log.Fields{
+		"hex":  tx,
+		"hash": txHash,
+	}).Info("sendrawtransaction RPC successful")
+
+	return btcjson.String(txHash), nil
 }
