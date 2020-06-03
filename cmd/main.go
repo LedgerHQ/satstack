@@ -36,6 +36,8 @@ func main() {
 	}
 	defer db.Close()
 
+	httpd.WaitForNodeSync(xrpc)
+
 	accounts := loadAccountsConfig()
 	_ = xrpc.ImportAccounts(accounts)
 
