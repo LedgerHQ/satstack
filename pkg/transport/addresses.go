@@ -36,17 +36,43 @@ func (x XRPC) getWalletTransactions(addresses []string) []string {
 		if err != nil {
 			log.Error(err)
 		}
+
 		if len(partialTxs) == 0 {
+			// no more transactions
 			break
 		}
 
 		for _, tx := range partialTxs {
+			if tx.Category == "send" {
+				tx2, err := x.GetTransaction(tx.TxID)
+				if err != nil {
+					log.Error(err)
+				}
+
+				for _, inputAddress := range getTransactionInputAddresses(tx2.Transaction) {
+					if contains(addresses, inputAddress) && !contains(result, tx.TxID) {
+						result = append(result, tx.TxID)
+						break
+					}
+				}
+			}
+
 			if contains(addresses, tx.Address) && !contains(result, tx.TxID) {
 				result = append(result, tx.TxID)
 			}
 		}
 
 		offset += listTransactionsBatchSize
+	}
+
+	return result
+}
+
+func getTransactionInputAddresses(tx types.Transaction) []string {
+	var result []string
+
+	for _, txInput := range tx.Inputs {
+		result = append(result, txInput.Address)
 	}
 
 	return result
