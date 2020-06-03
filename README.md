@@ -16,6 +16,7 @@
 
 - [Background](#background)
 - [Architecture](#architecture)
+- [Requirements](#requirements)
 - [Usage](#usage)
 - [Contribute](#contribute)
 
@@ -35,6 +36,42 @@ Ledger Sats Stack is a standalone Go application, that acts as a bridge between 
 <p align="center">
   <img src="/docs/architecture.png" width="550"/>
 </p>
+
+## Requirements
+
+- Bitcoin Core 0.18.0+
+  * Must have RPC enabled. Make sure you have this in `bitcoin.conf`.
+    ```
+    server=1
+    rpcuser=<user>
+    rpcpassword=<password>
+    ```
+  * Must have `txindex` enabled. Make sure you have this in `bitcoin.conf`.
+    ```
+    txindex=1
+    ```
+    
+    Will be optional after [**`#15`**](https://github.com/onyb/ledger-sats-stack/issues/15).
+- Ledger Live \<insert version\>
+
+## Usage
+
+First make sure `bitcoind` is running, then launch the application. It's okay if the node is not synced yet.
+
+```sh
+$ git clone https://github.com/onyb/ledger-sats-stack
+$ cd ledger-sats-stack
+$ BITCOIND_RPC_HOST=localhost:8332 BITCOIND_RPC_USER=<user> BITCOIND_RPC_PASSWORD=<password> make dev
+```
+
+Finally, launch Ledger Live Desktop:
+
+```sh
+$ git clone https://github.com/ledgerhq/ledger-live-desktop
+$ cd ledger-live-desktop
+$ yarn
+$ EXPERIMENTAL_EXPLORERS=1 EXPLORER=http://0.0.0.0:20000 yarn start
+```
 
 ## Contribute
 
