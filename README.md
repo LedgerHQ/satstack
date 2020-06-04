@@ -85,7 +85,7 @@ $ bitcoind -datadir=~/.bitcoin
 
 It's not important to have the node completely synced before proceeding to the next step.
 
-#### Launch Sats Stack
+##### Launch Sats Stack
 
 ```sh
 $ git clone https://github.com/onyb/ledger-sats-stack
@@ -95,7 +95,7 @@ $ BITCOIND_RPC_HOST=localhost:8332 BITCOIND_RPC_USER=<user> BITCOIND_RPC_PASSWOR
 
 **Note:** The RPC port is `18332` for `test` chain.
 
-#### Launch Ledger Live Desktop
+##### Launch Ledger Live Desktop
 
 ```sh
 $ git clone https://github.com/ledgerhq/ledger-live-desktop
