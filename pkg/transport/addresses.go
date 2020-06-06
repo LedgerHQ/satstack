@@ -2,6 +2,7 @@ package transport
 
 import (
 	"ledger-sats-stack/pkg/types"
+	"ledger-sats-stack/pkg/utils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -50,14 +51,14 @@ func (x XRPC) getWalletTransactions(addresses []string) []string {
 				}
 
 				for _, inputAddress := range getTransactionInputAddresses(tx2.Transaction) {
-					if contains(addresses, inputAddress) && !contains(result, tx.TxID) {
+					if utils.Contains(addresses, inputAddress) && !utils.Contains(result, tx.TxID) {
 						result = append(result, tx.TxID)
 						break
 					}
 				}
 			}
 
-			if contains(addresses, tx.Address) && !contains(result, tx.TxID) {
+			if utils.Contains(addresses, tx.Address) && !utils.Contains(result, tx.TxID) {
 				result = append(result, tx.TxID)
 			}
 		}
@@ -76,13 +77,4 @@ func getTransactionInputAddresses(tx types.Transaction) []string {
 	}
 
 	return result
-}
-
-func contains(s []string, e string) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
 }

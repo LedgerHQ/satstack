@@ -29,3 +29,14 @@ func ParseSatoshi(value float64) btcutil.Amount {
 func ParseChainHash(hash string) (*chainhash.Hash, error) {
 	return chainhash.NewHashFromStr(strings.TrimLeft(hash, "0x"))
 }
+
+// Contains is a helper function to check if a string
+// exists in a slice of strings.
+func Contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
