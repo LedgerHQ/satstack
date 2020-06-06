@@ -124,5 +124,7 @@ func getCurrencyFromChain(chain string) string {
 		return "btc_testnet"
 	case "main":
 		return "btc"
+	default:
+		return "btc"
 	}
 }
