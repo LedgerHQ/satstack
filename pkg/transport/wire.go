@@ -22,9 +22,10 @@ import (
 // Not an endorsement for XRP Classic (XRP) / Ripple (XRP).
 type XRPC struct {
 	*rpcclient.Client
-	Chain   string
-	Pruned  bool
-	TxIndex bool
+	Chain    string
+	Pruned   bool
+	TxIndex  bool
+	Currency string // Based on Chain value, for interoperability with libcore
 }
 
 func (x XRPC) getBlockByHash(hash *chainhash.Hash) (*BlockContainer, error) {

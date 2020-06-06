@@ -49,10 +49,11 @@ func GetXRPC(host string, user string, pass string, tls bool) transport.XRPC {
 	}).Info("RPC connection established")
 
 	return transport.XRPC{
-		Client:  client,
-		Pruned:  info.Pruned,
-		Chain:   info.Chain,
-		TxIndex: txIndex,
+		Client:   client,
+		Pruned:   info.Pruned,
+		Chain:    info.Chain,
+		TxIndex:  txIndex,
+		Currency: getCurrencyFromChain(info.Chain),
 	}
 }
 
@@ -114,5 +115,14 @@ func WaitForNodeSync(xrpc transport.XRPC) {
 		}).Info("Sychronizing")
 
 		time.Sleep(2 * time.Second)
+	}
+}
+
+func getCurrencyFromChain(chain string) string {
+	switch chain {
+	case "regtest", "test":
+		return "btc_testnet"
+	case "main":
+		return "btc"
 	}
 }

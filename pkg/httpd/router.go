@@ -15,15 +15,7 @@ func GetRouter(xrpc transport.XRPC) *gin.Engine {
 		baseRouter.GET("explorer/_health", handlers.GetHealth(xrpc))
 	}
 
-	var currency string
-	info, _ := xrpc.GetBlockChainInfo()
-	switch info.Chain {
-	case "regtest", "test":
-		currency = "btc_testnet"
-	case "main":
-		currency = "btc"
-	}
-	currencyRouter := baseRouter.Group(currency)
+	currencyRouter := baseRouter.Group(xrpc.Currency)
 	{
 		currencyRouter.GET("fees", handlers.GetFees(xrpc))
 	}
