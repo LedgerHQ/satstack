@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"ledger-sats-stack/pkg/types"
+	"ledger-sats-stack/pkg/config"
 
 	"github.com/btcsuite/btcd/btcjson"
 	log "github.com/sirupsen/logrus"
@@ -12,9 +12,11 @@ import (
 
 const masterKeyFingerprint = "d34db33f"
 
-const legacyDerivationPath = "44'/60'"
-const segwitDerivationPath = "49'/1'"
-const nativeSegwitDerivationPath = "84'/1'"
+var defaultAccountDerivationPaths = map[string]string{
+	"standard":      "44'/60'",
+	"segwit":        "49'/1'",
+	"native_segwit": "84'/1'",
+}
 
 // GetCanonicalDescriptor returns the descriptor in canonical form, along with
 // its computed checksum.
@@ -26,39 +28,10 @@ func (x XRPC) GetCanonicalDescriptor(descriptor string) (*string, error) {
 	return &info.Descriptor, nil
 }
 
-func (x XRPC) getAccountDescriptors(account types.Account) ([]string, error) {
+func (x XRPC) getAccountDescriptors(account config.Account) ([]string, error) {
 	var ret []string
 
-	rawDescriptors := func() []string {
-		switch account.Type {
-		case "legacy":
-			return []string{
-				fmt.Sprintf("sh(pkh([%s/%s/%d']%s/0/*))",
-					masterKeyFingerprint, legacyDerivationPath, account.Index, account.XPub),
-				fmt.Sprintf("sh(pkh([%s/%s/%d']%s/1/*))",
-					masterKeyFingerprint, legacyDerivationPath, account.Index, account.XPub),
-			}
-
-		case "segwit":
-			return []string{
-				fmt.Sprintf("sh(wpkh([%s/%s/%d']%s/0/*))",
-					masterKeyFingerprint, segwitDerivationPath, account.Index, account.XPub),
-				fmt.Sprintf("sh(wpkh([%s/%s/%d']%s/1/*))",
-					masterKeyFingerprint, segwitDerivationPath, account.Index, account.XPub),
-			}
-
-		case "native_segwit":
-			return []string{
-				fmt.Sprintf("sh(wpkh([%s/%s/%d']%s/0/*))",
-					masterKeyFingerprint, nativeSegwitDerivationPath, account.Index, account.XPub),
-				fmt.Sprintf("sh(wpkh([%s/%s/%d']%s/1/*))",
-					masterKeyFingerprint, nativeSegwitDerivationPath, account.Index, account.XPub),
-			}
-
-		default:
-			return []string{}
-		}
-	}()
+	rawDescriptors := getAccountDescriptors(account)
 
 	for _, desc := range rawDescriptors {
 		canonicalDescriptor, err := x.GetCanonicalDescriptor(desc)
@@ -71,7 +44,7 @@ func (x XRPC) getAccountDescriptors(account types.Account) ([]string, error) {
 	return ret, nil
 }
 
-func (x XRPC) ImportAccounts(accounts []types.Account) error {
+func (x XRPC) ImportAccounts(accounts []config.Account) error {
 	var allDescriptors []string
 	for _, account := range accounts {
 		accountDescriptors, err := x.getAccountDescriptors(account)
@@ -142,4 +115,30 @@ func (x XRPC) ImportAccounts(accounts []types.Account) error {
 	}
 
 	return nil
+}
+
+func getAccountDescriptors(account config.Account) []string {
+	var script string
+	switch *account.DerivationMode { // cannot panic due to config validation
+	case "standard":
+		script = "pkh"
+	case "segwit", "native_segwit":
+		script = "wpkh"
+	}
+
+	var derivationPath string
+	switch account.DerivationPath {
+	case nil:
+		// cannot panic due to config validation
+		derivationPath = defaultAccountDerivationPaths[*account.DerivationMode]
+	default:
+		derivationPath = *account.DerivationPath
+	}
+
+	return []string{
+		fmt.Sprintf("sh(%s([%s/%s/%d']%s/0/*))",
+			script, masterKeyFingerprint, derivationPath, *account.Index, *account.XPub),
+		fmt.Sprintf("sh(%s([%s/%s/%d']%s/1/*))",
+			script, masterKeyFingerprint, derivationPath, *account.Index, *account.XPub),
+	}
 }

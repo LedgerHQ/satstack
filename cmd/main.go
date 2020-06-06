@@ -5,8 +5,8 @@ import (
 	"os"
 	"path"
 
+	"ledger-sats-stack/pkg/config"
 	"ledger-sats-stack/pkg/httpd"
-	"ledger-sats-stack/pkg/types"
 
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
@@ -21,24 +21,25 @@ func main() {
 		SpacePadding:     45,
 	})
 
+	configuration := loadConfig()
+
 	xrpc := httpd.GetXRPC(
-		os.Getenv("BITCOIND_RPC_HOST"),
-		os.Getenv("BITCOIND_RPC_USER"),
-		os.Getenv("BITCOIND_RPC_PASSWORD"),
-		os.Getenv("BITCOIND_RPC_ENABLE_TLS") == "true",
+		*configuration.RPCURL,
+		*configuration.RPCUser,
+		*configuration.RPCPassword,
+		configuration.RPCTLS,
 	)
 	defer xrpc.Shutdown()
 
 	httpd.WaitForNodeSync(xrpc)
 
-	accounts := loadAccountsConfig()
-	_ = xrpc.ImportAccounts(accounts)
+	_ = xrpc.ImportAccounts(configuration.Accounts)
 
 	engine := httpd.GetRouter(xrpc)
 	engine.Run(":20000")
 }
 
-func loadAccountsConfig() []types.Account {
+func loadConfig() config.Configuration {
 	home, err := homedir.Dir()
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -58,19 +59,20 @@ func loadAccountsConfig() []types.Account {
 	defer file.Close()
 
 	decoder := json.NewDecoder(file)
-	accounts := []types.Account{}
+	configuration := config.Configuration{}
 
-	err = decoder.Decode(&accounts)
+	err = decoder.Decode(&configuration)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
 		}).Fatal("Cannot decode accounts config JSON")
 	}
 
+	configuration.Validate()
+
 	log.WithFields(log.Fields{
-		"path":        configPath,
-		"numAccounts": len(accounts),
+		"path": configPath,
 	}).Info("Loaded config file")
 
-	return accounts
+	return configuration
 }

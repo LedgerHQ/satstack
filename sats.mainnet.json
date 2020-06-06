@@ -1,0 +1,20 @@
+{
+  "accounts" : [
+    {
+      "xpub": "xpub...",
+      "index": 0,
+      "derivationMode": "segwit",
+      "birthday": "2020/01/01"
+    },
+    {
+      "xpub": "xpub...",
+      "index": 0,
+      "derivationMode": "native_segwit",
+      "birthday": "2020/01/01"
+    }
+  ],
+  "rpcURL": "localhost:8332",
+  "rpcUser": "user",
+  "rpcPassword": "pass",
+  "rpcTLS": false
+}

@@ -71,9 +71,3 @@ type Addresses struct {
 	Truncated    bool          `json:"truncated"`
 	Transactions []Transaction `json:"txs"`
 }
-
-type Account struct {
-	XPub  string `json:"xpub"`
-	Index int    `json:"index"`
-	Type  string `json:"type"` // legacy, segwit, or native_segwit
-}
