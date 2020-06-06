@@ -5,17 +5,14 @@ import (
 	"ledger-sats-stack/pkg/transport"
 
 	"github.com/gin-gonic/gin"
-	bolt "go.etcd.io/bbolt"
 )
 
-func GetRouter(xrpc transport.XRPC, db *bolt.DB) *gin.Engine {
+func GetRouter(xrpc transport.XRPC) *gin.Engine {
 	engine := gin.Default()
 
 	baseRouter := engine.Group("blockchain/v3")
 	{
 		baseRouter.GET("explorer/_health", handlers.GetHealth(xrpc))
-		baseRouter.GET("syncToken", handlers.GetSyncToken(xrpc, db))
-		baseRouter.DELETE("syncToken", handlers.DeleteSyncToken(xrpc, db))
 	}
 
 	var currency string

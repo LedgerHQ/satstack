@@ -11,7 +11,6 @@ import (
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 	prefixed "github.com/x-cray/logrus-prefixed-formatter"
-	bolt "go.etcd.io/bbolt"
 )
 
 func main() {
@@ -30,18 +29,12 @@ func main() {
 	)
 	defer xrpc.Shutdown()
 
-	db, err := bolt.Open("sats.db", 0666, nil)
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
-
 	httpd.WaitForNodeSync(xrpc)
 
 	accounts := loadAccountsConfig()
 	_ = xrpc.ImportAccounts(accounts)
 
-	engine := httpd.GetRouter(xrpc, db)
+	engine := httpd.GetRouter(xrpc)
 	engine.Run(":20000")
 }
 
