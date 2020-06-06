@@ -56,7 +56,36 @@ Ledger Sats Stack is a standalone Go application, that acts as a bridge between 
 
 ## Usage
 
-First make sure `bitcoind` is running, then launch the application. It's okay if the node is not synced yet.
+##### Create configuration file
+
+Gather the information of accounts you want to track from Ledger Live, and add them to a `~/.sats.json` file in the following format:
+
+```json
+[
+  {
+    "xpub": "xpub...",
+    "index": 0,
+    "type": "segwit"
+  },
+  {
+    "xpub": "xpub...",
+    "index": 1,
+    "type": "segwit"
+  }
+]
+```
+
+##### Launch Bitcoin full node
+
+Make sure you meet the [requirements](#requirements) first, then launch Bitcoin like this:
+
+```
+$ bitcoind -datadir=~/.bitcoin
+```
+
+It's not important to have the node completely synced before proceeding to the next step.
+
+##### Launch Sats Stack
 
 ```sh
 $ git clone https://github.com/onyb/ledger-sats-stack
@@ -64,7 +93,9 @@ $ cd ledger-sats-stack
 $ BITCOIND_RPC_HOST=localhost:8332 BITCOIND_RPC_USER=<user> BITCOIND_RPC_PASSWORD=<password> make dev
 ```
 
-Finally, launch Ledger Live Desktop:
+**Note:** The RPC port is `18332` for `test` chain.
+
+##### Launch Ledger Live Desktop
 
 ```sh
 $ git clone https://github.com/ledgerhq/ledger-live-desktop
