@@ -1,15 +1,20 @@
-<h1 align="center">
-  <a href="ledger.com"><img width="100" src="https://i.pinimg.com/originals/12/5c/e0/125ce0baff3271761ca61843eccf7985.jpg" alt="ledger Sats Stack logo" /></a>
+# Ledger Sats Stack
+
+<img src="/docs/logo.png" align="right" 
+    alt="Legder Sats Stack logo by Anton Lovchikov" width="150">
+     
+<!--<a href="https://golang.org"><img height="100" src="https://i.pinimg.com/originals/12/5c/e0/125ce0baff3271761ca61843eccf7985.jpg" alt="Gopher" /></a>-->
+
 </h1>
 
-<h4 align="center">Lightweight bridge to connect Ledger Live with your personal Bitcoin full node.</h4>
+Ledger Sats Stack is a lightweight bridge to connect Ledger Live with your personal Bitcoin full node. It's designed to allow Ledger Live users use Bitcoin without compromising on privacy, or relying on Ledger's infrastructure.
 
-<p align="center">
+<p>
   <img src="https://github.com/onyb/ledger-sats-stack/workflows/Build/badge.svg" />
   <img src="https://github.com/onyb/ledger-sats-stack/workflows/reviewdog/badge.svg" />
   <img src="https://github.com/onyb/ledger-sats-stack/workflows/Integration%20tests/badge.svg" />
   <img src="https://github.com/onyb/ledger-sats-stack/workflows/Regression%20tests/badge.svg" />
-  <img src="https://img.shields.io/badge/golang-%3E%3D1.13-orange.svg?style=flat-square" />
+  <img src="https://img.shields.io/badge/Go-%3E%3D1.13-orange.svg" />
 </p>
 
 # Table of Contents
@@ -34,7 +39,7 @@ Sats Stack aims to render Ledger's infrastructure dispensable, by allowing users
 Ledger Sats Stack is a standalone Go application, that acts as a bridge between the [Ledger Live](http://ledger.com/live) application and a Bitcoin Core full-node. It exposes a REST interface to the open-source C++ library [libcore](https://github.com/LedgerHQ/lib-ledger-core), embedded by Live, and communicates to the Bitcoin node over RPC. It utilizes the transport layer and data-structures of [btcd](https://github.com/btcsuite/btcd).
 
 <p align="center">
-  <img src="/docs/architecture.png" width="550"/>
+  <img src="/docs/architecture.png"/>
 </p>
 
 ## Requirements
