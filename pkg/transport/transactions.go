@@ -76,14 +76,17 @@ func (txn *TransactionContainer) init(rawTx *btcjson.TxRawResult, utxos types.UT
 			ScriptHex:   rawVout.ScriptPubKey.Hex,
 		}
 
-		if len(rawVout.ScriptPubKey.Addresses) >= 1 {
-			// ScriptPubKey can have multiple addresses for a multisig
-			// transaction.
+		if len(rawVout.ScriptPubKey.Addresses) > 1 {
+			// ScriptPubKey can have multiple addresses for multisig txns.
+			//
+			// Ref: https://bitcoin.stackexchange.com/a/4693/106367
 			log.WithFields(log.Fields{
 				"addresses":   rawVout.ScriptPubKey.Addresses,
 				"value":       outputValue,
 				"outputIndex": rawVout.N,
 			}).Warnf("Multisig transaction detected.")
+			vout[idx].Address = rawVout.ScriptPubKey.Addresses[0]
+		} else if len(rawVout.ScriptPubKey.Addresses) == 1 {
 			vout[idx].Address = rawVout.ScriptPubKey.Addresses[0]
 		} else {
 			// TODO: Document when this happens
