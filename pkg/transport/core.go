@@ -149,12 +149,14 @@ func (x XRPC) ImportAccounts(config config.Configuration) error {
 }
 
 func getRawAccountDescriptors(account config.Account) []string {
-	var script string
+	var scriptFragment string
 	switch *account.DerivationMode { // cannot panic due to config validation
 	case "standard":
-		script = "pkh"
-	case "segwit", "native_segwit":
-		script = "wpkh"
+		scriptFragment = "pkh(%s)"
+	case "segwit":
+		scriptFragment = "sh(wpkh(%s))"
+	case "native_segwit":
+		scriptFragment = "wpkh(%s)"
 	}
 
 	var derivationPath string
@@ -166,11 +168,14 @@ func getRawAccountDescriptors(account config.Account) []string {
 		derivationPath = *account.DerivationPath
 	}
 
+	accountDerivationPath := fmt.Sprintf("%s/%s/%d'",
+		masterKeyFingerprint, derivationPath, *account.Index)
+
 	return []string{
-		fmt.Sprintf("sh(%s([%s/%s/%d']%s/0/*))",
-			script, masterKeyFingerprint, derivationPath, *account.Index, *account.XPub),
-		fmt.Sprintf("sh(%s([%s/%s/%d']%s/1/*))",
-			script, masterKeyFingerprint, derivationPath, *account.Index, *account.XPub),
+		fmt.Sprintf(scriptFragment,
+			fmt.Sprintf("[%s]%s/0/*", accountDerivationPath, *account.XPub)),
+		fmt.Sprintf(scriptFragment,
+			fmt.Sprintf("[%s]%s/1/*", accountDerivationPath, *account.XPub)),
 	}
 }
 
