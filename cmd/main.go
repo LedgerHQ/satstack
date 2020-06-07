@@ -33,7 +33,11 @@ func main() {
 
 	httpd.WaitForNodeSync(xrpc)
 
-	_ = xrpc.ImportAccounts(configuration)
+	if err := xrpc.ImportAccounts(configuration); err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Fatal("Failed to import accounts")
+	}
 
 	engine := httpd.GetRouter(xrpc)
 	engine.Run(":20000")
