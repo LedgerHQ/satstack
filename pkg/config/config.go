@@ -44,7 +44,7 @@ func (d *date) UnmarshalJSON(input []byte) error {
 	return nil
 }
 
-func (c *Configuration) Validate() {
+func (c Configuration) Validate() {
 	validateStringField("rpcURL", c.RPCURL)
 	validateStringField("rpcUser", c.RPCUser)
 	validateStringField("rpcPassword", c.RPCPassword)
