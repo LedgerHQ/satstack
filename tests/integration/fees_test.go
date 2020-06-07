@@ -19,9 +19,9 @@ func TestFeesIntegration(t *testing.T) {
 		os.Getenv("BITCOIND_RPC_ENABLE_TLS") == "true",
 	)
 	// Inject Gin router into an HTTP server
-	ts := httptest.NewServer(httpd.GetRouter(xrpc, nil))
+	ts := httptest.NewServer(httpd.GetRouter(xrpc))
 
-	endpoint := fmt.Sprintf("%s/blockchain/v3/fees", ts.URL)
+	endpoint := fmt.Sprintf("%s/blockchain/v3/%s/fees", ts.URL, xrpc.Currency)
 	responseBytes, err := utils.GetResponseBytes(endpoint)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
