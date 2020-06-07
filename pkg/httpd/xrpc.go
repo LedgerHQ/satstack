@@ -111,10 +111,10 @@ func WaitForNodeSync(xrpc transport.XRPC) {
 		}
 
 		log.WithFields(log.Fields{
-			"progress": fmt.Sprintf("%.2f %%", info.VerificationProgress*100),
+			"progress": fmt.Sprintf("%f %%", info.VerificationProgress*100),
 		}).Info("Sychronizing")
 
-		time.Sleep(2 * time.Second)
+		time.Sleep(5 * time.Second)
 	}
 }
 
