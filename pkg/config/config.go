@@ -9,6 +9,7 @@ import (
 )
 
 // Account struct models the configuration of an account on Ledger Live.
+//
 // Fields marked as (?) are optional.
 type Account struct {
 	XPub           *string `json:"xpub"`
@@ -20,12 +21,15 @@ type Account struct {
 
 // Configuration is a struct to model the JSON configuration
 // of the project, stored in ~/.sats.json file.
+//
+// Fields marked as (?) are optional.
 type Configuration struct {
-	Accounts    []Account `json:"accounts"`
 	RPCURL      *string   `json:"rpcURL"`
 	RPCUser     *string   `json:"rpcUser"`
 	RPCPassword *string   `json:"rpcPassword"`
 	RPCTLS      bool      `json:"rpcTLS"`
+	Accounts    []Account `json:"accounts"`
+	Depth       *int      `json:"depth"` // (?) Number of addresses to import
 }
 
 type date struct {
@@ -44,6 +48,11 @@ func (d *date) UnmarshalJSON(input []byte) error {
 	return nil
 }
 
+// Validate checks for the validity of the JSON configuration loaded in
+// Configuration struct.
+//
+// It does not mutate the configuration values itself, but logs FATAL errors
+// in case of invalid configuration.
 func (c Configuration) Validate() {
 	validateStringField("rpcURL", c.RPCURL)
 	validateStringField("rpcUser", c.RPCUser)

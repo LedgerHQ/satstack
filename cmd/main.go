@@ -33,7 +33,7 @@ func main() {
 
 	httpd.WaitForNodeSync(xrpc)
 
-	_ = xrpc.ImportAccounts(configuration.Accounts)
+	_ = xrpc.ImportAccounts(configuration)
 
 	engine := httpd.GetRouter(xrpc)
 	engine.Run(":20000")

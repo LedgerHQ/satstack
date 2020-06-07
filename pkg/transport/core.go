@@ -11,6 +11,7 @@ import (
 )
 
 const masterKeyFingerprint = "d34db33f"
+const defaultAccountDepth = 1000
 
 var defaultAccountDerivationPaths = map[string]string{
 	"standard":      "44'/60'",
@@ -44,9 +45,17 @@ func (x XRPC) getAccountDescriptors(account config.Account) ([]string, error) {
 	return ret, nil
 }
 
-func (x XRPC) ImportAccounts(accounts []config.Account) error {
+func (x XRPC) ImportAccounts(config config.Configuration) error {
+	var depth int
+	switch config.Depth {
+	case nil:
+		depth = defaultAccountDepth
+	default:
+		depth = *config.Depth
+	}
+
 	var allDescriptors []string
-	for _, account := range accounts {
+	for _, account := range config.Accounts {
 		accountDescriptors, err := x.getAccountDescriptors(account)
 		if err != nil {
 			return err
@@ -58,7 +67,7 @@ func (x XRPC) ImportAccounts(accounts []config.Account) error {
 	for _, descriptor := range allDescriptors {
 		requests = append(requests, btcjson.ImportMultiRequest{
 			Descriptor: btcjson.String(descriptor),
-			Range:      &btcjson.DescriptorRange{Value: []int{0, 1000}},
+			Range:      &btcjson.DescriptorRange{Value: []int{0, depth}},
 			Timestamp:  btcjson.Timestamp{Value: 0},
 			WatchOnly:  btcjson.Bool(true),
 			KeyPool:    btcjson.Bool(false),
