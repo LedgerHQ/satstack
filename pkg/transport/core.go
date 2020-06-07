@@ -22,6 +22,7 @@ var defaultAccountDerivationPaths = map[string]string{
 // GetCanonicalDescriptor returns the descriptor in canonical form, along with
 // its computed checksum.
 func (x XRPC) GetCanonicalDescriptor(descriptor string) (*string, error) {
+
 	info, err := x.GetDescriptorInfo(descriptor)
 	if err != nil {
 		return nil, err
@@ -32,13 +33,14 @@ func (x XRPC) GetCanonicalDescriptor(descriptor string) (*string, error) {
 func (x XRPC) getAccountDescriptors(account config.Account) ([]string, error) {
 	var ret []string
 
-	rawDescriptors := getAccountDescriptors(account)
+	rawDescriptors := getRawAccountDescriptors(account)
 
 	for _, desc := range rawDescriptors {
 		canonicalDescriptor, err := x.GetCanonicalDescriptor(desc)
 		if err != nil {
 			return nil, err
 		}
+
 		ret = append(ret, *canonicalDescriptor)
 	}
 
@@ -63,25 +65,47 @@ func (x XRPC) ImportAccounts(config config.Configuration) error {
 		allDescriptors = append(allDescriptors, accountDescriptors...)
 	}
 
-	var requests []btcjson.ImportMultiRequest
+	var descriptorsToImport []string
 	for _, descriptor := range allDescriptors {
+		log.WithFields(log.Fields{
+			"descriptor": descriptor,
+			"depth":      depth,
+		}).Info("Generate ranged descriptor")
+
+		address := x.deriveFromDescriptor(descriptor, depth)
+		addressInfo, err := x.GetAddressInfo(address)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"address": address,
+				"error":   err,
+			}).Fatal("Failed to get address info")
+		}
+		if !addressInfo.IsWatchOnly {
+			descriptorsToImport = append(descriptorsToImport, descriptor)
+		}
+	}
+
+	if len(descriptorsToImport) == 0 {
+		log.Warn("No (new) addresses to import")
+		return nil
+	}
+
+	var requests []btcjson.ImportMultiRequest
+	for _, descriptor := range descriptorsToImport {
 		requests = append(requests, btcjson.ImportMultiRequest{
 			Descriptor: btcjson.String(descriptor),
 			Range:      &btcjson.DescriptorRange{Value: []int{0, depth}},
-			Timestamp:  btcjson.Timestamp{Value: 0},
+			Timestamp:  btcjson.Timestamp{Value: 0}, // TODO: Use birthday here
 			WatchOnly:  btcjson.Bool(true),
 			KeyPool:    btcjson.Bool(false),
 			Internal:   btcjson.Bool(false),
 		})
 	}
 
-	if requests == nil || len(requests) == 0 {
-		err := errors.New("nothing to import")
-		log.WithFields(log.Fields{
-			"error": err,
-		}).Fatal("Import descriptors")
-		return err
-	}
+	log.WithFields(log.Fields{
+		"rescan": true,
+		"N":      len(requests),
+	}).Info("Importing descriptors")
 
 	results, err := x.ImportMulti(requests, &btcjson.ImportMultiOptions{Rescan: true})
 	if err != nil {
@@ -99,7 +123,7 @@ func (x XRPC) ImportAccounts(config config.Configuration) error {
 				"descriptor": *requests[idx].Descriptor,
 				"range":      requests[idx].Range.Value,
 				"error":      result.Error,
-			}).Error("Import output descriptor failed")
+			}).Error("Failed to import descriptors")
 			hasErrors = true
 		}
 
@@ -120,13 +144,13 @@ func (x XRPC) ImportAccounts(config config.Configuration) error {
 	}
 
 	if hasErrors {
-		return errors.New("failed to import descriptor")
+		return errors.New("importmulti RPC returned errors")
 	}
 
 	return nil
 }
 
-func getAccountDescriptors(account config.Account) []string {
+func getRawAccountDescriptors(account config.Account) []string {
 	var script string
 	switch *account.DerivationMode { // cannot panic due to config validation
 	case "standard":
@@ -150,4 +174,24 @@ func getAccountDescriptors(account config.Account) []string {
 		fmt.Sprintf("sh(%s([%s/%s/%d']%s/1/*))",
 			script, masterKeyFingerprint, derivationPath, *account.Index, *account.XPub),
 	}
+}
+
+func (x XRPC) deriveFromDescriptor(descriptor string, addressIndex int) string {
+	addresses, err := x.DeriveAddresses(
+		descriptor,
+
+		// Since we're interested in only the address at addressIndex,
+		// specifying the range as [begin, end] ensures that addresses
+		// between index 0 and end-1 are not derived uselessly.
+		&btcjson.DescriptorRange{Value: []int{addressIndex, addressIndex}},
+	)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":      err,
+			"descriptor": descriptor,
+			"index":      addressIndex,
+		}).Fatal("Failed to derive address")
+	}
+
+	return (*addresses)[0] // *addresses is always a single-element slice
 }
