@@ -1,7 +1,6 @@
 package transport
 
 import (
-	"errors"
 	"fmt"
 
 	"ledger-sats-stack/pkg/config"
@@ -112,7 +111,6 @@ func (x XRPC) ImportAccounts(config config.Configuration) error {
 		log.WithFields(log.Fields{
 			"error": err,
 		}).Fatal("Failed to import descriptors")
-		return err
 	}
 
 	hasErrors := false
@@ -139,12 +137,12 @@ func (x XRPC) ImportAccounts(config config.Configuration) error {
 			log.WithFields(log.Fields{
 				"descriptor": *requests[idx].Descriptor,
 				"range":      requests[idx].Range.Value,
-			}).Info("Import output descriptor")
+			}).Info("Import descriptor successful")
 		}
 	}
 
 	if hasErrors {
-		return errors.New("importmulti RPC returned errors")
+		log.Fatal("Failed to import descriptors")
 	}
 
 	return nil
