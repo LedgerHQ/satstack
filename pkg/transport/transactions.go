@@ -98,8 +98,7 @@ func (txn *TransactionContainer) init(rawTx *btcjson.TxRawResult, utxos types.UT
 
 	txn.Block = block
 
-	// ?XXX: Confirmations in Ledger Blockchain Explorer are always off by 1
-	txn.Confirmations = rawTx.Confirmations - uint64(1)
+	txn.Confirmations = rawTx.Confirmations
 
 	var fees btcutil.Amount
 
