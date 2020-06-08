@@ -172,9 +172,10 @@ func getRawAccountDescriptors(account config.Account) []string {
 		masterKeyFingerprint, derivationPath, *account.Index)
 
 	return []string{
-		fmt.Sprintf(scriptFragment,
+		fmt.Sprintf(scriptFragment, // external chain (receive address descriptor)
 			fmt.Sprintf("[%s]%s/0/*", accountDerivationPath, *account.XPub)),
-		fmt.Sprintf(scriptFragment,
+
+		fmt.Sprintf(scriptFragment, // internal chain (change address descriptor)
 			fmt.Sprintf("[%s]%s/1/*", accountDerivationPath, *account.XPub)),
 	}
 }
