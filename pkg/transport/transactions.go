@@ -18,7 +18,7 @@ type TransactionContainer struct {
 	types.Transaction
 }
 
-func (txn *TransactionContainer) init(rawTx *btcjson.TxRawResult, utxos types.UTXOs, blockHeight int64) {
+func (txn *TransactionContainer) init(rawTx *btcjson.TxRawResult, utxos types.UTXOs, block *types.Block) {
 	txn.ID = rawTx.Txid
 	txn.Hash = rawTx.Txid // !FIXME: Use rawTx.Hash, which can differ for witness transactions
 	txn.ReceivedAt = utils.ParseUnixTimestamp(rawTx.Time)
@@ -96,11 +96,7 @@ func (txn *TransactionContainer) init(rawTx *btcjson.TxRawResult, utxos types.UT
 	}
 	txn.Outputs = vout
 
-	txn.Block = types.Block{
-		Hash:   rawTx.BlockHash,
-		Height: blockHeight,
-		Time:   utils.ParseUnixTimestamp(rawTx.Blocktime),
-	}
+	txn.Block = block
 
 	// ?XXX: Confirmations in Ledger Blockchain Explorer are always off by 1
 	txn.Confirmations = rawTx.Confirmations - uint64(1)
@@ -129,10 +125,19 @@ func (x XRPC) GetTransaction(txHash string) (*TransactionContainer, error) {
 		return nil, err
 	}
 
-	blockHeight := x.GetBlockHeightByHash(txRaw.BlockHash)
+	var block *types.Block
+	if txRaw.BlockHash == "" {
+		block = nil
+	} else {
+		block = &types.Block{
+			Hash:   txRaw.BlockHash,
+			Height: x.GetBlockHeightByHash(txRaw.BlockHash),
+			Time:   utils.ParseUnixTimestamp(txRaw.Blocktime),
+		}
+	}
 
 	transaction := new(TransactionContainer)
-	transaction.init(txRaw, utxos, blockHeight)
+	transaction.init(txRaw, utxos, block)
 	return transaction, nil
 }
 

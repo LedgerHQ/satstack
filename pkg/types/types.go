@@ -64,7 +64,7 @@ type Transaction struct {
 	Confirmations uint64          `json:"confirmations"`
 	Inputs        []Input         `json:"inputs"`
 	Outputs       []Output        `json:"outputs"`
-	Block         Block           `json:"block"`
+	Block         *Block          `json:"block"`
 }
 
 type Addresses struct {
