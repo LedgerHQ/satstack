@@ -11,6 +11,10 @@ let's talk!
 time also has a lot to do with the number of UTXOs, which is not mentioned
 below.
 
+There are a lot of ways to improve the performance, although **RPC Batch**
+and/or **Goroutines** are probably going to have the biggest impact.
+
+
 #### With `txindex=1`
 
 
