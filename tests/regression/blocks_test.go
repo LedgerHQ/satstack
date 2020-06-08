@@ -20,7 +20,7 @@ func TestBlocksRegression(t *testing.T) {
 		os.Getenv("BITCOIND_RPC_ENABLE_TLS") == "true",
 	)
 	// Inject Gin router into an HTTP server
-	ts := httptest.NewServer(httpd.GetRouter(xrpc, nil))
+	ts := httptest.NewServer(httpd.GetRouter(xrpc))
 
 	for _, testCase := range BlocksTestCases {
 		t.Run(testCase, func(t *testing.T) {
