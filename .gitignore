@@ -35,3 +35,6 @@
 main
 .idea
 .DS_Store
+
+# libcore DB created during benchmarks / integration tests
+dbdata
