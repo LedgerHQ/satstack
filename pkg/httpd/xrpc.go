@@ -48,6 +48,10 @@ func GetXRPC(host string, user string, pass string, tls bool) transport.XRPC {
 		"txindex": txIndex,
 	}).Info("RPC connection established")
 
+	if !txIndex {
+		log.Warn("May have unexpected errors without txindex")
+	}
+
 	return transport.XRPC{
 		Client:   client,
 		Pruned:   info.Pruned,
