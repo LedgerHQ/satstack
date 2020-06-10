@@ -2,8 +2,6 @@
 
 <img src="/docs/logo.png" align="right" 
     alt="Legder Sats Stack logo by Anton Lovchikov" width="150">
-     
-<!--<a href="https://golang.org"><img height="100" src="https://i.pinimg.com/originals/12/5c/e0/125ce0baff3271761ca61843eccf7985.jpg" alt="Gopher" /></a>-->
 
 </h1>
 
@@ -16,6 +14,10 @@ Ledger Sats Stack is a lightweight bridge to connect Ledger Live with your perso
   <img src="https://github.com/onyb/ledger-sats-stack/workflows/Regression%20tests/badge.svg" />
   <img src="https://img.shields.io/badge/Go-%3E%3D1.13-orange.svg" />
 </p>
+
+
+<img src="docs/txindex_enabled.gif" align="center" />
+
 
 # Table of Contents
 
