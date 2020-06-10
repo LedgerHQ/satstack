@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"encoding/hex"
 	"fmt"
 	"strconv"
 	"strings"
@@ -136,10 +137,38 @@ func (x XRPC) getTransactionByHash(txHash string) (*btcjson.TxRawResult, error) 
 		return nil, err
 	}
 
-	txRaw, err := x.GetRawTransactionVerbose(chainHash)
+	switch x.TxIndex {
+	case true:
+		txRaw, err := x.GetRawTransactionVerbose(chainHash)
+		if err != nil {
+			return nil, err
+		}
 
-	if err != nil {
-		return nil, err
+		return txRaw, nil
+	default:
+		tx, err := x.Client.GetTransactionWatchOnly(chainHash, true)
+		if err != nil {
+			return nil, err
+		}
+
+		serializedTx, err := hex.DecodeString(tx.Hex)
+		if err != nil {
+			return nil, err
+		}
+
+		txRaw, err := x.Client.DecodeRawTransaction(serializedTx)
+		if err != nil {
+			return nil, err
+		}
+
+		// The decoded transaction hex doesn't contain confirmation number and
+		// block height/hash; it must be fetched from the GetTransactionResult
+		// instance.
+		txRaw.Confirmations = uint64(tx.Confirmations)
+		txRaw.BlockHash = tx.BlockHash
+		txRaw.Time = tx.Time
+		txRaw.Blocktime = tx.BlockTime
+
+		return txRaw, nil
 	}
-	return txRaw, nil
 }
