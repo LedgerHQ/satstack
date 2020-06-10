@@ -66,28 +66,23 @@ func (x XRPC) getBlockHashByReference(blockRef string) (*chainhash.Hash, error) 
 
 func (x XRPC) buildUTXOs(vin []btcjson.Vin) (types.UTXOs, error) {
 	utxos := make(types.UTXOs)
-	utxoResults := make(map[types.OutputIdentifier]rpcclient.FutureGetRawTransactionVerboseResult)
+	utxoResults := make(map[types.OutputIdentifier]*btcjson.TxRawResult)
 
 	for _, inputRaw := range vin {
 		if inputRaw.IsCoinBase() {
 			continue
 		}
 
-		chainHash, err := utils.ParseChainHash(inputRaw.Txid)
+		utxo, err := x.getTransactionByHash(inputRaw.Txid)
 		if err != nil {
 			return nil, err
 		}
 
-		utxoResults[types.OutputIdentifier{Hash: inputRaw.Txid, Index: inputRaw.Vout}] = x.GetRawTransactionVerboseAsync(chainHash)
+		utxoResults[types.OutputIdentifier{Hash: inputRaw.Txid, Index: inputRaw.Vout}] = utxo
 	}
 
 	for utxoID, utxoResult := range utxoResults {
-		tx, err := utxoResult.Receive()
-		if err != nil {
-			return nil, err
-		}
-
-		utxo, err := parseUTXO(tx, utxoID.Index)
+		utxo, err := parseUTXO(utxoResult, utxoID.Index)
 		if err != nil {
 			return nil, err
 		}
