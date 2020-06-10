@@ -1,0 +1,136 @@
+# The configurations that used for the recording, feel free to edit them
+config:
+
+  # Specify a command to be executed
+  # like `/bin/bash -l`, `ls`, or any other commands
+  # the default is bash for Linux
+  # or powershell.exe for Windows
+  command: bash -l
+
+  # Specify the current working directory path
+  # the default is the current working directory path
+  cwd: /Users/abose/repos/onyb/ledger-sats-stack
+
+  # Export additional ENV variables
+  env:
+    recording: true
+
+  # Explicitly set the number of columns
+  # or use `auto` to take the current
+  # number of columns of your shell
+  cols: 158
+
+  # Explicitly set the number of rows
+  # or use `auto` to take the current
+  # number of rows of your shell
+  rows: 43
+
+  # Amount of times to repeat GIF
+  # If value is -1, play once
+  # If value is 0, loop indefinitely
+  # If value is a positive number, loop n times
+  repeat: 1
+
+  # Quality
+  # 1 - 100
+  quality: 100
+
+  # Delay between frames in ms
+  # If the value is `auto` use the actual recording delays
+  frameDelay: auto
+
+  # Maximum delay between frames in ms
+  # Ignored if the `frameDelay` isn't set to `auto`
+  # Set to `auto` to prevent limiting the max idle time
+  maxIdleTime: auto
+
+  # The surrounding frame box
+  # The `type` can be null, window, floating, or solid`
+  # To hide the title use the value null
+  # Don't forget to add a backgroundColor style with a null as type
+  frameBox:
+    type: floating
+    title: Ledger Sats Stack
+    style:
+      border: 0px black solid
+      # boxShadow: none
+      # margin: 0px
+
+  # Add a watermark image to the rendered gif
+  # You need to specify an absolute path for
+  # the image on your machine or a URL, and you can also
+  # add your own CSS styles
+  watermark:
+    imagePath: null
+    style:
+      position: absolute
+      right: 15px
+      bottom: 15px
+      width: 100px
+      opacity: 0.9
+
+  # Cursor style can be one of
+  # `block`, `underline`, or `bar`
+  cursorStyle: block
+
+  # Font family
+  # You can use any font that is installed on your machine
+  # in CSS-like syntax
+  fontFamily: "Monaco, Lucida Console, Ubuntu Mono, Monospace"
+
+  # The size of the font
+  fontSize: 12
+
+  # The height of lines
+  lineHeight: 1
+
+  # The spacing between letters
+  letterSpacing: 0
+
+  # Theme
+  theme:
+    background: "transparent"
+    foreground: "#afafaf"
+    cursor: "#c7c7c7"
+    black: "#232628"
+    red: "#fc4384"
+    green: "#b3e33b"
+    yellow: "#ffa727"
+    blue: "#75dff2"
+    magenta: "#ae89fe"
+    cyan: "#708387"
+    white: "#d5d5d0"
+    brightBlack: "#626566"
+    brightRed: "#ff7fac"
+    brightGreen: "#c8ed71"
+    brightYellow: "#ebdf86"
+    brightBlue: "#75dff2"
+    brightMagenta: "#ae89fe"
+    brightCyan: "#b1c6ca"
+    brightWhite: "#f9f9f4"
+
+
+records:
+  - delay: 2000
+    content: "go run cmd/main.go\r\n"
+  - delay: 2000
+    content: "\e[90m[2020/06/10 - 00:03:59]\e[0m \e[32m INFO\e[0m Loaded config file                            \e[32mpath\e[0m=/Users/onyb/.sats.json\r\n"
+  - delay: 2000
+    content: "\e[90m[2020/06/10 - 00:03:59]\e[0m \e[32m INFO\e[0m RPC connection established                    \e[32mchain\e[0m=test \e[32mpruned\e[0m=false \e[32mtxindex\e[0m=false\r\n\e[90m[2020/06/11 - 01:12:57]\e[0m \e[33m WARN\e[0m May have unexpected errors without txindex   \r\n"
+  - delay: 1000
+    content: "\e[90m[2020/06/10 - 01:50:32]\e[0m \e[32m INFO\e[0m Sychronizing node                             \e[32mprogress\e[0m=99.94%\r\n"
+  - delay: 1000
+    content: "\e[90m[2020/06/10 - 01:50:42]\e[0m \e[32m INFO\e[0m Sychronizing node                             \e[32mprogress\e[0m=99.94%\r\n"
+  - delay: 1000
+    content: "\e[90m[2020/06/10 - 01:50:52]\e[0m \e[32m INFO\e[0m Sychronizing node                             \e[32mprogress\e[0m=99.95%\r\n"
+  - delay: 1000
+    content: "\e[90m[2020/06/10 - 01:51:02]\e[0m \e[32m INFO\e[0m Sychronizing node                             \e[32mprogress\e[0m=99.97%\r\n"
+  - delay: 1000
+    content: "\e[90m[2020/06/10 - 01:51:12]\e[0m \e[32m INFO\e[0m Sychronization completed                      \e[32mbestblockhash\e[0m=000000000000295fbe593f03aafc40a46c8e60901a14e8b4f4866f9d96791f7f \e[32mblocks\e[0m=1766139\r\n"
+  - delay: 100
+    content: "\e[90m[2020/06/10 - 01:51:12]\e[0m \e[32m INFO\e[0m Generate ranged descriptor                    \e[32mdepth\e[0m=1000 \e[32mdescriptor\e[0m=sh(wpkh([d34db33f/49'/1'/0']tpubDDTGDeY...9UNPw4s/0/*))#4aq4hy8r\r\n\e[90m[2020/06/10 - 01:51:12]\e[0m \e[32m INFO\e[0m Generate ranged descriptor                    \e[32mdepth\e[0m=1000 \e[32mdescriptor\e[0m=sh(wpkh([d34db33f/49'/1'/0']tpubDDTGDeY...9UNPw4s/1/*))#quwr0mju\r\n"
+
+  - delay: 0
+    content: "\e[90m[2020/06/10 - 02:01:42]\e[0m \e[32m INFO\e[0m Import descriptor successful                  \e[32mdescriptor\e[0m=sh(wpkh([d34db33f/49'/1'/0']tpubDDTGDeY...9UNPw4s/0/*))#4aq4hy8r \e[32mrange\e[0m=[0 1000]\r\n\e[90m[2020/06/10 - 02:01:42]\e[0m \e[32m INFO\e[0m Import descriptor successful                  \e[32mdescriptor\e[0m=sh(wpkh([d34db33f/49'/1'/0']tpubDDTGDeY...9UNPw4s/1/*))#quwr0mju \e[32mrange\e[0m=[0 1000]\r\n"
+  - delay: 2000
+    content: ""
