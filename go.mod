@@ -5,7 +5,6 @@ go 1.13
 require (
 	github.com/btcsuite/btcd v0.20.1-beta.0.20200414114020-8b54b0b96418
 	github.com/btcsuite/btcutil v1.0.2
-	github.com/davecgh/go-spew v1.1.1
 	github.com/gin-gonic/gin v1.6.3
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/google/uuid v1.1.1 // indirect
@@ -21,4 +20,4 @@ require (
 )
 
 // Comment the line below to disable experimental JSON-RPC features.
-replace github.com/btcsuite/btcd v0.20.1-beta.0.20200414114020-8b54b0b96418 => github.com/onyb/btcd v0.20.1-beta.0.20200607085457-41d7b63b8f58
+replace github.com/btcsuite/btcd v0.20.1-beta.0.20200414114020-8b54b0b96418 => github.com/onyb/btcd v0.20.1-beta.0.20200610053733-b5863b397825
