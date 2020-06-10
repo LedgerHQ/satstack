@@ -16,8 +16,12 @@ do
     echo -e "${CYAN}XPUB:${NC}   ${xpub}"
 
     cmd="time ledger-live sync --xpub $xpub -c bitcoin_testnet -s ${scheme/standard/} -f summary"
+
+    ledger-live libcoreReset
     echo -e "${CYAN}SYNC:${NC}   explorers.api.live.ledger.com"
     want=$($cmd)
+
+    ledger-live libcoreReset
     echo -e "${CYAN}SYNC:${NC}   0.0.0.0:20000"
     got=$(EXPERIMENTAL_EXPLORERS=1 EXPLORER="http://0.0.0.0:20000" $cmd)
 
