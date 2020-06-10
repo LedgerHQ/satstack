@@ -16,7 +16,10 @@ func (x XRPC) GetAddresses(addresses []string) (types.Addresses, error) {
 	for _, txID := range txIDs {
 		tx, err := x.GetTransaction(txID)
 		if err != nil {
-			log.Error(err)
+			log.WithFields(log.Fields{
+				"error": err,
+				"hash":  txID,
+			}).Error("Unable to fetch transaction")
 			continue
 		}
 		txs = append(txs, tx.Transaction)
@@ -35,7 +38,14 @@ func (x XRPC) getWalletTransactions(addresses []string) []string {
 	for {
 		partialTxs, err := x.ListTransactionsCountFromWatchOnly("*", listTransactionsBatchSize, offset)
 		if err != nil {
-			log.Error(err)
+			log.WithFields(log.Fields{
+				"error":     err,
+				"batchSize": listTransactionsBatchSize,
+				"offset":    offset,
+			}).Error("Failed to list transactions")
+
+			// return whatever we have so far (possibly empty slice)
+			return result
 		}
 
 		if len(partialTxs) == 0 {
@@ -47,7 +57,14 @@ func (x XRPC) getWalletTransactions(addresses []string) []string {
 			if tx.Category == "send" {
 				tx2, err := x.GetTransaction(tx.TxID)
 				if err != nil {
-					log.Error(err)
+					log.WithFields(log.Fields{
+						"error":    err,
+						"hash":     tx.TxID,
+						"category": tx.Category,
+					}).Error("Failed to get wallet transaction")
+
+					// abandon processing the current transaction
+					continue
 				}
 
 				for _, inputAddress := range getTransactionInputAddresses(tx2.Transaction) {
