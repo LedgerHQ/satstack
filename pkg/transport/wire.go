@@ -75,7 +75,12 @@ func (x XRPC) buildUTXOs(vin []btcjson.Vin) (types.UTXOs, error) {
 
 		utxo, err := x.getTransactionByHash(inputRaw.Txid)
 		if err != nil {
-			return nil, err
+			log.WithFields(log.Fields{
+				"error": err,
+				"hash":  inputRaw.Txid,
+				"vout":  inputRaw.Vout,
+			}).Warn("Encountered non-wallet Vout")
+			continue
 		}
 
 		utxoResults[types.OutputIdentifier{Hash: inputRaw.Txid, Index: inputRaw.Vout}] = utxo
