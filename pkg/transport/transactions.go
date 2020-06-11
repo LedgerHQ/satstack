@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"ledger-sats-stack/pkg/types"
 	"ledger-sats-stack/pkg/utils"
+	"time"
 
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/wire"
@@ -21,7 +22,6 @@ type TransactionContainer struct {
 func (txn *TransactionContainer) init(rawTx *btcjson.TxRawResult, utxos types.UTXOs, block *types.Block) {
 	txn.ID = rawTx.Txid
 	txn.Hash = rawTx.Txid // !FIXME: Use rawTx.Hash, which can differ for witness transactions
-	txn.ReceivedAt = utils.ParseUnixTimestamp(rawTx.Time)
 	txn.LockTime = rawTx.LockTime
 
 	vin := make([]types.Input, len(rawTx.Vin))
@@ -99,6 +99,13 @@ func (txn *TransactionContainer) init(rawTx *btcjson.TxRawResult, utxos types.UT
 	txn.Block = block
 
 	txn.Confirmations = rawTx.Confirmations
+
+	if txn.Confirmations == 0 {
+		// rawTx.Time is 0 if transaction is unconfirmed
+		txn.ReceivedAt = utils.ParseUnixTimestamp(time.Now().Unix())
+	} else {
+		txn.ReceivedAt = utils.ParseUnixTimestamp(rawTx.Time)
+	}
 
 	var fees btcutil.Amount
 
