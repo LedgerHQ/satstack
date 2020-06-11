@@ -46,63 +46,71 @@ Ledger Sats Stack is a standalone Go application, that acts as a bridge between 
 
 ## Requirements
 
-- Bitcoin Core 0.18.0+
-  * Must have RPC enabled. Make sure you have this in `bitcoin.conf`.
+- Bitcoin Core **`0.19.0+`**
+  * Example `bitcoin.conf`:
     ```
+    # Enable RPC server
     server=1
+    
+    # Set RPC credentials
     rpcuser=<user>
     rpcpassword=<password>
-    ```
-  * Must have `txindex` enabled. Make sure you have this in `bitcoin.conf`.
-    ```
+    
+    # Enable txindex
     txindex=1
     ```
-    
-    Will be optional after [**`#15`**](https://github.com/onyb/ledger-sats-stack/issues/15).
-- Ledger Live \<insert version\>
+    ⚠️ It is recommended to enable `txindex` for better performance. `txindex=0` is supported, but unstable.
+
+- Ledger Live (desktop) **`2.5.0+`**
+- Go **`1.13+`** (or download a [release](https://github.com/onyb/ledger-sats-stack/releases))
 
 ## Usage
 
-##### Create configuration file
+#### Create configuration file
 
-Gather the information of accounts you want to track from Ledger Live, and add them to a `~/.sats.json` file in the following format:
+Export your xPubs from Ledger Live, and add them to a `~/.sats.json` file. Example:
 
 ```json
-[
-  {
-    "xpub": "xpub...",
-    "index": 0,
-    "type": "segwit"
-  },
-  {
-    "xpub": "xpub...",
-    "index": 1,
-    "type": "segwit"
-  }
-]
+{
+  "accounts" : [
+    {
+      "xpub": "xpubDCHCguj...mFJejwC",
+      "index": 0,
+      "derivationMode": "native_segwit",
+      "birthday": "2020/01/01"
+    }
+  ],
+  "rpcURL": "localhost:8332",
+  "rpcUser": "<user>",
+  "rpcPassword": "<password>",
+  "rpcTLS": false,
+  "depth": 1000
+}
 ```
 
-##### Launch Bitcoin full node
+###### Optional fields
+- **`depth`**: overrides the number of addresses to derive and import in the Bitcoin wallet. Defaults to `1000`.
+- **`birthday`**: earliest known creation date (`YYYY/MM/DD` format), for faster wallet import. Defaults to genesis.
 
-Make sure you meet the [requirements](#requirements) first, then launch Bitcoin like this:
+#### Launch Bitcoin full node
+
+Make sure you meet the [requirements](#requirements) first, then launch `bitcoind` like this:
 
 ```
-$ bitcoind -datadir=~/.bitcoin
+$ bitcoind
 ```
 
 It's not important to have the node completely synced before proceeding to the next step.
 
-##### Launch Sats Stack
+#### Launch Sats Stack
 
 ```sh
 $ git clone https://github.com/onyb/ledger-sats-stack
 $ cd ledger-sats-stack
-$ BITCOIND_RPC_HOST=localhost:8332 BITCOIND_RPC_USER=<user> BITCOIND_RPC_PASSWORD=<password> make dev
+$ make release
 ```
 
-**Note:** The RPC port is `18332` for `test` chain.
-
-##### Launch Ledger Live Desktop
+#### Launch Ledger Live Desktop
 
 ```sh
 $ git clone https://github.com/ledgerhq/ledger-live-desktop
