@@ -47,19 +47,20 @@ Ledger Sats Stack is a standalone Go application, that acts as a bridge between 
 ## Requirements
 
 - Bitcoin Core **`0.19.0+`**
-  * Example `bitcoin.conf`:
-    ```
-    # Enable RPC server
-    server=1
+
+  Example `bitcoin.conf`:
+  ```
+  # Enable RPC server
+  server=1
     
-    # Set RPC credentials
-    rpcuser=<user>
-    rpcpassword=<password>
+  # Set RPC credentials
+  rpcuser=<user>
+  rpcpassword=<password>
     
-    # Enable txindex
-    txindex=1
-    ```
-    ⚠️ It is recommended to enable `txindex` for better performance. `txindex=0` is supported, but unstable.
+  # Enable txindex
+  txindex=1
+  ```
+  ⚠️ It is recommended to enable `txindex` for better performance. `txindex=0` is supported, but unstable.
 
 - Ledger Live (desktop) **`2.5.0+`**
 - Go **`1.13+`** (or download a [release](https://github.com/onyb/ledger-sats-stack/releases))
@@ -68,7 +69,14 @@ Ledger Sats Stack is a standalone Go application, that acts as a bridge between 
 
 #### Create configuration file
 
-Export your xPubs from Ledger Live, and add them to a `~/.sats.json` file. Example:
+Export your xPubs from Ledger Live, and add them to a **`~/.sats.json`** file.
+Sample configuration templates are available in the repository.
+
+```sh
+$ cp sats.mainnet.json ~/.sats.json
+```
+
+Example configuration:
 
 ```json
 {
