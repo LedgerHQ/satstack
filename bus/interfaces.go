@@ -22,6 +22,7 @@ type Util interface {
 }
 
 type Chain interface {
+	GetBlockChainInfo() (*btcjson.GetBlockChainInfoResult, error)
 	GetBestBlockHash() (*chainhash.Hash, error)
 	GetBlockHash(height int64) (*chainhash.Hash, error)
 	GetBlock(hash *chainhash.Hash) (*types.Block, error)

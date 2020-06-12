@@ -2,9 +2,11 @@ package bus
 
 import (
 	"fmt"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"ledger-sats-stack/pkg/types"
 	"ledger-sats-stack/pkg/utils"
+
+	"github.com/btcsuite/btcd/btcjson"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
 func (b *Bus) GetBestBlockHash() (*chainhash.Hash, error) {
@@ -34,4 +36,8 @@ func (b *Bus) GetBlock(hash *chainhash.Hash) (*types.Block, error) {
 	}
 
 	return &block, nil
+}
+
+func (b *Bus) GetBlockChainInfo() (*btcjson.GetBlockChainInfoResult, error) {
+	return b.client.GetBlockChainInfo()
 }
