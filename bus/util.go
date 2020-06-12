@@ -80,7 +80,6 @@ func getMode(s string) *btcjson.EstimateSmartFeeMode {
 	case "CONSERVATIVE":
 		return &btcjson.EstimateModeConservative
 	default:
-		// FIXME: return some default value here
-		panic(s)
+		return &btcjson.EstimateModeEconomical
 	}
 }
