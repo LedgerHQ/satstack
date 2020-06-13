@@ -13,7 +13,7 @@ func (s *Service) GetAddresses(addresses []string) (types.Addresses, error) {
 	txResults := s.Bus.ListTransactions()
 	walletTxIDs := s.filterTransactionsByAddresses(addresses, txResults)
 
-	var txs []types.Transaction
+	txs := []types.Transaction{}
 	for _, txID := range walletTxIDs {
 		tx, err := s.GetTransaction(txID)
 		if err != nil {
