@@ -10,10 +10,10 @@ import (
 )
 
 type Wallet interface {
-	ListTransactions() []btcjson.ListTransactionsResult
+	ListTransactions(blockHash *chainhash.Hash) ([]btcjson.ListTransactionsResult, error)
 	GetTransaction(hash *chainhash.Hash) (*btcjson.TxRawResult, error)
 	GetAddressInfo(address string) (*btcjson.GetAddressInfoResult, error)
-	ImportDescriptors(descriptors []string, depth int)
+	ImportDescriptors(descriptors []string, depth int) error
 }
 
 type Util interface {

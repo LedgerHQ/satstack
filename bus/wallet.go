@@ -10,33 +10,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const listTransactionsBatchSize = 1000
-
-func (b *Bus) ListTransactions() []btcjson.ListTransactionsResult {
-	var result []btcjson.ListTransactionsResult
-	offset := 0
-
-	for {
-		txs, err := b.Client.ListTransactionsCountFromWatchOnly("*", listTransactionsBatchSize, offset)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error":     err,
-				"batchSize": listTransactionsBatchSize,
-				"offset":    offset,
-			}).Error("Failed to list transactions")
-
-			// return whatever we have so far (possibly empty slice)
-			return result
-		}
-
-		if len(txs) == 0 {
-			// no more transactions
-			return result
-		}
-
-		result = append(result, txs...)
-		offset += listTransactionsBatchSize
+func (b *Bus) ListTransactions(blockHash *chainhash.Hash) ([]btcjson.ListTransactionsResult, error) {
+	txs, err := b.Client.ListSinceBlockMinConfWatchOnly(nil, 1, true)
+	if err != nil {
+		return nil, err
 	}
+
+	return txs.Transactions, nil
 }
 
 func (b *Bus) GetTransaction(hash *chainhash.Hash) (*btcjson.TxRawResult, error) {

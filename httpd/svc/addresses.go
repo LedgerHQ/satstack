@@ -10,7 +10,13 @@ import (
 )
 
 func (s *Service) GetAddresses(addresses []string) (types.Addresses, error) {
-	txResults := s.Bus.ListTransactions()
+	txResults, err := s.Bus.ListTransactions(nil)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":     err,
+			"blockHash": nil,
+		}).Error("Unable to fetch transaction")
+	}
 	walletTxIDs := s.filterTransactionsByAddresses(addresses, txResults)
 
 	txs := []types.Transaction{}
