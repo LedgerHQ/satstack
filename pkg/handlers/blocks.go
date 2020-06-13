@@ -1,9 +1,9 @@
 package handlers
 
 import (
+	"ledger-sats-stack/pkg/types"
+	"ledger-sats-stack/svc"
 	"net/http"
-
-	"ledger-sats-stack/pkg/transport"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,11 +16,11 @@ import (
 //
 // Except for the case where the block reference is "current", the response is
 // a list of 1 element.
-func GetBlock(xrpc transport.XRPC) gin.HandlerFunc {
+func GetBlock(s svc.BlocksService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		blockRef := ctx.Param("block")
 
-		block, err := xrpc.GetBlock(blockRef)
+		block, err := s.GetBlock(blockRef)
 		if err != nil {
 			ctx.JSON(http.StatusNotFound, err)
 			return
@@ -30,7 +30,7 @@ func GetBlock(xrpc transport.XRPC) gin.HandlerFunc {
 		case "current":
 			ctx.JSON(http.StatusOK, block)
 		default:
-			ctx.JSON(http.StatusOK, []*transport.BlockContainer{block})
+			ctx.JSON(http.StatusOK, []*types.Block{block})
 		}
 	}
 }

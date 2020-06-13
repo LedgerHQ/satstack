@@ -42,9 +42,10 @@ type Output struct {
 // It is used to represent minimal information of the block containing the given
 // transaction.
 type Block struct {
-	Hash   string `json:"hash"`   // 0x prefixed
-	Height int64  `json:"height"` // integer
-	Time   string `json:"time"`   // RFC3339 format
+	Hash         string    `json:"hash"`          // 0x prefixed
+	Height       int64     `json:"height"`        // integer
+	Time         string    `json:"time"`          // RFC3339 format
+	Transactions *[]string `json:"txs,omitempty"` // optional list of 0x prefixed transaction IDs
 }
 
 // BlockWithTransactions is a struct that embeds Block, but also contains

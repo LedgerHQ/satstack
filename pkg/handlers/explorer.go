@@ -1,18 +1,17 @@
 package handlers
 
 import (
+	"ledger-sats-stack/svc"
 	"net/http"
 	"strconv"
 	"strings"
 
-	"ledger-sats-stack/pkg/transport"
-
 	"github.com/gin-gonic/gin"
 )
 
-func GetHealth(xrpc transport.XRPC) gin.HandlerFunc {
+func GetHealth(s svc.ExplorerService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		err := xrpc.GetHealth()
+		err := s.GetHealth()
 		if err != nil {
 			ctx.JSON(http.StatusServiceUnavailable, err)
 			return
@@ -22,7 +21,7 @@ func GetHealth(xrpc transport.XRPC) gin.HandlerFunc {
 	}
 }
 
-func GetFees(xrpc transport.XRPC) gin.HandlerFunc {
+func GetFees(s svc.ExplorerService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		blockCounts := ctx.QueryArray("block_count")
 		mode := strings.ToUpper(ctx.Param("mode"))
@@ -41,7 +40,7 @@ func GetFees(xrpc transport.XRPC) gin.HandlerFunc {
 			blockCountsIntegers = append(blockCountsIntegers, 2, 3, 6)
 		}
 
-		fees := xrpc.GetSmartFeeEstimates(blockCountsIntegers, mode)
+		fees := s.GetFees(blockCountsIntegers, mode)
 		ctx.JSON(http.StatusOK, fees)
 	}
 }

@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"ledger-sats-stack/bus"
+	"ledger-sats-stack/svc"
 	"os"
 	"path"
 
@@ -23,24 +25,34 @@ func main() {
 
 	configuration := loadConfig()
 
-	xrpc := httpd.GetXRPC(
+	b, err := bus.New(
 		*configuration.RPCURL,
 		*configuration.RPCUser,
 		*configuration.RPCPassword,
 		configuration.RPCTLS,
 	)
-	defer xrpc.Shutdown()
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Fatal("Failed to initialize Bus")
+		return
+	}
+	defer b.Close()
 
-	httpd.WaitForNodeSync(xrpc)
+	bus.WaitForNodeSync(b)
 
-	if err := xrpc.ImportAccounts(configuration); err != nil {
+	s := &svc.Service{
+		Bus: b,
+	}
+
+	if err := s.ImportAccounts(configuration); err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
 		}).Fatal("Failed to import accounts")
 	}
 
-	engine := httpd.GetRouter(xrpc)
-	engine.Run(":20000")
+	engine := httpd.GetRouter(s)
+	_ = engine.Run(":20000")
 }
 
 func loadConfig() config.Configuration {

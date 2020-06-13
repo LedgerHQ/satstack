@@ -2,39 +2,39 @@ package httpd
 
 import (
 	"ledger-sats-stack/pkg/handlers"
-	"ledger-sats-stack/pkg/transport"
+	"ledger-sats-stack/svc"
 
 	"github.com/gin-gonic/gin"
 )
 
-func GetRouter(xrpc transport.XRPC) *gin.Engine {
+func GetRouter(s *svc.Service) *gin.Engine {
 	engine := gin.Default()
 
 	baseRouter := engine.Group("blockchain/v3")
 	{
-		baseRouter.GET("explorer/_health", handlers.GetHealth(xrpc))
+		baseRouter.GET("explorer/_health", handlers.GetHealth(s))
 	}
 
-	currencyRouter := baseRouter.Group(xrpc.Currency)
+	currencyRouter := baseRouter.Group(s.Bus.Currency)
 	{
-		currencyRouter.GET("fees", handlers.GetFees(xrpc))
+		currencyRouter.GET("fees", handlers.GetFees(s))
 	}
 
 	blocksRouter := currencyRouter.Group("/blocks")
 	{
-		blocksRouter.GET(":block", handlers.GetBlock(xrpc))
+		blocksRouter.GET(":block", handlers.GetBlock(s))
 	}
 
 	transactionsRouter := currencyRouter.Group("/transactions")
 	{
-		transactionsRouter.GET(":hash", handlers.GetTransaction(xrpc))
-		transactionsRouter.GET(":hash/hex", handlers.GetTransactionHex(xrpc))
-		transactionsRouter.POST("send", handlers.SendTransaction(xrpc))
+		transactionsRouter.GET(":hash", handlers.GetTransaction(s))
+		transactionsRouter.GET(":hash/hex", handlers.GetTransactionHex(s))
+		transactionsRouter.POST("send", handlers.SendTransaction(s))
 	}
 
 	addressesRouter := currencyRouter.Group("/addresses")
 	{
-		addressesRouter.GET(":addresses/transactions", handlers.GetAddresses(xrpc))
+		addressesRouter.GET(":addresses/transactions", handlers.GetAddresses(s))
 	}
 
 	return engine

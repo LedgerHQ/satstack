@@ -12,7 +12,7 @@ import (
 
 func TestFeesIntegration(t *testing.T) {
 	// Setup phase
-	xrpc := httpd.GetXRPC(
+	xrpc := httpd.GetBus(
 		os.Getenv("BITCOIND_RPC_HOST"),
 		os.Getenv("BITCOIND_RPC_USER"),
 		os.Getenv("BITCOIND_RPC_PASSWORD"),

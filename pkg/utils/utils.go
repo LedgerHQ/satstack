@@ -4,6 +4,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/btcsuite/btcd/btcjson"
+
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcutil"
 )
@@ -39,4 +41,8 @@ func Contains(s []string, e string) bool {
 		}
 	}
 	return false
+}
+
+func ToStringPointer(value string) *string {
+	return btcjson.String(value)
 }

@@ -13,11 +13,12 @@ type Wallet interface {
 	ListTransactions() []btcjson.ListTransactionsResult
 	GetTransaction(hash *chainhash.Hash) (*btcjson.TxRawResult, error)
 	GetAddressInfo(address string) (*btcjson.GetAddressInfoResult, error)
+	ImportDescriptors(descriptors []string, depth int)
 }
 
 type Util interface {
 	GetCanonicalDescriptor(descriptor string) (*string, error)
-	DeriveAddresses(descriptor string, index int) (*string, error)
+	DeriveAddress(descriptor string, index int) (*string, error)
 	EstimateSmartFee(target int64, mode string) btcutil.Amount
 }
 
@@ -32,7 +33,7 @@ type RawTransactions interface {
 	SendTransaction(tx string) (*chainhash.Hash, error)
 }
 
-type RPC interface {
+type Bridge interface {
 	Chain
 	Util
 	RawTransactions

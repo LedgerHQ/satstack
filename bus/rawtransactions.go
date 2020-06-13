@@ -31,19 +31,19 @@ func (b *Bus) SendTransaction(tx string) (*chainhash.Hash, error) {
 		return nil, err
 	}
 
-	chainHash, err := b.client.SendRawTransaction(&msgTx, true)
+	chainHash, err := b.Client.SendRawTransaction(&msgTx, true)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"hex":   tx,
 			"error": err,
-		}).Error("sendrawtransaction RPC failed")
+		}).Error("sendrawtransaction Bridge failed")
 		return nil, err
 	}
 
 	log.WithFields(log.Fields{
 		"hex":  tx,
 		"hash": chainHash.String(),
-	}).Info("sendrawtransaction RPC successful")
+	}).Info("sendrawtransaction Bridge successful")
 
 	return chainHash, nil
 }

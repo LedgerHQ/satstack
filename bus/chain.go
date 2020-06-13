@@ -10,15 +10,15 @@ import (
 )
 
 func (b *Bus) GetBestBlockHash() (*chainhash.Hash, error) {
-	return b.client.GetBestBlockHash()
+	return b.Client.GetBestBlockHash()
 }
 
 func (b *Bus) GetBlockHash(height int64) (*chainhash.Hash, error) {
-	return b.client.GetBlockHash(height)
+	return b.Client.GetBlockHash(height)
 }
 
 func (b *Bus) GetBlock(hash *chainhash.Hash) (*types.Block, error) {
-	nativeBlock, err := b.client.GetBlockVerbose(hash)
+	nativeBlock, err := b.Client.GetBlockVerbose(hash)
 	if err != nil {
 		return nil, err
 	}
@@ -39,5 +39,5 @@ func (b *Bus) GetBlock(hash *chainhash.Hash) (*types.Block, error) {
 }
 
 func (b *Bus) GetBlockChainInfo() (*btcjson.GetBlockChainInfoResult, error) {
-	return b.client.GetBlockChainInfo()
+	return b.Client.GetBlockChainInfo()
 }
