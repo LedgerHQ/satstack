@@ -3,6 +3,7 @@ package bus
 import (
 	"encoding/hex"
 	"errors"
+	"ledger-sats-stack/utils"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 
@@ -10,8 +11,17 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (b *Bus) ListTransactions(blockHash *chainhash.Hash) ([]btcjson.ListTransactionsResult, error) {
-	txs, err := b.Client.ListSinceBlockMinConfWatchOnly(nil, 1, true)
+func (b *Bus) ListTransactions(blockHash *string) ([]btcjson.ListTransactionsResult, error) {
+	var blockHashNative *chainhash.Hash
+	if blockHash != nil {
+		var err error
+		blockHashNative, err = utils.ParseChainHash(*blockHash)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	txs, err := b.Client.ListSinceBlockMinConfWatchOnly(blockHashNative, 1, true)
 	if err != nil {
 		return nil, err
 	}

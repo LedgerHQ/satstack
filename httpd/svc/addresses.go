@@ -9,8 +9,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (s *Service) GetAddresses(addresses []string) (types.Addresses, error) {
-	txResults, err := s.Bus.ListTransactions(nil)
+func (s *Service) GetAddresses(addresses []string, blockHash *string) (types.Addresses, error) {
+	txResults, err := s.Bus.ListTransactions(blockHash)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error":     err,

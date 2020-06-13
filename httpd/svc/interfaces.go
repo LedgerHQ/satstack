@@ -16,7 +16,7 @@ type BlocksService interface {
 }
 
 type AddressesService interface {
-	GetAddresses(addresses []string) (types.Addresses, error)
+	GetAddresses(addresses []string, blockHash *string) (types.Addresses, error)
 }
 
 type ExplorerService interface {

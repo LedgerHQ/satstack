@@ -13,9 +13,16 @@ import (
 func GetAddresses(s svc.AddressesService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		param := ctx.Param("addresses")
+		blockHashQuery := ctx.Query("block_hash")
+
 		addressList := strings.Split(param, ",")
 
-		addresses, err := s.GetAddresses(addressList)
+		var blockHash *string
+		if blockHashQuery != "" {
+			blockHash = &blockHashQuery
+		}
+
+		addresses, err := s.GetAddresses(addressList, blockHash)
 		if err != nil {
 			ctx.JSON(http.StatusNotFound, err)
 			return

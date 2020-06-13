@@ -10,7 +10,7 @@ import (
 )
 
 type Wallet interface {
-	ListTransactions(blockHash *chainhash.Hash) ([]btcjson.ListTransactionsResult, error)
+	ListTransactions(blockHash *string) ([]btcjson.ListTransactionsResult, error)
 	GetTransaction(hash *chainhash.Hash) (*btcjson.TxRawResult, error)
 	GetAddressInfo(address string) (*btcjson.GetAddressInfoResult, error)
 	ImportDescriptors(descriptors []string, depth int) error
