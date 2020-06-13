@@ -16,6 +16,20 @@ func ParseUnixTimestamp(timestamp int64) string {
 	return time.Unix(timestamp, 0).UTC().Format(time.RFC3339)
 }
 
+// ParseRFC3339Timestamp converts a timestamp in RFC3339 format to a UNIX
+// timestamp in seconds.
+//
+// It is the reverse of ParseUnixTimestamp
+func ParseRFC3339Timestamp(timestamp string) (*int64, error) {
+	t, err := time.Parse(time.RFC3339, timestamp)
+	if err != nil {
+		return nil, err
+	}
+
+	tUnix := t.Unix()
+	return &tUnix, nil
+}
+
 // ParseSatoshi converts a float64 bitcoin value to satoshis.
 // Named after ParseInt function.
 func ParseSatoshi(value float64) btcutil.Amount {
