@@ -1,8 +1,8 @@
 package svc
 
 import (
-	"ledger-sats-stack/pkg/config"
-	"ledger-sats-stack/pkg/types"
+	"ledger-sats-stack/config"
+	"ledger-sats-stack/types"
 )
 
 type TransactionsService interface {

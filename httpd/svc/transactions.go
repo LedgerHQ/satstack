@@ -3,8 +3,8 @@ package svc
 import (
 	"time"
 
-	"ledger-sats-stack/pkg/types"
-	"ledger-sats-stack/pkg/utils"
+	"ledger-sats-stack/types"
+	"ledger-sats-stack/utils"
 
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcutil"

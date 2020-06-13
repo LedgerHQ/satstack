@@ -2,8 +2,8 @@ package svc
 
 import (
 	"fmt"
-	"ledger-sats-stack/pkg/types"
-	"ledger-sats-stack/pkg/utils"
+	"ledger-sats-stack/types"
+	"ledger-sats-stack/utils"
 	"strconv"
 	"strings"
 

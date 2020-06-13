@@ -2,7 +2,7 @@ package integration
 
 import (
 	"fmt"
-	"ledger-sats-stack/pkg/httpd"
+	"ledger-sats-stack/httpd"
 	utils "ledger-sats-stack/tests"
 	"net/http/httptest"
 	"os"

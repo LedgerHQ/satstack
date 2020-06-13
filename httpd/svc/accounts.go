@@ -2,7 +2,7 @@ package svc
 
 import (
 	"fmt"
-	"ledger-sats-stack/pkg/config"
+	"ledger-sats-stack/config"
 
 	log "github.com/sirupsen/logrus"
 )

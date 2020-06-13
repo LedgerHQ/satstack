@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"ledger-sats-stack/pkg/types"
-	"ledger-sats-stack/svc"
+	"ledger-sats-stack/httpd/svc"
+	"ledger-sats-stack/types"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

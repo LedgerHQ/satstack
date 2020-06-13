@@ -1,7 +1,7 @@
 package config
 
 import (
-	"ledger-sats-stack/pkg/utils"
+	"ledger-sats-stack/utils"
 	"strings"
 	"time"
 

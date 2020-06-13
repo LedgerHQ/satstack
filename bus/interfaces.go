@@ -1,7 +1,7 @@
 package bus
 
 import (
-	"ledger-sats-stack/pkg/types"
+	"ledger-sats-stack/types"
 
 	"github.com/btcsuite/btcutil"
 

@@ -3,7 +3,7 @@ package bus
 import (
 	"errors"
 	"fmt"
-	"ledger-sats-stack/pkg/utils"
+	"ledger-sats-stack/utils"
 	"time"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"

@@ -3,12 +3,12 @@ package main
 import (
 	"encoding/json"
 	"ledger-sats-stack/bus"
-	"ledger-sats-stack/svc"
+	"ledger-sats-stack/httpd/svc"
 	"os"
 	"path"
 
-	"ledger-sats-stack/pkg/config"
-	"ledger-sats-stack/pkg/httpd"
+	"ledger-sats-stack/config"
+	"ledger-sats-stack/httpd"
 
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"

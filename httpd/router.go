@@ -1,8 +1,8 @@
 package httpd
 
 import (
-	"ledger-sats-stack/pkg/handlers"
-	"ledger-sats-stack/svc"
+	"ledger-sats-stack/httpd/handlers"
+	"ledger-sats-stack/httpd/svc"
 
 	"github.com/gin-gonic/gin"
 )

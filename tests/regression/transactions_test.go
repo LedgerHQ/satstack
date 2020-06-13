@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"ledger-sats-stack/pkg/httpd"
+	"ledger-sats-stack/httpd"
 	utils "ledger-sats-stack/tests"
 	"net/http/httptest"
 	"os"

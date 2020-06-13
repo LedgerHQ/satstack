@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"ledger-sats-stack/svc"
+	"ledger-sats-stack/httpd/svc"
 	"net/http"
 	"strings"
 
