@@ -14,15 +14,31 @@ below.
 There are a lot of ways to improve the performance, although **RPC Batch**
 and/or **Goroutines** are probably going to have the biggest impact.
 
-#### Legend
+### Synchronization
+
+##### Legend
 
 * **Ops** = Number of operations (`libcore` abstraction for transactions)
 * **LBE** = Ledger Blockchain Explorer
 * **LSS** = Ledger Sats Stack 
 * **reset** = reset libcore DB and sync from scratch
 
-### With `txindex=1`
+#### With `txindex=1` + Bus Cache
 
+| xpub                  | Ops | LBE (reset) | LSS (reset) | LBE         | LSS         |
+| :--------------------:|----:|------------:|------------:|------------:|------------:|
+| `tpubDDTG...FeF6mSjZ` | 2   | 6.54s       | 8.70s       | 3.78s       | 5.04s       |
+| `tpubDDbk...auTWxMLC` | 9   | 5.56s       | 7.90s       | 3.58s       | 4.18s       |
+| `tpubDDTG...H9UNPw4s` | 10  | 6.90s       | 8.41s       | 3.68s       | 4.20s       |
+| `tpubDDAt...tHEHYUnt` | 18  | 6.67s       | 8.87s       | 3.57s       | 5.31s       |
+| `tpubDCHC...9mFJejwC` | 30  | 6.19s       | 8.21s       | 3.68s       | 4.67s       |
+| `tpubDCkv...kFk9DBpZ` | 36  | 6.15s       | 8.17s       | 3.67s       | 4.99s       |
+| `tpubDCuo...wrhHqhsW` | 928 | 33.13s      | 41.50s      | 13.04s      | 15.99s       |
+
+
+#### With `txindex=1` + Bus Cache disabled
+
+🗄️ Benchmark only for posterity; archived as of commit [4cbae0d](https://github.com/onyb/ledger-sats-stack/tree/4cbae0db8f2a862d9b280601940af8b5662e99a3).
 
 | xpub                  | Ops | LBE (reset) | LSS (reset) | LBE         | LSS         |
 | :--------------------:|----:|------------:|------------:|------------:|------------:|
