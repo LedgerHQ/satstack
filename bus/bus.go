@@ -8,6 +8,7 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
+	"github.com/patrickmn/go-cache"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -16,7 +17,8 @@ type Bus struct {
 	Chain    string
 	Pruned   bool
 	TxIndex  bool
-	Currency string // Based on Chain value, for interoperability with libcore
+	Currency string       // Based on Chain value, for interoperability with libcore
+	Cache    *cache.Cache // Thread-safe Bus cache, to query results typically by hash
 }
 
 // New initializes a Bus struct that embeds a btcd RPC client.
@@ -68,6 +70,7 @@ func New(host string, user string, pass string, tls bool) (*Bus, error) {
 		Chain:    info.Chain,
 		TxIndex:  txIndex,
 		Currency: getCurrencyFromChain(info.Chain),
+		Cache:    nil, // Disabled by default
 	}, nil
 }
 

@@ -3,6 +3,7 @@ package bus
 import (
 	"encoding/hex"
 	"errors"
+	"github.com/patrickmn/go-cache"
 	"ledger-sats-stack/utils"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -30,11 +31,21 @@ func (b *Bus) ListTransactions(blockHash *string) ([]btcjson.ListTransactionsRes
 }
 
 func (b *Bus) GetTransaction(hash *chainhash.Hash) (*btcjson.TxRawResult, error) {
+	if b.Cache != nil { // Cache has been enabled at the svc level
+		if tx, found := b.Cache.Get(hash.String()); found {
+			return tx.(*btcjson.TxRawResult), nil
+		}
+	}
+
 	switch b.TxIndex {
 	case true:
 		txRaw, err := b.Client.GetRawTransactionVerbose(hash)
 		if err != nil {
 			return nil, err
+		}
+
+		if b.Cache != nil {
+			b.Cache.Set(hash.String(), txRaw, cache.NoExpiration)
 		}
 
 		return txRaw, nil
@@ -61,6 +72,10 @@ func (b *Bus) GetTransaction(hash *chainhash.Hash) (*btcjson.TxRawResult, error)
 		txRaw.BlockHash = tx.BlockHash
 		txRaw.Time = tx.Time
 		txRaw.Blocktime = tx.BlockTime
+
+		if b.Cache != nil {
+			b.Cache.Set(hash.String(), txRaw, cache.NoExpiration)
+		}
 
 		return txRaw, nil
 	}

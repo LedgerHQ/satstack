@@ -1,15 +1,26 @@
 package svc
 
 import (
+	"github.com/btcsuite/btcd/btcjson"
+	"github.com/patrickmn/go-cache"
 	"ledger-sats-stack/types"
 	"ledger-sats-stack/utils"
-
-	"github.com/btcsuite/btcd/btcjson"
 
 	log "github.com/sirupsen/logrus"
 )
 
 func (s *Service) GetAddresses(addresses []string, blockHash *string) (types.Addresses, error) {
+	// Thread-safe Bus cache, to cache result of GetTransaction from the Bus
+	// against the TxID.
+	//
+	// cleanupInterval is set to 0 to avoid spinning up the janitor
+	// goroutine.
+	s.Bus.Cache = cache.New(cache.NoExpiration, 0)
+	defer func() {
+		s.Bus.Cache.Flush()
+		s.Bus.Cache = nil
+	}()
+
 	txResults, err := s.Bus.ListTransactions(blockHash)
 	if err != nil {
 		log.WithFields(log.Fields{
