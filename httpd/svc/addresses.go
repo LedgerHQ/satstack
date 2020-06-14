@@ -17,7 +17,10 @@ func (s *Service) GetAddresses(addresses []string, blockHash *string) (types.Add
 	// goroutine.
 	s.Bus.Cache = cache.New(cache.NoExpiration, 0)
 	defer func() {
-		s.Bus.Cache.Flush()
+		if s.Bus.Cache != nil {
+			s.Bus.Cache.Flush()
+		}
+
 		s.Bus.Cache = nil
 	}()
 
@@ -38,9 +41,16 @@ func (s *Service) GetAddresses(addresses []string, blockHash *string) (types.Add
 				"error": err,
 				"hash":  txID,
 			}).Error("Unable to fetch transaction")
+
+			s.Bus.Cache.Delete(txID)
 			continue
 		}
-		txs = append(txs, *tx)
+
+		// Be defensive here with the retrieved transaction, to avoid
+		// nil pointer dereference.
+		if tx != nil {
+			txs = append(txs, *tx)
+		}
 	}
 
 	return types.Addresses{
