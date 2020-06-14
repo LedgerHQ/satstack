@@ -10,6 +10,8 @@ import (
 func GetRouter(s *svc.Service) *gin.Engine {
 	engine := gin.Default()
 
+	engine.GET("timestamp", handlers.GetTimestamp())
+
 	baseRouter := engine.Group("blockchain/v3")
 	{
 		baseRouter.GET("explorer/_health", handlers.GetHealth(s))

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -42,5 +43,13 @@ func GetFees(s svc.ExplorerService) gin.HandlerFunc {
 
 		fees := s.GetFees(blockCountsIntegers, mode)
 		ctx.JSON(http.StatusOK, fees)
+	}
+}
+
+func GetTimestamp() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, gin.H{
+			"timestamp": time.Now().Unix(),
+		})
 	}
 }
