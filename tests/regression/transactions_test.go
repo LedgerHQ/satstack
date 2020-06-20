@@ -73,7 +73,7 @@ func TestTransactionsRegression(t *testing.T) {
 				deleteConfirmations(transaction)
 				deleteInputIndexes(transaction)
 			}
-			for _, transaction := range remoteResponseJSON {
+			for idx, transaction := range remoteResponseJSON {
 				deleteConfirmations(transaction)
 				deleteInputIndexes(transaction)
 				normalizeInputsOrder(localResponseJSON[idx], transaction)
