@@ -3,7 +3,9 @@ package regression
 import (
 	"encoding/json"
 	"fmt"
+	"ledger-sats-stack/bus"
 	"ledger-sats-stack/httpd"
+	"ledger-sats-stack/httpd/svc"
 	utils "ledger-sats-stack/tests"
 	"net/http/httptest"
 	"os"
@@ -12,19 +14,29 @@ import (
 )
 
 func TestBlocksRegression(t *testing.T) {
-	// Setup phase
-	xrpc := httpd.GetBus(
+	b, err := bus.New(
 		os.Getenv("BITCOIND_RPC_HOST"),
 		os.Getenv("BITCOIND_RPC_USER"),
 		os.Getenv("BITCOIND_RPC_PASSWORD"),
 		os.Getenv("BITCOIND_RPC_ENABLE_TLS") == "true",
 	)
+	if err != nil {
+		t.Fatalf("Failed to initialize Bus: %v", err)
+	}
+	defer b.Close()
+
+	s := &svc.Service{
+		Bus: b,
+	}
+
 	// Inject Gin router into an HTTP server
-	ts := httptest.NewServer(httpd.GetRouter(xrpc))
+	engine := httpd.GetRouter(s)
+	ts := httptest.NewServer(engine)
+	defer ts.Close()
 
 	for _, testCase := range BlocksTestCases {
 		t.Run(testCase, func(t *testing.T) {
-			baseEndpoint := fmt.Sprintf("blockchain/v3/blocks/%s", testCase)
+			baseEndpoint := fmt.Sprintf("blockchain/v3/btc/blocks/%s", testCase)
 			localEndpoint := fmt.Sprintf("%s/%s", ts.URL, baseEndpoint)
 			remoteEndpoint := fmt.Sprintf("http://bitcoin-mainnet.explorers.prod.aws.ledger.fr/%s", baseEndpoint)
 
@@ -69,7 +81,4 @@ func TestBlocksRegression(t *testing.T) {
 			}
 		})
 	}
-	// Teardown phase
-	xrpc.Shutdown()
-	ts.Close()
 }

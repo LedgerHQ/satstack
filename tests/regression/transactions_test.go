@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"ledger-sats-stack/bus"
 	"ledger-sats-stack/httpd"
+	"ledger-sats-stack/httpd/svc"
 	utils "ledger-sats-stack/tests"
 	"net/http/httptest"
 	"os"
@@ -14,19 +16,29 @@ import (
 )
 
 func TestTransactionsRegression(t *testing.T) {
-	// Setup phase
-	xrpc := httpd.GetBus(
+	b, err := bus.New(
 		os.Getenv("BITCOIND_RPC_HOST"),
 		os.Getenv("BITCOIND_RPC_USER"),
 		os.Getenv("BITCOIND_RPC_PASSWORD"),
 		os.Getenv("BITCOIND_RPC_ENABLE_TLS") == "true",
 	)
+	if err != nil {
+		t.Fatalf("Failed to initialize Bus: %v", err)
+	}
+	defer b.Close()
+
+	s := &svc.Service{
+		Bus: b,
+	}
+
 	// Inject Gin router into an HTTP server
-	ts := httptest.NewServer(httpd.GetRouter(xrpc))
+	engine := httpd.GetRouter(s)
+	ts := httptest.NewServer(engine)
+	defer ts.Close()
 
 	for _, testCase := range TransactionTestCases {
 		t.Run(testCase, func(t *testing.T) {
-			baseEndpoint := fmt.Sprintf("blockchain/v3/transactions/%s", testCase)
+			baseEndpoint := fmt.Sprintf("blockchain/v3/btc/transactions/%s", testCase)
 			localEndpoint := fmt.Sprintf("%s/%s", ts.URL, baseEndpoint)
 			remoteEndpoint := fmt.Sprintf("http://bitcoin-mainnet.explorers.prod.aws.ledger.fr/%s", baseEndpoint)
 
@@ -61,10 +73,10 @@ func TestTransactionsRegression(t *testing.T) {
 				deleteConfirmations(transaction)
 				deleteInputIndexes(transaction)
 			}
-			for idx, transaction := range remoteResponseJSON {
+			for _, transaction := range remoteResponseJSON {
 				deleteConfirmations(transaction)
 				deleteInputIndexes(transaction)
-				normalizeInputsOrder(localResponseJSON[idx], transaction)
+				//normalizeInputsOrder(localResponseJSON[idx], transaction)
 			}
 
 			if !reflect.DeepEqual(localResponseJSON, remoteResponseJSON) {
@@ -77,10 +89,6 @@ func TestTransactionsRegression(t *testing.T) {
 			}
 		})
 	}
-
-	// Teardown phase
-	xrpc.Shutdown()
-	ts.Close()
 }
 
 func normalizeInputsOrder(localTransaction interface{}, remoteTransaction interface{}) {
