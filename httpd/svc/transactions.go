@@ -31,7 +31,8 @@ func (s *Service) GetTransaction(hash string) (*types.Transaction, error) {
 
 	block := s.getTransactionBlock(tx)
 
-	transaction := buildTx(tx, utxos, block)
+	transaction := buildTx(tx, utxos)
+	transaction.Block = block
 	return transaction, nil
 }
 
@@ -154,7 +155,7 @@ func parseUTXO(tx *btcjson.TxRawResult, outputIndex uint32) (*types.UTXOData, er
 	}
 }
 
-func buildTx(rawTx *btcjson.TxRawResult, utxos types.UTXOs, block *types.Block) *types.Transaction {
+func buildTx(rawTx *btcjson.TxRawResult, utxos types.UTXOs) *types.Transaction {
 	txn := new(types.Transaction)
 	txn.ID = rawTx.Txid
 	txn.Hash = rawTx.Txid // !FIXME: Use rawTx.Hash, which can differ for witness transactions
@@ -231,8 +232,6 @@ func buildTx(rawTx *btcjson.TxRawResult, utxos types.UTXOs, block *types.Block) 
 		sumVoutValues += *vout[idx].Value
 	}
 	txn.Outputs = vout
-
-	txn.Block = block
 
 	txn.Confirmations = rawTx.Confirmations
 
