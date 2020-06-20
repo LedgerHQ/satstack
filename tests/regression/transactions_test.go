@@ -76,7 +76,7 @@ func TestTransactionsRegression(t *testing.T) {
 			for _, transaction := range remoteResponseJSON {
 				deleteConfirmations(transaction)
 				deleteInputIndexes(transaction)
-				//normalizeInputsOrder(localResponseJSON[idx], transaction)
+				normalizeInputsOrder(localResponseJSON[idx], transaction)
 			}
 
 			if !reflect.DeepEqual(localResponseJSON, remoteResponseJSON) {
