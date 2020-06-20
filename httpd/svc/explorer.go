@@ -3,11 +3,7 @@ package svc
 import (
 	"strconv"
 	"time"
-
-	"github.com/btcsuite/btcutil"
 )
-
-const fallbackFee = btcutil.Amount(1)
 
 func (s *Service) GetHealth() error {
 	_, err := s.Bus.GetBlockChainInfo()

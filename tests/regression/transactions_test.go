@@ -3,14 +3,12 @@ package regression
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"ledger-sats-stack/bus"
 	"ledger-sats-stack/httpd"
 	"ledger-sats-stack/httpd/svc"
 	utils "ledger-sats-stack/tests"
 	"net/http/httptest"
 	"os"
-	"path"
 	"reflect"
 	"testing"
 )
@@ -126,31 +124,4 @@ func containsInput(inputs []interface{}, input interface{}) bool {
 		}
 	}
 	return false
-}
-
-func loadRecordingOrGetUrl(transactionHash string) ([]byte, error) {
-	cassette := path.Join("fixtures", "transactions", fmt.Sprintf("%s.json", transactionHash))
-	if _, err := os.Stat(cassette); os.IsNotExist(err) {
-		baseEndpoint := fmt.Sprintf("blockchain/v3/transactions/%s", transactionHash)
-		endpoint := fmt.Sprintf("http://bitcoin-mainnet.explorers.prod.aws.ledger.fr/%s", baseEndpoint)
-		responseBytes, err := utils.GetResponseBytes(endpoint)
-		if err != nil {
-			return nil, err
-		}
-
-		// prettify JSON
-		jsonArray, err := utils.LoadJSONArray(responseBytes)
-		if err != nil {
-			return nil, err
-		}
-		indentedResponseBytes, err := json.MarshalIndent(jsonArray, "", "  ")
-		if err != nil {
-			return nil, err
-		}
-		if err := ioutil.WriteFile(cassette, indentedResponseBytes, 0644); err != nil {
-			return nil, err
-		}
-		return responseBytes, nil
-	}
-	return ioutil.ReadFile(cassette)
 }

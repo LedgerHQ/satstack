@@ -226,7 +226,10 @@ func buildTx(rawTx *btcjson.TxRawResult, utxos types.UTXOs) *types.Transaction {
 		} else if len(rawVout.ScriptPubKey.Addresses) == 1 {
 			vout[idx].Address = rawVout.ScriptPubKey.Addresses[0]
 		} else {
-			// TODO: Document when this happens
+			log.WithFields(log.Fields{
+				"value":       outputValue,
+				"outputIndex": rawVout.N,
+			}).Warn("No address in scriptPubKey")
 		}
 
 		sumVoutValues += *vout[idx].Value
