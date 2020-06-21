@@ -1,6 +1,6 @@
 import hashlib
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Literal
 
 import base58
 import click
@@ -11,6 +11,7 @@ from ledgerwallet.transport import enumerate_devices
 
 BTCHIP_INS_GET_WALLET_PUBLIC_KEY = 0x40
 BIP32_HD_VERSION_MAINNET = 0x0488B21E
+SCHEME = Literal["legacy", "segwit", "native_segwit"]
 
 GetPubKey = Struct(
     public_key=Prefixed(Int8ub, GreedyBytes),
@@ -82,12 +83,22 @@ class ExtendedPublicKey:
         checksum = hash256(extended_key_bytes)[:4]
         return base58.b58encode(extended_key_bytes + checksum).decode()
 
-    def to_descriptor(self, derivation: Derivation, change: bool) -> str:
-        key_origin = f"{self.parent_fingerprint}/{derivation.path}"
+    def to_descriptor(
+        self, scheme: SCHEME, derivation: Derivation, change: bool
+    ) -> str:
+        key_origin = f"{self.parent_fingerprint.hex()}/{derivation.path}"
 
         change_index = 1 if change else 0
+        fragment = f"[{key_origin}]{self.serialize()}/{change_index}/*"
 
-        return f"sh([{key_origin}]{self.serialize()}/{change_index}/*)"
+        if scheme == "legacy":
+            return f"pkh({fragment})"
+        elif scheme == "segwit":
+            return f"sh(wpkh({fragment}))"
+        elif scheme == "native_segwit":
+            return f"wpkh({fragment})"
+
+        raise ValueError(f"Invalid scheme: {scheme}")
 
 
 def sha256(s) -> bytes:
@@ -129,11 +140,13 @@ def get_pubkey_from_path(client: LedgerClient, derivation: Derivation):
     return pubkey, chain_code
 
 
-def get_xpub_from_path(client: LedgerClient, derivation: Derivation) -> str:
+def derive_extended_public_key(
+    client: LedgerClient, derivation: Derivation
+) -> ExtendedPublicKey:
     pubkey, chain_code = get_pubkey_from_path(client, derivation)
     parent_pubkey, _ = get_pubkey_from_path(client, derivation.parent)
 
-    extended_key = ExtendedPublicKey(
+    return ExtendedPublicKey(
         version=BIP32_HD_VERSION_MAINNET,
         depth=derivation.depth,
         parent_fingerprint=hash160(parent_pubkey)[:4],
@@ -141,14 +154,34 @@ def get_xpub_from_path(client: LedgerClient, derivation: Derivation) -> str:
         chaincode=chain_code,
         pubkey=pubkey,
     )
-    return extended_key.serialize()
 
 
 def get_client() -> LedgerClient:
     for device in enumerate_devices():
         return LedgerClient(device)
-    else:
-        raise ConnectionError("No Ledger device has been found.")
+    raise ConnectionError("No Ledger device has been found.")
+
+
+def get_derivation_from_scheme(scheme: SCHEME, account: int):
+    m = Derivation()
+
+    if scheme == "legacy":
+        return m / Level(44).h() / Level(0).h() / Level(account).h()
+    elif scheme == "segwit":
+        return m / Level(49).h() / Level(0).h() / Level(account).h()
+    elif scheme == "native_segwit":
+        return m / Level(84).h() / Level(0).h() / Level(account).h()
+
+    raise ValueError(f"Bad derivation scheme: {scheme}")
+
+
+def derive_output_descriptors(client: LedgerClient, scheme: SCHEME, account: int):
+    derivation = get_derivation_from_scheme(scheme, account)
+    extended_key = derive_extended_public_key(client, derivation)
+
+    yield extended_key.to_descriptor(scheme=scheme, derivation=derivation, change=False)
+
+    yield extended_key.to_descriptor(scheme=scheme, derivation=derivation, change=True)
 
 
 @click.command()
@@ -156,21 +189,17 @@ def get_client() -> LedgerClient:
     "--scheme", type=click.Choice(["legacy", "segwit", "native_segwit"]), required=True,
 )
 @click.option("--account", type=int, required=True)
-def main(scheme, account):
-    m = Derivation()
-
-    if scheme == "legacy":
-        derivation = m / Level(44).h() / Level(0).h() / Level(account).h()
-    elif scheme == "segwit":
-        derivation = m / Level(49).h() / Level(0).h() / Level(account).h()
-    elif scheme == "native_segwit":
-        derivation = m / Level(84).h() / Level(0).h() / Level(account).h()
-    else:
-        raise ValueError(f"Bad derivation scheme: {scheme}")
-
+def main(scheme: SCHEME, account):
+    result = ()
     client = get_client()
-    xpub = get_xpub_from_path(client, derivation)
-    click.secho(f"{scheme} BTC (mainnet) xPub: {xpub}", fg="green")
+    for descriptor in derive_output_descriptors(client, scheme, account):
+        result += ({"descriptor": descriptor},)
+
+    click.secho(
+        f"Bitcoin output descriptors: scheme={scheme} network=mainnet", fg="green",
+    )
+    for each in result:
+        click.echo(f"\t{each['descriptor']}")
 
 
 if __name__ == "__main__":
