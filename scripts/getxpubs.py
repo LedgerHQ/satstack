@@ -1,29 +1,64 @@
 import hashlib
-from typing import NamedTuple
+from dataclasses import dataclass, field
+from typing import List
 
 import base58
 import click
 from construct import Bytes, GreedyBytes, Int8ub, PascalString, Prefixed, Struct
 from ledgerwallet.client import LedgerClient
-from ledgerwallet.params import Bip32Path
+from ledgerwallet.params import Bip32Path as bip32_path
 from ledgerwallet.transport import enumerate_devices
 
 BTCHIP_INS_GET_WALLET_PUBLIC_KEY = 0x40
-BIP32_HARDEN = 0x80000000
-BIP32_HD_VERSION_MAP = {
-    "mainnet": 0x0488B21E,
-    "testnet": 0x043587CF,
-}
-BIP32_HD_VERSION_MAP["regtest"] = BIP32_HD_VERSION_MAP["testnet"]
+BIP32_HD_VERSION_MAINNET = 0x0488B21E
 
-GetPubKeyResponse = Struct(
+GetPubKey = Struct(
     public_key=Prefixed(Int8ub, GreedyBytes),
     address=PascalString(Int8ub, "utf-8"),
     chain_code=Bytes(32),
 )
 
 
-class ExtendedPublicKey(NamedTuple):
+@dataclass
+class Derivation:
+    _path_list: List["Level"] = field(default_factory=list)
+
+    def __truediv__(self, level: "Level") -> "Derivation":
+        return Derivation(self._path_list + [level])
+
+    @property
+    def parent(self) -> "Derivation":
+        return Derivation(self._path_list[:-1])
+
+    @property
+    def path(self) -> str:
+        return "/".join(str(level) for level in self._path_list)
+
+    @property
+    def depth(self) -> int:
+        return len(self._path_list)
+
+
+@dataclass
+class Level:
+    _value: int
+
+    BIP32_HARDEN_BIT = 0x80000000
+
+    def harden(self) -> "Level":
+        return Level(self._value + self.BIP32_HARDEN_BIT)
+
+    h = harden
+
+    def __str__(self) -> str:
+        if self._value & self.BIP32_HARDEN_BIT:
+            value = self._value - self.BIP32_HARDEN_BIT
+            return f"{value}'"
+        return f"{self._value}"
+
+
+@dataclass
+class ExtendedPublicKey:
     version: int  # 4 bytes
     depth: int  # 1 byte
     parent_fingerprint: bytes  # 4 bytes
@@ -46,6 +81,13 @@ class ExtendedPublicKey(NamedTuple):
         )
         checksum = hash256(extended_key_bytes)[:4]
         return base58.b58encode(extended_key_bytes + checksum).decode()
+
+    def to_descriptor(self, derivation: Derivation, change: bool) -> str:
+        key_origin = f"{self.parent_fingerprint}/{derivation.path}"
+
+        change_index = 1 if change else 0
+
+        return f"sh([{key_origin}]{self.serialize()}/{change_index}/*)"
 
 
 def sha256(s) -> bytes:
@@ -77,28 +119,25 @@ def compress_public_key(public_key: bytes) -> bytes:
         raise ValueError("Invalid public key format")
 
 
-def get_xpub_from_path(client: LedgerClient, path: str, network: str) -> str:
-    # Get Pubkey and chaincode
+def get_pubkey_from_path(client: LedgerClient, derivation: Derivation):
     response = client.apdu_exchange(
-        BTCHIP_INS_GET_WALLET_PUBLIC_KEY, Bip32Path.build(path)
+        BTCHIP_INS_GET_WALLET_PUBLIC_KEY, bip32_path.build(derivation.path)
     )
-    r = GetPubKeyResponse.parse(response)
+    r = GetPubKey.parse(response)
     pubkey = compress_public_key(r.public_key)
     chain_code = r.chain_code
+    return pubkey, chain_code
 
-    # Get Parent Path pubkey and compute its fingerprint:
-    parent_path = "/".join(path.split("/")[:-1])
-    response = client.apdu_exchange(
-        BTCHIP_INS_GET_WALLET_PUBLIC_KEY, Bip32Path.build(parent_path)
-    )
-    r = GetPubKeyResponse.parse(response)
-    parent_public_key = r.public_key
+
+def get_xpub_from_path(client: LedgerClient, derivation: Derivation) -> str:
+    pubkey, chain_code = get_pubkey_from_path(client, derivation)
+    parent_pubkey, _ = get_pubkey_from_path(client, derivation.parent)
 
     extended_key = ExtendedPublicKey(
-        version=BIP32_HD_VERSION_MAP[network],
-        depth=len(path.split("/")),
-        parent_fingerprint=hash160(compress_public_key(parent_public_key))[:4],
-        child_num=BIP32_HARDEN,
+        version=BIP32_HD_VERSION_MAINNET,
+        depth=derivation.depth,
+        parent_fingerprint=hash160(parent_pubkey)[:4],
+        child_num=0x80000000,
         chaincode=chain_code,
         pubkey=pubkey,
     )
@@ -114,32 +153,24 @@ def get_client() -> LedgerClient:
 
 @click.command()
 @click.option(
-    "--scheme",
-    type=click.Choice(["BIP44", "BIP49", "BIP84"], case_sensitive=False),
-    required=True,
-)
-@click.option(
-    "--network",
-    type=click.Choice(["mainnet", "testnet", "regtest"], case_sensitive=False),
-    required=True,
+    "--scheme", type=click.Choice(["legacy", "segwit", "native_segwit"]), required=True,
 )
 @click.option("--account", type=int, required=True)
-def main(scheme, network, account):
-    if scheme == "BIP44":
-        path = f"44'/0'/{account}'"
-        kind = "Legacy"
-    elif scheme == "BIP49":
-        path = f"49'/0'/{account}'"
-        kind = "Segwit"
-    elif scheme == "BIP84":
-        path = f"84'/0'/{account}'"
-        kind = "Native Segwit"
+def main(scheme, account):
+    m = Derivation()
+
+    if scheme == "legacy":
+        derivation = m / Level(44).h() / Level(0).h() / Level(account).h()
+    elif scheme == "segwit":
+        derivation = m / Level(49).h() / Level(0).h() / Level(account).h()
+    elif scheme == "native_segwit":
+        derivation = m / Level(84).h() / Level(0).h() / Level(account).h()
     else:
         raise ValueError(f"Bad derivation scheme: {scheme}")
 
     client = get_client()
-    xpub = get_xpub_from_path(client, path, network)
-    click.secho(f"{kind} ({scheme}) BTC {network} xPub: {xpub}", fg="green")
+    xpub = get_xpub_from_path(client, derivation)
+    click.secho(f"{scheme} BTC (mainnet) xPub: {xpub}", fg="green")
 
 
 if __name__ == "__main__":
