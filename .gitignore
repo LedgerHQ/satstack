@@ -38,3 +38,6 @@ main
 
 # libcore DB created during benchmarks / integration tests
 dbdata
+
+# Python virtualenvs
+venv

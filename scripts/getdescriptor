@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import hashlib
 from dataclasses import dataclass, field
 from typing import List, Literal
@@ -10,8 +12,14 @@ from ledgerwallet.params import Bip32Path as bip32_path
 from ledgerwallet.transport import enumerate_devices
 
 BTCHIP_INS_GET_WALLET_PUBLIC_KEY = 0x40
-BIP32_HD_VERSION_MAINNET = 0x0488B21E
+BIP32_HD_VERSION = {
+    "main": 0x0488B21E,
+    "test": 0x043587CF,
+    "regtest": 0x043587CF,
+}
+BIP32_HARDEN_BIT = 0x80000000
 SCHEME = Literal["legacy", "segwit", "native_segwit"]
+CHAIN = Literal["main", "test", "regtest"]
 
 GetPubKey = Struct(
     public_key=Prefixed(Int8ub, GreedyBytes),
@@ -26,6 +34,12 @@ class Derivation:
 
     def __truediv__(self, level: "Level") -> "Derivation":
         return Derivation(self._path_list + [level])
+
+    @property
+    def account(self) -> int:
+        if self.depth < 3:
+            raise ValueError(f"Insufficient HD tree depth: {self.depth}")
+        return self._path_list[2].value
 
     @property
     def parent(self) -> "Derivation":
@@ -44,16 +58,16 @@ class Derivation:
 class Level:
     _value: int
 
-    BIP32_HARDEN_BIT = 0x80000000
+    @property
+    def value(self) -> int:
+        return self._value
 
-    def harden(self) -> "Level":
-        return Level(self._value + self.BIP32_HARDEN_BIT)
-
-    h = harden
+    def h(self) -> "Level":
+        return Level(self._value + BIP32_HARDEN_BIT)
 
     def __str__(self) -> str:
-        if self._value & self.BIP32_HARDEN_BIT:
-            value = self._value - self.BIP32_HARDEN_BIT
+        if self._value & BIP32_HARDEN_BIT:
+            value = self._value - BIP32_HARDEN_BIT
             return f"{value}'"
         return f"{self._value}"
 
@@ -83,13 +97,11 @@ class ExtendedPublicKey:
         checksum = hash256(extended_key_bytes)[:4]
         return base58.b58encode(extended_key_bytes + checksum).decode()
 
-    def to_descriptor(
-        self, scheme: SCHEME, derivation: Derivation, change: bool
-    ) -> str:
+    def to_descriptor(self, scheme: SCHEME, derivation: Derivation) -> str:
         key_origin = f"{self.parent_fingerprint.hex()}/{derivation.path}"
 
-        change_index = 1 if change else 0
-        fragment = f"[{key_origin}]{self.serialize()}/{change_index}/*"
+        change = 0  # hard-code to external chain for simpler UX
+        fragment = f"[{key_origin}]{self.serialize()}/{change}/*"
 
         if scheme == "legacy":
             return f"pkh({fragment})"
@@ -141,16 +153,16 @@ def get_pubkey_from_path(client: LedgerClient, derivation: Derivation):
 
 
 def derive_extended_public_key(
-    client: LedgerClient, derivation: Derivation
+    client: LedgerClient, chain: CHAIN, derivation: Derivation
 ) -> ExtendedPublicKey:
     pubkey, chain_code = get_pubkey_from_path(client, derivation)
     parent_pubkey, _ = get_pubkey_from_path(client, derivation.parent)
 
     return ExtendedPublicKey(
-        version=BIP32_HD_VERSION_MAINNET,
+        version=BIP32_HD_VERSION[chain],
         depth=derivation.depth,
         parent_fingerprint=hash160(parent_pubkey)[:4],
-        child_num=0x80000000,
+        child_num=derivation.account,
         chaincode=chain_code,
         pubkey=pubkey,
     )
@@ -162,44 +174,43 @@ def get_client() -> LedgerClient:
     raise ConnectionError("No Ledger device has been found.")
 
 
-def get_derivation_from_scheme(scheme: SCHEME, account: int):
+def get_derivation_from_scheme(
+    scheme: SCHEME, chain: CHAIN, account: int
+) -> Derivation:
     m = Derivation()
 
+    chain_level = 0 if chain == "main" else 1
+
     if scheme == "legacy":
-        return m / Level(44).h() / Level(0).h() / Level(account).h()
+        return m / Level(44).h() / Level(chain_level).h() / Level(account).h()
     elif scheme == "segwit":
-        return m / Level(49).h() / Level(0).h() / Level(account).h()
+        return m / Level(49).h() / Level(chain_level).h() / Level(account).h()
     elif scheme == "native_segwit":
-        return m / Level(84).h() / Level(0).h() / Level(account).h()
+        return m / Level(84).h() / Level(chain_level).h() / Level(account).h()
 
     raise ValueError(f"Bad derivation scheme: {scheme}")
 
 
-def derive_output_descriptors(client: LedgerClient, scheme: SCHEME, account: int):
-    derivation = get_derivation_from_scheme(scheme, account)
-    extended_key = derive_extended_public_key(client, derivation)
-
-    yield extended_key.to_descriptor(scheme=scheme, derivation=derivation, change=False)
-
-    yield extended_key.to_descriptor(scheme=scheme, derivation=derivation, change=True)
+def derive_output_descriptors(
+    client: LedgerClient, scheme: SCHEME, chain: CHAIN, account: int
+) -> str:
+    derivation = get_derivation_from_scheme(scheme, chain, account)
+    extended_key = derive_extended_public_key(client, chain, derivation)
+    return extended_key.to_descriptor(scheme=scheme, derivation=derivation)
 
 
 @click.command()
 @click.option(
-    "--scheme", type=click.Choice(["legacy", "segwit", "native_segwit"]), required=True,
+    "--scheme", type=click.Choice(SCHEME.__args__), required=True,
+)
+@click.option(
+    "--chain", type=click.Choice(CHAIN.__args__), required=True,
 )
 @click.option("--account", type=int, required=True)
-def main(scheme: SCHEME, account):
-    result = ()
+def main(scheme: SCHEME, chain: CHAIN, account):
     client = get_client()
-    for descriptor in derive_output_descriptors(client, scheme, account):
-        result += ({"descriptor": descriptor},)
-
-    click.secho(
-        f"Bitcoin output descriptors: scheme={scheme} network=mainnet", fg="green",
-    )
-    for each in result:
-        click.echo(f"\t{each['descriptor']}")
+    descriptor = derive_output_descriptors(client, scheme, chain, account)
+    click.echo(descriptor)
 
 
 if __name__ == "__main__":

@@ -60,16 +60,39 @@ Ledger Sats Stack is a standalone Go application, that acts as a bridge between 
   # Enable txindex
   txindex=1
   ```
-  ⚠️ It is recommended to enable `txindex` for better performance. `txindex=0` is supported, but unstable.
+  ⚠️ While you can synchronize your accounts with `txindex=0` (disabled), outgoing
+  transactions are currently not supported.
 
-- Ledger Live (desktop) **`2.5.0+`**
-- Go **`1.13+`** (or download a [release](https://github.com/onyb/ledger-sats-stack/releases))
+- Ledger Live (desktop) **`2.5.0+`**.
+- Go **`1.14+`** (or download a [release](https://github.com/onyb/ledger-sats-stack/releases)).
 
 ## Usage
 
+#### Retrieve descriptors from device
+
+(coming soon) You'll soon be able to find this information directly on Ledger Live,
+in your account settings.
+
+If you are a first-time user of Ledger Live, you should retrieve your account xPubs
+directly from your Ledger device, in order to avoid leaking your privacy. Simply follow
+these steps:
+
+1. Plug in your Ledger device via USB.
+2. Enter your PIN code on the device, and open the Bitcoin app.
+3. Run the `scripts/getdescriptor` script, as shown below.
+
+```bash
+$ cd scripts
+$ python3 -m venv venv  # ensure Python 3.7+
+$ source venv/bin/activate
+(venv) $ pip install -r requirements.txt
+(venv) $ ./getdescriptor --scheme native_segwit --chain main --account 3
+wpkh([6e6a1271/84'/0'/3']xpubDCHCguj...mFJejwC/0/*)
+```
+
 #### Create configuration file
 
-Export your xPubs from Ledger Live, and add them to a **`~/.sats.json`** file.
+Add the descriptors to a **`~/.sats.json`** file.
 Sample configuration templates are available in the repository.
 
 ```sh
@@ -82,9 +105,11 @@ Example configuration:
 {
   "accounts" : [
     {
-      "xpub": "xpubDCHCguj...mFJejwC",
-      "index": 0,
-      "derivationMode": "native_segwit",
+      "descriptor": "wpkh([6e6a1271/84'/0'/3']xpubDCHCguj...mFJejwC/0/*)",
+      "birthday": "2020/01/01"
+    },
+    {
+      "descriptor": "sh(wpkh([c260546c/49'/0'/1']xpub6D5dhQj...NiDn3ef/0/*))",
       "birthday": "2020/01/01"
     }
   ],
@@ -104,11 +129,9 @@ Example configuration:
 
 Make sure you meet the [requirements](#requirements) first, then launch `bitcoind` like this:
 
-```
+```bash
 $ bitcoind
 ```
-
-It's not important to have the node completely synced before proceeding to the next step.
 
 #### Launch Sats Stack
 
@@ -117,6 +140,10 @@ $ git clone https://github.com/onyb/ledger-sats-stack
 $ cd ledger-sats-stack
 $ make release
 ```
+
+On startup, Sats Stack will wait for the Bitcoin node to be fully synced,
+and import your output descriptors to bitcoind's native wallet. This can
+take a while.
 
 #### Launch Ledger Live Desktop
 
@@ -127,6 +154,10 @@ $ yarn
 $ EXPERIMENTAL_EXPLORERS=1 EXPLORER=http://0.0.0.0:20000 yarn start
 ```
 
-## Contribute
+## Community
 
-Contributions in the form of code improvements, documentation, tutorials, and feedback are most welcome. If you want to help out, please see [CONTRIBUTING.md](/).
+If you liked this project, show us some love by tweeting to [@Ledger](https://twitter.com/Ledger)
+and [@onybose](https://twitter.com/onybose).
+
+Contributions in the form of code improvements, documentation, tutorials,
+and feedback are most welcome.

@@ -1,15 +1,11 @@
 {
   "accounts" : [
     {
-      "xpub": "tpub...",
-      "index": 0,
-      "derivationMode": "segwit",
+      "descriptor": "sh(wpkh(...",
       "birthday": "2020/01/01"
     },
     {
-      "xpub": "tpub...",
-      "index": 0,
-      "derivationMode": "native_segwit",
+      "descriptor": "wpkh(...",
       "birthday": "2020/01/01"
     }
   ],
