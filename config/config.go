@@ -12,8 +12,9 @@ import (
 //
 // Fields marked as (?) are optional.
 type Account struct {
-	XPub           *string `json:"xpub"`
-	Index          *int    `json:"index"`
+	Descriptor     *string `json:"descriptor"`     // output descriptor for the account
+	XPub           *string `json:"xpub"`           // xPub of the account
+	Index          *int    `json:"index"`          // the account index
 	DerivationMode *string `json:"derivationMode"` // standard, segwit, or native_segwit
 	DerivationPath *string `json:"derivationPath"` // (?) Will override libcore defaults
 	Birthday       *date   `json:"birthday"`       // (?) Earliest known creation date (YYYY/MM/DD)
@@ -65,15 +66,17 @@ func (c Configuration) Validate() {
 	}
 
 	for _, account := range c.Accounts {
-		validateStringField("xpub", account.XPub)
-		validateIntField("index", account.Index)
-		validateStringField("derivationMode", account.DerivationMode)
+		if account.Descriptor == nil {
+			validateStringField("xpub", account.XPub)
+			validateIntField("index", account.Index)
+			validateStringField("derivationMode", account.DerivationMode)
 
-		validDerivationModes := []string{"standard", "segwit", "native_segwit"}
-		if !utils.Contains(validDerivationModes, *account.DerivationMode) {
-			log.WithFields(log.Fields{
-				"derivationMode": *account.DerivationMode,
-			}).Fatal("Invalid value for field")
+			validDerivationModes := []string{"standard", "segwit", "native_segwit"}
+			if !utils.Contains(validDerivationModes, *account.DerivationMode) {
+				log.WithFields(log.Fields{
+					"derivationMode": *account.DerivationMode,
+				}).Fatal("Invalid value for field")
+			}
 		}
 	}
 }

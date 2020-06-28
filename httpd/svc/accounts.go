@@ -3,6 +3,7 @@ package svc
 import (
 	"fmt"
 	"ledger-sats-stack/config"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -72,6 +73,13 @@ func (s *Service) ImportAccounts(config config.Configuration) error {
 }
 
 func getRawAccountDescriptors(account config.Account) []string {
+	if account.Descriptor != nil {
+		return []string{
+			*account.Descriptor, // external chain
+			strings.Replace(*account.Descriptor, "/0/*", "/1/*", -1), // internal chain
+		}
+	}
+
 	var scriptFragment string
 	switch *account.DerivationMode { // cannot panic due to config validation
 	case "standard":
