@@ -92,11 +92,11 @@ wpkh([6e6a1271/84'/0'/3']xpubDCHCguj...mFJejwC/0/*)
 
 #### Create configuration file
 
-Add the descriptors to a **`~/.sats.json`** file.
+Add the descriptors to a **`~/.lss.json`** file.
 Sample configuration templates are available in the repository.
 
 ```sh
-$ cp sats.mainnet.json ~/.sats.json
+$ cp lss.mainnet.json ~/.lss.json
 ```
 
 Example configuration:

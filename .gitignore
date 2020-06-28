@@ -32,7 +32,7 @@
 
 # End of https://www.gitignore.io/api/go,code
 
-main
+lss
 .idea
 .DS_Store
 

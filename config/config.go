@@ -21,7 +21,7 @@ type Account struct {
 }
 
 // Configuration is a struct to model the JSON configuration
-// of the project, stored in ~/.sats.json file.
+// of the project, stored in ~/.lss.json file.
 //
 // Fields marked as (?) are optional.
 type Configuration struct {

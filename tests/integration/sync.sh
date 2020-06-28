@@ -6,7 +6,7 @@ GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
 
-for account in $(jq -r ".accounts[] | [.xpub,.derivationMode] | @csv" < ~/.sats.json | sed "s/\"//g")
+for account in $(jq -r ".accounts[] | [.xpub,.derivationMode] | @csv" < ~/.lss.json | sed "s/\"//g")
 do
     xpub=$(echo "$account" | cut -d"," -f1)
     scheme=$(echo "$account" | cut -d"," -f2)

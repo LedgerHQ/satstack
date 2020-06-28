@@ -63,7 +63,7 @@ func loadConfig() config.Configuration {
 		}).Fatal("Cannot obtain user home directory")
 	}
 
-	configPath := path.Join(home, ".sats.json")
+	configPath := path.Join(home, ".lss.json")
 
 	file, err := os.Open(configPath)
 	if err != nil {
