@@ -8,11 +8,15 @@
 Ledger Sats Stack is a lightweight bridge to connect Ledger Live with your personal Bitcoin full node. It's designed to allow Ledger Live users use Bitcoin without compromising on privacy, or relying on Ledger's infrastructure.
 
 <p>
+  <img src="https://img.shields.io/github/v/release/onyb/ledger-sats-stack?include_prereleases" />
+  <img src="https://img.shields.io/github/downloads/onyb/ledger-sats-stack/total">
+  <img src="https://img.shields.io/badge/Go-%3E%3D1.14-04ADD8.svg" />
+</p>
+
+<p>
   <img src="https://github.com/onyb/ledger-sats-stack/workflows/Build/badge.svg" />
-  <img src="https://github.com/onyb/ledger-sats-stack/workflows/reviewdog/badge.svg" />
   <img src="https://github.com/onyb/ledger-sats-stack/workflows/Integration%20tests/badge.svg" />
   <img src="https://github.com/onyb/ledger-sats-stack/workflows/Regression%20tests/badge.svg" />
-  <img src="https://img.shields.io/badge/Go-%3E%3D1.13-orange.svg" />
 </p>
 
 
@@ -46,25 +50,11 @@ Ledger Sats Stack is a standalone Go application, that acts as a bridge between 
 
 ## Requirements
 
-- Bitcoin Core **`0.19.0+`**
+- Bitcoin Core **`0.19.0+`** (with `txindex` enabled).
 
-  Example `bitcoin.conf`:
-  ```
-  # Enable RPC server
-  server=1
-    
-  # Set RPC credentials
-  rpcuser=<user>
-  rpcpassword=<password>
-    
-  # Enable txindex
-  txindex=1
-  ```
-  ⚠️ While you can synchronize your accounts with `txindex=0` (disabled), outgoing
-  transactions are currently not supported.
-
+  ⚠️ If you disable `txindex`, outgoing transactions may not work,
+  although synchronization on Ledger Live should work fine.
 - Ledger Live (desktop) **`2.5.0+`**.
-- Go **`1.14+`** (or download a [release](https://github.com/onyb/ledger-sats-stack/releases)).
 
 ## Usage
 
@@ -127,7 +117,22 @@ Example configuration:
 
 #### Launch Bitcoin full node
 
-Make sure you meet the [requirements](#requirements) first, then launch `bitcoind` like this:
+Make sure you've read the [requirements](#requirements) first, and that your node is configured properly.
+Here's an example `bitcoin.conf`:
+
+```
+# Enable RPC server
+server=1
+
+# Set RPC credentials
+rpcuser=<user>
+rpcpassword=<password>
+
+# Enable txindex
+txindex=1
+```
+
+Then launch `bitcoind` like this:
 
 ```bash
 $ bitcoind
@@ -135,15 +140,21 @@ $ bitcoind
 
 #### Launch Sats Stack
 
+Pre-built binaries are available for download on the [releases](https://github.com/onyb/ledger-sats-stack/releases)
+page (Linux, Windows, MacOS). Extract the tarball, and launch it as:
+
 ```sh
-$ git clone https://github.com/onyb/ledger-sats-stack
-$ cd ledger-sats-stack
-$ make release
+$ ./lss
+```
+
+If you want to build `lss` yourself, just do:
+
+```sh
+$ make release  # or "make dev" for a development build
 ```
 
 On startup, Sats Stack will wait for the Bitcoin node to be fully synced,
-and import your output descriptors to bitcoind's native wallet. This can
-take a while.
+and import your accounts. This can take a while
 
 #### Launch Ledger Live Desktop
 
@@ -156,8 +167,8 @@ $ EXPERIMENTAL_EXPLORERS=1 EXPLORER=http://0.0.0.0:20000 yarn start
 
 ## Community
 
-If you liked this project, show us some love by tweeting to [@Ledger](https://twitter.com/Ledger)
-and [@onybose](https://twitter.com/onybose).
+If you liked this project, show us some love by tweeting to us
+[@Ledger](https://twitter.com/Ledger) and [@onybose](https://twitter.com/onybose).
 
 Contributions in the form of code improvements, documentation, tutorials,
 and feedback are most welcome.
