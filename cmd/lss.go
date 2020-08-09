@@ -9,6 +9,7 @@ import (
 
 	"ledger-sats-stack/config"
 	"ledger-sats-stack/httpd"
+	"ledger-sats-stack/version"
 
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
@@ -22,6 +23,13 @@ func main() {
 		QuoteEmptyFields: true,
 		SpacePadding:     45,
 	})
+
+	log.WithFields(log.Fields{
+		"build":   version.Build,
+		"commit":  version.GitCommit,
+		"runtime": version.GoVersion,
+		"arch":    version.OsArch,
+	}).Infof("Ledger Sats Stack (lss) %s", version.Version)
 
 	configuration := loadConfig()
 

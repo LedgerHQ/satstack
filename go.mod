@@ -7,6 +7,7 @@ require (
 	github.com/btcsuite/btcutil v1.0.2
 	github.com/gin-gonic/gin v1.6.3
 	github.com/golang/protobuf v1.4.2 // indirect
+	github.com/magefile/mage v1.10.0
 	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
 	github.com/mitchellh/go-homedir v1.1.0
