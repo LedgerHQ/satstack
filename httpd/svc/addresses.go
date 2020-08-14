@@ -1,10 +1,11 @@
 package svc
 
 import (
-	"github.com/btcsuite/btcd/btcjson"
-	"github.com/patrickmn/go-cache"
 	"ledger-sats-stack/types"
 	"ledger-sats-stack/utils"
+
+	"github.com/btcsuite/btcd/btcjson"
+	"github.com/patrickmn/go-cache"
 
 	log "github.com/sirupsen/logrus"
 )

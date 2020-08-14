@@ -22,13 +22,13 @@ type Bus struct {
 }
 
 // New initializes a Bus struct that embeds a btcd RPC client.
-func New(host string, user string, pass string, tls bool) (*Bus, error) {
+func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 	connCfg := &rpcclient.ConnConfig{
 		Host:         host,
 		User:         user,
 		Pass:         pass,
 		HTTPPostMode: true,
-		DisableTLS:   !tls,
+		DisableTLS:   noTLS,
 	}
 	// The notification parameter is nil since notifications are not
 	// supported in HTTP POST mode.
@@ -37,7 +37,7 @@ func New(host string, user string, pass string, tls bool) (*Bus, error) {
 		log.WithFields(log.Fields{
 			"host": host,
 			"user": user,
-			"TLS":  tls,
+			"TLS":  !noTLS,
 		}).Error("Failed to initialize RPC client")
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func New(host string, user string, pass string, tls bool) (*Bus, error) {
 		log.WithFields(log.Fields{
 			"host": host,
 			"user": user,
-			"TLS":  tls,
+			"TLS":  !noTLS,
 		}).Error("Failed to connect to RPC server")
 		return nil, err
 	}

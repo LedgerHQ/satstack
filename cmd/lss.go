@@ -37,7 +37,7 @@ func main() {
 		*configuration.RPCURL,
 		*configuration.RPCUser,
 		*configuration.RPCPassword,
-		configuration.RPCTLS,
+		configuration.NoTLS,
 	)
 	if err != nil {
 		log.WithFields(log.Fields{

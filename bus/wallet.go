@@ -3,8 +3,10 @@ package bus
 import (
 	"encoding/hex"
 	"errors"
-	"github.com/patrickmn/go-cache"
+	"ledger-sats-stack/types"
 	"ledger-sats-stack/utils"
+
+	"github.com/patrickmn/go-cache"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 
@@ -85,13 +87,13 @@ func (b *Bus) GetAddressInfo(address string) (*btcjson.GetAddressInfoResult, err
 	return b.Client.GetAddressInfo(address)
 }
 
-func (b *Bus) ImportDescriptors(descriptors []string, depth int) error {
+func (b *Bus) ImportDescriptors(descriptors []types.Descriptor) error {
 	var requests []btcjson.ImportMultiRequest
 	for _, descriptor := range descriptors {
 		requests = append(requests, btcjson.ImportMultiRequest{
-			Descriptor: btcjson.String(descriptor),
-			Range:      &btcjson.DescriptorRange{Value: []int{0, depth}},
-			Timestamp:  btcjson.Timestamp{Value: 0}, // TODO: Use birthday here
+			Descriptor: btcjson.String(descriptor.Value),
+			Range:      &btcjson.DescriptorRange{Value: []int{0, descriptor.Depth}},
+			Timestamp:  btcjson.Timestamp{Value: descriptor.Age},
 			WatchOnly:  btcjson.Bool(true),
 			KeyPool:    btcjson.Bool(false),
 			Internal:   btcjson.Bool(false),

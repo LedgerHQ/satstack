@@ -1,7 +1,6 @@
 package config
 
 import (
-	"ledger-sats-stack/utils"
 	"strings"
 	"time"
 
@@ -12,12 +11,9 @@ import (
 //
 // Fields marked as (?) are optional.
 type Account struct {
-	Descriptor     *string `json:"descriptor"`     // output descriptor for the account
-	XPub           *string `json:"xpub"`           // xPub of the account
-	Index          *int    `json:"index"`          // the account index
-	DerivationMode *string `json:"derivationMode"` // standard, segwit, or native_segwit
-	DerivationPath *string `json:"derivationPath"` // (?) Will override libcore defaults
-	Birthday       *date   `json:"birthday"`       // (?) Earliest known creation date (YYYY/MM/DD)
+	Descriptor *string `json:"descriptor"` // output descriptor for the account
+	Depth      *int    `json:"depth"`      // (?) Number of addresses to import
+	Birthday   *date   `json:"birthday"`   // (?) Earliest known creation date (YYYY/MM/DD)
 }
 
 // Configuration is a struct to model the JSON configuration
@@ -25,12 +21,11 @@ type Account struct {
 //
 // Fields marked as (?) are optional.
 type Configuration struct {
-	RPCURL      *string   `json:"rpcURL"`
-	RPCUser     *string   `json:"rpcUser"`
-	RPCPassword *string   `json:"rpcPassword"`
-	RPCTLS      bool      `json:"rpcTLS"`
+	RPCURL      *string   `json:"rpcurl"`
+	RPCUser     *string   `json:"rpcuser"`
+	RPCPassword *string   `json:"rpcpass"`
+	NoTLS       bool      `json:"notls"`
 	Accounts    []Account `json:"accounts"`
-	Depth       *int      `json:"depth"` // (?) Number of addresses to import
 }
 
 type date struct {
@@ -66,30 +61,13 @@ func (c Configuration) Validate() {
 	}
 
 	for _, account := range c.Accounts {
-		if account.Descriptor == nil {
-			validateStringField("xpub", account.XPub)
-			validateIntField("index", account.Index)
-			validateStringField("derivationMode", account.DerivationMode)
+		validateStringField("descriptor", account.Descriptor)
 
-			validDerivationModes := []string{"standard", "segwit", "native_segwit"}
-			if !utils.Contains(validDerivationModes, *account.DerivationMode) {
-				log.WithFields(log.Fields{
-					"derivationMode": *account.DerivationMode,
-				}).Fatal("Invalid value for field")
-			}
-		}
+		// TODO: Add validation for birthday field
 	}
 }
 
 func validateStringField(key string, value *string) {
-	if value == nil {
-		log.WithFields(log.Fields{
-			key: value,
-		}).Fatal("Missing configuration")
-	}
-}
-
-func validateIntField(key string, value *int) {
 	if value == nil {
 		log.WithFields(log.Fields{
 			key: value,

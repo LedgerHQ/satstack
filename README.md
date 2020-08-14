@@ -50,7 +50,7 @@ Ledger Sats Stack is a standalone Go application, that acts as a bridge between 
 
 ## Requirements
 
-- Bitcoin Core **`0.19.0+`** (with `txindex` enabled).
+- Bitcoin Core **`0.20.0+`** (with `txindex` enabled).
 
   ⚠️ If you disable `txindex`, outgoing transactions may not work,
   although synchronization on Ledger Live should work fine.
@@ -95,23 +95,24 @@ Example configuration:
 {
   "accounts" : [
     {
-      "descriptor": "wpkh([6e6a1271/84'/0'/3']xpubDCHCguj...mFJejwC/0/*)",
-      "birthday": "2020/01/01"
+      "descriptor": "wpkh([6e6a1271/84'/0'/3']xpubDCHCguj...mFJejwC)",
+      "birthday": "2020/01/01",
+      "depth": 1000
     },
     {
-      "descriptor": "sh(wpkh([c260546c/49'/0'/1']xpub6D5dhQj...NiDn3ef/0/*))",
-      "birthday": "2020/01/01"
+      "descriptor": "sh(wpkh([c260546c/49'/0'/1']xpub6D5dhQj...NiDn3ef))",
+      "birthday": "2020/01/01",
+      "depth": 1000
     }
   ],
-  "rpcURL": "localhost:8332",
-  "rpcUser": "<user>",
-  "rpcPassword": "<password>",
-  "rpcTLS": false,
-  "depth": 1000
+  "rpcurl": "localhost:8332",
+  "rpcuser": "<user>",
+  "rpcpass": "<password>",
+  "notls": true
 }
 ```
 
-###### Optional fields
+###### Optional account fields
 - **`depth`**: overrides the number of addresses to derive and import in the Bitcoin wallet. Defaults to `1000`.
 - **`birthday`**: earliest known creation date (`YYYY/MM/DD` format), for faster wallet import. Defaults to genesis.
 

@@ -1,16 +1,20 @@
 {
-  "accounts" : [
+  "accounts": [
     {
-      "descriptor": "sh(wpkh(...",
+      "descriptor": "sh(wpkh(...)",
       "birthday": "2020/01/01"
     },
     {
-      "descriptor": "wpkh(...",
+      "descriptor": "sh(wpkh(...))",
+      "birthday": "2020/01/01"
+    },
+    {
+      "descriptor": "wpkh(...)",
       "birthday": "2020/01/01"
     }
   ],
-  "rpcURL": "localhost:18332",
-  "rpcUser": "user",
-  "rpcPassword": "pass",
-  "rpcTLS": false
+  "rpcurl": "localhost:18332",
+  "rpcuser": "user",
+  "rpcpass": "pass",
+  "notls": true
 }
