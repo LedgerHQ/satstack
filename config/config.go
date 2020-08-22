@@ -50,9 +50,9 @@ func (d *date) UnmarshalJSON(input []byte) error {
 // It does not mutate the configuration values itself, but logs FATAL errors
 // in case of invalid configuration.
 func (c Configuration) Validate() {
-	validateStringField("rpcURL", c.RPCURL)
-	validateStringField("rpcUser", c.RPCUser)
-	validateStringField("rpcPassword", c.RPCPassword)
+	validateStringField("rpcurl", c.RPCURL)
+	validateStringField("rpcuser", c.RPCUser)
+	validateStringField("rpcpass", c.RPCPassword)
 
 	if c.Accounts == nil {
 		log.WithFields(log.Fields{
