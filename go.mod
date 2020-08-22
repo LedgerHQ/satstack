@@ -1,6 +1,6 @@
 module ledger-sats-stack
 
-go 1.13
+go 1.15
 
 require (
 	github.com/btcsuite/btcd v0.20.1-beta.0.20200414114020-8b54b0b96418
