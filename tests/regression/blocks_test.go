@@ -15,10 +15,10 @@ import (
 
 func TestBlocksRegression(t *testing.T) {
 	b, err := bus.New(
-		os.Getenv("BITCOIND_RPC_HOST"),
-		os.Getenv("BITCOIND_RPC_USER"),
-		os.Getenv("BITCOIND_RPC_PASSWORD"),
-		os.Getenv("BITCOIND_RPC_ENABLE_TLS") == "true",
+		os.Getenv("RPC_URL"),
+		os.Getenv("RPC_USER"),
+		os.Getenv("RPC_PASS"),
+		os.Getenv("RPC_NOTLS") == "true",
 	)
 	if err != nil {
 		t.Fatalf("Failed to initialize Bus: %v", err)
