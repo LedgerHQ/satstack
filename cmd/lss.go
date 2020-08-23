@@ -32,6 +32,10 @@ func main() {
 	}).Infof("Ledger Sats Stack (lss) %s", version.Version)
 
 	configuration := loadConfig()
+	if configuration == nil {
+		log.Fatal("Cannot find config file")
+		return
+	}
 
 	b, err := bus.New(
 		*configuration.RPCURL,
@@ -53,7 +57,7 @@ func main() {
 		Bus: b,
 	}
 
-	if err := s.ImportAccounts(configuration); err != nil {
+	if err := s.ImportAccounts(*configuration); err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
 		}).Fatal("Failed to import accounts")
@@ -63,7 +67,7 @@ func main() {
 	_ = engine.Run(":20000")
 }
 
-func loadConfig() config.Configuration {
+func loadConfig() *config.Configuration {
 	home, err := homedir.Dir()
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -71,19 +75,43 @@ func loadConfig() config.Configuration {
 		}).Fatal("Cannot obtain user home directory")
 	}
 
-	configPath := path.Join(home, ".lss.json")
+	configLookupPaths := []string{
+		// TODO: Add Ledger Live user data folder
+		"lss.json",
+		path.Join(home, "lss.json"),
+	}
+
+	for _, configPath := range configLookupPaths {
+		configuration, err := loadConfigFromPath(configPath)
+		if err == nil {
+			configuration.Validate()
+
+			log.WithFields(log.Fields{
+				"path": configPath,
+			}).Info("Loaded config file")
+			return &configuration
+		}
+	}
+
+	return nil
+}
+
+func loadConfigFromPath(configPath string) (config.Configuration, error) {
+	configuration := config.Configuration{}
 
 	file, err := os.Open(configPath)
 	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).Fatal("Cannot open config file")
+		return configuration, err
 	}
 
-	defer file.Close()
+	defer func() {
+		err := file.Close()
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	decoder := json.NewDecoder(file)
-	configuration := config.Configuration{}
 
 	err = decoder.Decode(&configuration)
 	if err != nil {
@@ -92,11 +120,5 @@ func loadConfig() config.Configuration {
 		}).Fatal("Cannot decode accounts config JSON")
 	}
 
-	configuration.Validate()
-
-	log.WithFields(log.Fields{
-		"path": configPath,
-	}).Info("Loaded config file")
-
-	return configuration
+	return configuration, nil
 }
