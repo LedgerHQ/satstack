@@ -15,6 +15,7 @@ jobs:
       - uses: wangyoucao577/go-release-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          goversion: "1.15"
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
           pre_command: "export GIN_MODE=release"
