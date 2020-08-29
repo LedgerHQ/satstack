@@ -82,39 +82,14 @@ wpkh([6e6a1271/84'/0'/3']xpubDCHCguj...mFJejwC/0/*)
 
 #### Create configuration file
 
-Add the descriptors to a **`~/.lss.json`** file.
-Sample configuration templates are available in the repository.
-
-```sh
-$ cp lss.mainnet.json ~/.lss.json
-```
-
-Example configuration:
-
-```json
-{
-  "accounts" : [
-    {
-      "descriptor": "wpkh([6e6a1271/84'/0'/3']xpubDCHCguj...mFJejwC)",
-      "birthday": "2020/01/01",
-      "depth": 1000
-    },
-    {
-      "descriptor": "sh(wpkh([c260546c/49'/0'/1']xpub6D5dhQj...NiDn3ef))",
-      "birthday": "2020/01/01",
-      "depth": 1000
-    }
-  ],
-  "rpcurl": "localhost:8332",
-  "rpcuser": "<user>",
-  "rpcpass": "<password>",
-  "notls": true
-}
-```
+Create a config file **`lss.json`** in your home directory.
+You can use [this](https://github.com/onyb/ledger-sats-stack/blob/master/lss.mainnet.json) sample config file as a template.
 
 ###### Optional account fields
-- **`depth`**: overrides the number of addresses to derive and import in the Bitcoin wallet. Defaults to `1000`.
-- **`birthday`**: earliest known creation date (`YYYY/MM/DD` format), for faster wallet import. Defaults to genesis.
+
+- **`depth`**: override the number of addresses to derive and import in the Bitcoin wallet. Defaults to `1000`.
+- **`birthday`**: set the earliest known creation date (`YYYY/MM/DD` format), for faster account import.
+Defaults to `2016/06/01` (launch date of Ledger Nano S).
 
 #### Launch Bitcoin full node
 
@@ -148,10 +123,12 @@ page (Linux, Windows, MacOS). Extract the tarball, and launch it as:
 $ ./lss
 ```
 
-If you want to build `lss` yourself, just do:
+If you want to build `lss` yourself, just do the following:
+
+(make sure you have [mage](https://magefile.org) installed first)
 
 ```sh
-$ make release  # or "make dev" for a development build
+$ mage release  # or "mage build" for a development build
 ```
 
 On startup, Sats Stack will wait for the Bitcoin node to be fully synced,
