@@ -7,6 +7,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// LedgerNanoSGenesis indicates the earliest possible date of a Ledger device
+// that is currently supported by Ledger Live.
+//
+// Ledger Nano S was launched in 2016/06/01.
+var LedgerNanoSGenesis, _ = time.Parse("2006/01/02", "2016/06/01")
+
 // Account struct models the configuration of an account on Ledger Live.
 //
 // Fields marked as (?) are optional.
@@ -63,7 +69,12 @@ func (c Configuration) Validate() {
 	for _, account := range c.Accounts {
 		validateStringField("descriptor", account.Descriptor)
 
-		// TODO: Add validation for birthday field
+		if account.Birthday != nil && account.Birthday.Before(LedgerNanoSGenesis) {
+			log.WithFields(log.Fields{
+				"account":  account.Descriptor,
+				"birthday": account.Birthday,
+			}).Warn("Account birthday older than 2016/06/01")
+		}
 	}
 }
 
