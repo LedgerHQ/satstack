@@ -1,0 +1,52 @@
+before:
+  hooks:
+    - go mod tidy
+    - go mod download
+
+builds:
+  -
+    goos:
+      - linux
+      - windows
+      - darwin
+      - freebsd
+
+    goarch:
+      - amd64
+
+    binary: lss
+
+    main: ./cmd/lss.go
+
+    ldflags: -s -w -X ledger-sats-stack/version.GitCommit={{.ShortCommit}} -X ledger-sats-stack/version.Build=release
+
+    env:
+      - GIN_MODE=release
+
+checksum:
+  name_template: '{{ .ProjectName }}_{{ .Version }}_checksums.txt'
+
+snapshot:
+  name_template: SNAPSHOT-{{ .Commit }}
+
+archives:
+  -
+    name_template: "{{.Binary}}_{{.Version}}_{{.Os}}-{{.Arch}}"
+    replacements:
+      darwin: macOS
+      linux: Linux
+      windows: Windows
+      freebsd: FreeBSD
+
+    files:
+      - LICENSE
+
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+
+release:
+  github:
+    owner: onyb
+    name: ledger-sats-stack
