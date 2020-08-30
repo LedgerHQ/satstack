@@ -24,7 +24,7 @@ builds:
       - GIN_MODE=release
 
 checksum:
-  name_template: '{{ .ProjectName }}_{{ .Version }}_checksums.txt'
+  name_template: '{{.Binary}}_{{.Version}}_checksums.txt'
 
 snapshot:
   name_template: SNAPSHOT-{{ .Commit }}
