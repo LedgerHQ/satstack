@@ -41,3 +41,6 @@ dbdata
 
 # Python virtualenvs
 venv
+
+# goreleaser dist directory
+dist
