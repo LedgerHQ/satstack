@@ -1,11 +1,10 @@
 package svc
 
 import (
-	"ledger-sats-stack/types"
-	"ledger-sats-stack/utils"
-
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/patrickmn/go-cache"
+	"ledger-sats-stack/types"
+	"ledger-sats-stack/utils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -32,18 +31,19 @@ func (s *Service) GetAddresses(addresses []string, blockHash *string) (types.Add
 			"blockHash": nil,
 		}).Error("Unable to fetch transaction")
 	}
-	walletTxIDs := s.filterTransactionsByAddresses(addresses, txResults)
+	walletTxs := s.filterTransactionsByAddresses(addresses, txResults)
 
 	txs := []types.Transaction{}
-	for _, txID := range walletTxIDs {
-		tx, err := s.GetTransaction(txID, nil)
+	for _, txn := range walletTxs {
+		block := blockFromTxResult(txn)
+		tx, err := s.GetTransaction(txn.TxID, block)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
-				"hash":  txID,
+				"hash":  txn.TxID,
 			}).Error("Unable to fetch transaction")
 
-			s.Bus.Cache.Delete(txID)
+			s.Bus.Cache.Delete(txn.TxID)
 			continue
 		}
 
@@ -60,8 +60,11 @@ func (s *Service) GetAddresses(addresses []string, blockHash *string) (types.Add
 	}, nil
 }
 
-func (s *Service) filterTransactionsByAddresses(addresses []string, txs []btcjson.ListTransactionsResult) []string {
-	var result []string
+func (s *Service) filterTransactionsByAddresses(
+	addresses []string, txs []btcjson.ListTransactionsResult,
+) []btcjson.ListTransactionsResult {
+	var result []btcjson.ListTransactionsResult
+	var visited []string
 
 	for _, tx := range txs {
 		if tx.Category == "send" {
@@ -79,15 +82,17 @@ func (s *Service) filterTransactionsByAddresses(addresses []string, txs []btcjso
 			}
 
 			for _, inputAddress := range getTransactionInputAddresses(*tx2) {
-				if utils.Contains(addresses, inputAddress) && !utils.Contains(result, tx.TxID) {
-					result = append(result, tx.TxID)
+				if utils.Contains(addresses, inputAddress) && !utils.Contains(visited, tx.TxID) {
+					result = append(result, tx)
+					visited = append(visited, tx.TxID)
 					break
 				}
 			}
 		}
 
-		if utils.Contains(addresses, tx.Address) && !utils.Contains(result, tx.TxID) {
-			result = append(result, tx.TxID)
+		if utils.Contains(addresses, tx.Address) && !utils.Contains(visited, tx.TxID) {
+			result = append(result, tx)
+			visited = append(visited, tx.TxID)
 		}
 	}
 
