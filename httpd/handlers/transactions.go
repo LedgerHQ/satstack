@@ -15,7 +15,7 @@ func GetTransaction(s svc.TransactionsService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		txHash := ctx.Param("hash")
 
-		transaction, err := s.GetTransaction(txHash)
+		transaction, err := s.GetTransaction(txHash, nil)
 		if err != nil {
 			ctx.JSON(http.StatusNotFound, err)
 			return

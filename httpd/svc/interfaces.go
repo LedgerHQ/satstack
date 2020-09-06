@@ -6,7 +6,7 @@ import (
 )
 
 type TransactionsService interface {
-	GetTransaction(hash string) (*types.Transaction, error)
+	GetTransaction(hash string, block *types.Block) (*types.Transaction, error)
 	GetTransactionHex(hash string) (*string, error)
 	SendTransaction(tx string) (*string, error)
 }

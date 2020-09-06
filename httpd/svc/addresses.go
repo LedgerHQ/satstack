@@ -36,7 +36,7 @@ func (s *Service) GetAddresses(addresses []string, blockHash *string) (types.Add
 
 	txs := []types.Transaction{}
 	for _, txID := range walletTxIDs {
-		tx, err := s.GetTransaction(txID)
+		tx, err := s.GetTransaction(txID, nil)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
@@ -65,7 +65,8 @@ func (s *Service) filterTransactionsByAddresses(addresses []string, txs []btcjso
 
 	for _, tx := range txs {
 		if tx.Category == "send" {
-			tx2, err := s.GetTransaction(tx.TxID)
+			block := blockFromTxResult(tx)
+			tx2, err := s.GetTransaction(tx.TxID, block)
 			if err != nil {
 				log.WithFields(log.Fields{
 					"error":    err,
@@ -101,4 +102,19 @@ func getTransactionInputAddresses(tx types.Transaction) []string {
 	}
 
 	return result
+}
+
+func blockFromTxResult(tx btcjson.ListTransactionsResult) *types.Block {
+	var height int64
+	if tx.BlockHeight != nil {
+		height = int64(*tx.BlockHeight)
+	} else {
+		height = -1
+	}
+
+	return &types.Block{
+		Hash:   tx.BlockHash,
+		Height: height,
+		Time:   utils.ParseUnixTimestamp(tx.BlockTime),
+	}
 }

@@ -13,7 +13,7 @@ import (
 
 // GetTransaction is a service function to query transaction details
 // by transaction hash.
-func (s *Service) GetTransaction(hash string) (*types.Transaction, error) {
+func (s *Service) GetTransaction(hash string, block *types.Block) (*types.Transaction, error) {
 	chainHash, err := utils.ParseChainHash(hash)
 	if err != nil {
 		return nil, err
@@ -29,10 +29,14 @@ func (s *Service) GetTransaction(hash string) (*types.Transaction, error) {
 		return nil, err
 	}
 
-	block := s.getTransactionBlock(tx)
-
 	transaction := buildTx(tx, utxos)
-	transaction.Block = block
+
+	if block == nil {
+		transaction.Block = s.getTransactionBlock(tx)
+	} else {
+		transaction.Block = block
+	}
+
 	return transaction, nil
 }
 
