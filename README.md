@@ -92,11 +92,11 @@ You can use [this](https://github.com/onyb/ledger-sats-stack/blob/master/lss.mai
 Defaults to `2013/09/10` ([BIP0039](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) proposal date).
 Refer to the table below for a list of safe wallet birthdays to choose from.
 
-| Event | Date (YYYY/MM/DD) |
-|-------|-------------------|
-| BIP0039 proposal created | 2013/09/10 (default) |
-| First ever BIP39 compatible Ledger device (Nano) shipped | 2014/11/24 |
-| First ever Ledger Nano S shipped | 2016/07/28 |
+  | Event | Date (YYYY/MM/DD) |
+  |-------|-------------------|
+  | BIP0039 proposal created | 2013/09/10 (default) |
+  | First ever BIP39 compatible Ledger device (Nano) shipped | 2014/11/24 |
+  | First ever Ledger Nano S shipped | 2016/07/28 |
 
 #### Launch Bitcoin full node
 
