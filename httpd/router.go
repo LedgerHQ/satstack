@@ -12,7 +12,9 @@ func GetRouter(s *svc.Service) *gin.Engine {
 
 	engine.GET("timestamp", handlers.GetTimestamp())
 
-	baseRouter := engine.Group("blockchain/v3")
+	// We support both Ledger Blockchain Explorer v2 and v3. The version here
+	// is irrelevant.
+	baseRouter := engine.Group("blockchain/:version")
 	{
 		baseRouter.GET("explorer/_health", handlers.GetHealth(s))
 	}

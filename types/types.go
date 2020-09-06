@@ -63,11 +63,12 @@ type BlockWithTransactions struct {
 
 // Transaction represents the principal type to model the response of the GetTransaction handler.
 type Transaction struct {
-	ID            string          `json:"id"`
+	ID            string          `json:"id"` // only in v3 explorer
 	Hash          string          `json:"hash"`
 	ReceivedAt    string          `json:"received_at"`
 	LockTime      uint32          `json:"lock_time"`
 	Fees          *btcutil.Amount `json:"fees"`
+	Amount        *btcutil.Amount `json:"amount,omitempty"` // legacy field for v2 explorer
 	Confirmations uint64          `json:"confirmations"`
 	Inputs        []Input         `json:"inputs"`
 	Outputs       []Output        `json:"outputs"`

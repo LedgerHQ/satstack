@@ -257,7 +257,18 @@ func buildTx(rawTx *btcjson.TxRawResult, utxos types.UTXOs) *types.Transaction {
 	} else {
 		fees = sumVinValues - sumVoutValues
 	}
+
+	// This is typically in case of incoming transactions, where computing
+	// the fees without a transaction index is impossible.
+	if fees < 0 {
+		fees = 0
+	}
+
 	txn.Fees = &fees
+
+	// In Ledger Blockchain Explorer v2, the Amount field is the sum of all
+	// Vout values.
+	txn.Amount = &sumVoutValues
 
 	return txn
 }

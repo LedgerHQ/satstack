@@ -1,7 +1,6 @@
 package bus
 
 import (
-	"fmt"
 	"ledger-sats-stack/types"
 	"ledger-sats-stack/utils"
 
@@ -25,11 +24,11 @@ func (b *Bus) GetBlock(hash *chainhash.Hash) (*types.Block, error) {
 
 	transactions := make([]string, len(nativeBlock.Tx))
 	for idx, transaction := range nativeBlock.Tx {
-		transactions[idx] = fmt.Sprintf("0x%s", transaction)
+		transactions[idx] = transaction
 	}
 
 	block := types.Block{
-		Hash:         fmt.Sprintf("0x%s", nativeBlock.Hash),
+		Hash:         nativeBlock.Hash,
 		Height:       nativeBlock.Height,
 		Time:         utils.ParseUnixTimestamp(nativeBlock.Time),
 		Transactions: &transactions,
