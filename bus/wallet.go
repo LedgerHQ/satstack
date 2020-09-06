@@ -74,6 +74,7 @@ func (b *Bus) GetTransaction(hash *chainhash.Hash) (*btcjson.TxRawResult, error)
 		txRaw.BlockHash = tx.BlockHash
 		txRaw.Time = tx.Time
 		txRaw.Blocktime = tx.BlockTime
+		txRaw.Hex = tx.Hex
 
 		if b.Cache != nil {
 			b.Cache.Set(hash.String(), txRaw, cache.NoExpiration)

@@ -42,17 +42,17 @@ func (s *Service) GetTransaction(hash string, block *types.Block) (*types.Transa
 
 // GetTransactionHex is a service function to get hex encoded raw
 // transaction by hash.
-func (s *Service) GetTransactionHex(hash string) (*string, error) {
+func (s *Service) GetTransactionHex(hash string) (string, error) {
 	chainHash, err := utils.ParseChainHash(hash)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	tx, err := s.Bus.GetTransaction(chainHash)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return utils.ToStringPointer(tx.Hex), nil
+	return tx.Hex, nil
 }
 
 func (s *Service) SendTransaction(tx string) (*string, error) {
