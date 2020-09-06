@@ -29,14 +29,17 @@ func (c Configuration) validate() error {
 	}
 
 	for _, account := range c.Accounts {
-		if err := validateStringField("descriptor", account.Descriptor); err != nil {
+		if err := validateStringField("external", account.External); err != nil {
+			return err
+		}
+		if err := validateStringField("internal", account.Internal); err != nil {
 			return err
 		}
 
 		if account.Birthday != nil && account.Birthday.Before(LedgerNanoSGenesis) {
 			log.WithFields(log.Fields{
-				"account":  account.Descriptor,
-				"birthday": account.Birthday,
+				"descriptor": account.External,
+				"birthday":   account.Birthday,
 			}).Warn("Account birthday older than 2016/06/01")
 		}
 	}

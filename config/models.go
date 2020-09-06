@@ -9,9 +9,10 @@ import (
 //
 // Fields marked as (?) are optional.
 type Account struct {
-	Descriptor *string `json:"descriptor"` // output descriptor for the account
-	Depth      *int    `json:"depth"`      // (?) Number of addresses to import
-	Birthday   *date   `json:"birthday"`   // (?) Earliest known creation date (YYYY/MM/DD)
+	External *string `json:"external"` // output descriptor at external path
+	Internal *string `json:"internal"` // output descriptor at internal path
+	Depth    *int    `json:"depth"`    // (?) Number of addresses to import
+	Birthday *date   `json:"birthday"` // (?) Earliest known creation date (YYYY/MM/DD)
 }
 
 // Configuration is a struct to model the JSON configuration

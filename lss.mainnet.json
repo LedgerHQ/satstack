@@ -1,15 +1,8 @@
 {
   "accounts": [
     {
-      "descriptor": "sh(wpkh(...)",
-      "birthday": "2020/01/01"
-    },
-    {
-      "descriptor": "sh(wpkh(...))",
-      "birthday": "2020/01/01"
-    },
-    {
-      "descriptor": "wpkh(...)",
+      "external": "wpkh([18734cbe/84'/0'/0']xpubDAZhhJ9...7mddUMS/0/*)#xxxxxxxx",
+      "internal": "wpkh([18734cbe/84'/0'/0']xpubDAZhhJ9...7mddUMS/1/*)#xxxxxxxx",
       "birthday": "2020/01/01"
     }
   ],

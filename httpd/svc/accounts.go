@@ -62,10 +62,9 @@ func (s *Service) ImportAccounts(config config.Configuration) error {
 }
 
 func getRawAccountDescriptors(account config.Account) []string {
-	descriptor := strings.Split(*account.Descriptor, "#")[0] // strip out the checksum
 	return []string{
-		strings.Replace(descriptor, ")", "/0/*)", 1), // external chain
-		strings.Replace(descriptor, ")", "/1/*)", 1), // internal chain
+		strings.Split(*account.External, "#")[0], // strip out the checksum
+		strings.Split(*account.Internal, "#")[0], // strip out the checksum
 	}
 }
 
