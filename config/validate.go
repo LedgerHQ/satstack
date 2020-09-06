@@ -36,7 +36,7 @@ func (c Configuration) validate() error {
 			return err
 		}
 
-		if account.Birthday != nil && account.Birthday.Before(LedgerNanoSGenesis) {
+		if account.Birthday != nil && account.Birthday.Before(BIP0039Genesis) {
 			log.WithFields(log.Fields{
 				"descriptor": account.External,
 				"birthday":   account.Birthday,

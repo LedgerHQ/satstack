@@ -91,7 +91,7 @@ func (s *Service) getAccountDescriptors(account config.Account) ([]types.Descrip
 	var age uint32
 	switch account.Birthday {
 	case nil:
-		age = uint32(config.LedgerNanoSGenesis.Unix())
+		age = uint32(config.BIP0039Genesis.Unix())
 	default:
 		age = uint32(account.Birthday.Unix())
 	}

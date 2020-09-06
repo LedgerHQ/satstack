@@ -89,7 +89,14 @@ You can use [this](https://github.com/onyb/ledger-sats-stack/blob/master/lss.mai
 
 - **`depth`**: override the number of addresses to derive and import in the Bitcoin wallet. Defaults to `1000`.
 - **`birthday`**: set the earliest known creation date (`YYYY/MM/DD` format), for faster account import.
-Defaults to `2016/06/01` (launch date of Ledger Nano S).
+Defaults to `2013/09/10` ([BIP0039](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) proposal date).
+Refer to the table below for a list of safe wallet birthdays to choose from.
+
+| Event | Date (YYYY/MM/DD) |
+|-------|-------------------|
+| BIP0039 proposal created | 2013/09/10 (default) |
+| First ever BIP39 compatible Ledger device (Nano) shipped | 2014/11/24 |
+| First ever Ledger Nano S shipped | 2016/07/28 |
 
 #### Launch Bitcoin full node
 
