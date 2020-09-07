@@ -31,7 +31,7 @@ snapshot:
 
 archives:
   -
-    name_template: "{{.Binary}}_{{.Version}}_{{.Os}}-{{.Arch}}"
+    name_template: "lss_{{.Version}}_{{.Os}}-{{.Arch}}"
     replacements:
       darwin: macOS
       linux: Linux
