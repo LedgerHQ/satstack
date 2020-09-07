@@ -1,8 +1,8 @@
 {
   "accounts": [
     {
-      "external": "wpkh([18734cbe/84'/0'/0']xpubDAZhhJ9...7mddUMS/0/*)#xxxxxxxx",
-      "internal": "wpkh([18734cbe/84'/0'/0']xpubDAZhhJ9...7mddUMS/1/*)#xxxxxxxx",
+      "external": "wpkh([18734cbe/84'/0'/0']xpubDAZhhJ9...7mddUMS/0/*)",
+      "internal": "wpkh([18734cbe/84'/0'/0']xpubDAZhhJ9...7mddUMS/1/*)",
       "birthday": "2020/01/01"
     }
   ],
