@@ -50,10 +50,7 @@ Ledger Sats Stack is a standalone Go application, that acts as a bridge between 
 
 ## Requirements
 
-- Bitcoin Core **`0.20.0+`** (with `txindex` enabled).
-
-  ⚠️ If you disable `txindex`, outgoing transactions may not work,
-  although synchronization on Ledger Live should work fine.
+- Bitcoin Core **`0.20.0+`**.
 - Ledger Live (desktop) **`2.5.0+`**.
 
 ## Usage
@@ -110,9 +107,6 @@ server=1
 # Set RPC credentials
 rpcuser=<user>
 rpcpassword=<password>
-
-# Enable txindex
-txindex=1
 ```
 
 Then launch `bitcoind` like this:
@@ -139,7 +133,7 @@ $ mage release  # or "mage build" for a development build
 ```
 
 On startup, Sats Stack will wait for the Bitcoin node to be fully synced,
-and import your accounts. This can take a while
+and import your accounts. This can take a while.
 
 #### Launch Ledger Live Desktop
 
@@ -147,7 +141,7 @@ and import your accounts. This can take a while
 $ git clone https://github.com/ledgerhq/ledger-live-desktop
 $ cd ledger-live-desktop
 $ yarn
-$ EXPERIMENTAL_EXPLORERS=1 EXPLORER=http://0.0.0.0:20000 yarn start
+$ EXPLORER=http://0.0.0.0:20000 yarn start
 ```
 
 ## Community
