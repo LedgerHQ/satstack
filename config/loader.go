@@ -39,11 +39,11 @@ func Load() (*Configuration, error) {
 
 	configuration, err := loadFromPath(configPath)
 	if err != nil {
-		return nil, fmt.Errorf("malformed JSON config: %w", err)
+		return nil, fmt.Errorf("%s: %w", ErrMalformed, err)
 	}
 
 	if err := configuration.validate(); err != nil {
-		return nil, fmt.Errorf("validation error: %w", err)
+		return nil, fmt.Errorf("%s: %w", ErrValidation, err)
 	}
 
 	return configuration, nil
@@ -86,7 +86,7 @@ func loadFromPath(path string) (*Configuration, error) {
 func configLookupPaths() ([]string, error) {
 	home, err := homedir.Dir()
 	if err != nil {
-		return nil, fmt.Errorf("home directory not found: %w", err)
+		return nil, fmt.Errorf("%s: %w", ErrHomeNotFound, err)
 	}
 
 	return []string{

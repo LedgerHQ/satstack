@@ -9,8 +9,8 @@ import (
 // validate checks for the validity of the JSON configuration loaded in
 // Configuration struct.
 //
-// It does not mutate the configuration values itself, but logs FATAL errors
-// in case of invalid configuration.
+// It does not mutate the configuration values, and returns an error in case of
+// invalid configuration.
 func (c Configuration) validate() error {
 	if err := validateStringField("rpcurl", c.RPCURL); err != nil {
 		return err
@@ -49,7 +49,7 @@ func (c Configuration) validate() error {
 
 func validateStringField(key string, value *string) error {
 	if value == nil {
-		return fmt.Errorf("missing key: %s", key)
+		return fmt.Errorf("%s: %s", ErrMissingKey, key)
 	}
 
 	return nil
