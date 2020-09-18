@@ -26,7 +26,7 @@ func main() {
 		"arch":    version.OsArch,
 	}).Infof("Ledger Sats Stack (lss) %s", version.Version)
 
-	configuration, err := config.LoadConfig()
+	configuration, err := config.Load()
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err.Error(),
