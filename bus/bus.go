@@ -1,12 +1,9 @@
 package bus
 
 import (
-	"errors"
 	"fmt"
-	"ledger-sats-stack/utils"
 	"time"
 
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/patrickmn/go-cache"
 	log "github.com/sirupsen/logrus"
@@ -17,7 +14,7 @@ type Bus struct {
 	Chain    string
 	Pruned   bool
 	TxIndex  bool
-	Currency string       // Based on Chain value, for interoperability with libcore
+	Currency Currency     // Based on Chain value, for interoperability with libcore
 	Cache    *cache.Cache // Thread-safe Bus cache, to query results typically by hash
 }
 
@@ -30,38 +27,27 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 		HTTPPostMode: true,
 		DisableTLS:   noTLS,
 	}
+
 	// The notification parameter is nil since notifications are not
 	// supported in HTTP POST mode.
 	client, err := rpcclient.New(connCfg, nil)
 	if err != nil {
-		log.WithFields(log.Fields{
-			"host": host,
-			"user": user,
-			"TLS":  !noTLS,
-		}).Error("Failed to initialize RPC client")
-		return nil, err
+		return nil, err // error ctx not required
 	}
 
 	info, err := client.GetBlockChainInfo()
 	if err != nil {
-		log.WithFields(log.Fields{
-			"host": host,
-			"user": user,
-			"TLS":  !noTLS,
-		}).Error("Failed to connect to RPC server")
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", ErrBitcoindUnreachable, err)
 	}
 
-	txIndex := isTxIndexEnabled(client)
+	txIndex, err := TxIndexEnabled(client)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", ErrFailedToDetectTxIndex, err)
+	}
 
-	log.WithFields(log.Fields{
-		"chain":   info.Chain,
-		"pruned":  info.Pruned,
-		"txindex": txIndex,
-	}).Info("RPC connection established")
-
-	if !txIndex {
-		log.Warn("May have unexpected errors without txindex")
+	currency, err := CurrencyFromChain(info.Chain)
+	if err != nil {
+		return nil, err
 	}
 
 	return &Bus{
@@ -69,7 +55,7 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 		Pruned:   info.Pruned,
 		Chain:    info.Chain,
 		TxIndex:  txIndex,
-		Currency: getCurrencyFromChain(info.Chain),
+		Currency: currency,
 		Cache:    nil, // Disabled by default
 	}, nil
 }
@@ -100,50 +86,5 @@ func WaitForNodeSync(bus *Bus) {
 		}).Info("Sychronizing node")
 
 		time.Sleep(10 * time.Second)
-	}
-}
-
-func isTxIndexEnabled(client *rpcclient.Client) bool {
-	tx, err := getBlockOneTransaction(client)
-	if err != nil {
-		log.Error(err)
-		return false
-	}
-
-	if _, err := client.GetRawTransaction(tx); err != nil {
-		return false
-	}
-
-	return true
-}
-
-func getBlockOneTransaction(client *rpcclient.Client) (*chainhash.Hash, error) {
-	// Genesis coinbase is not part of transaction index, so use block 1
-	blockHash, err := client.GetBlockHash(1)
-	if err != nil {
-		return nil, errors.New("failed to get block 1 hash")
-	}
-
-	block, err := client.GetBlockVerbose(blockHash)
-	if err != nil {
-		return nil, errors.New("dailed to get block 1")
-	}
-
-	coinbaseTxHash, err := utils.ParseChainHash(block.Tx[0])
-	if err != nil {
-		return nil, errors.New("failed to get coinbase tx in block 1")
-	}
-
-	return coinbaseTxHash, nil
-}
-
-func getCurrencyFromChain(chain string) string {
-	switch chain {
-	case "regtest", "test":
-		return "btc_testnet"
-	case "main":
-		return "btc"
-	default:
-		return "btc"
 	}
 }

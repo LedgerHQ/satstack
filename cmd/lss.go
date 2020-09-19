@@ -48,6 +48,12 @@ func main() {
 	}
 	defer b.Close()
 
+	log.WithFields(log.Fields{
+		"chain":   b.Chain,
+		"pruned":  b.Pruned,
+		"txindex": b.TxIndex,
+	}).Info("RPC connection established")
+
 	bus.WaitForNodeSync(b)
 
 	s := &svc.Service{
