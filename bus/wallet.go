@@ -94,7 +94,7 @@ func (b *Bus) ImportDescriptors(descriptors []types.Descriptor) error {
 		requests = append(requests, btcjson.ImportMultiRequest{
 			Descriptor: btcjson.String(descriptor.Value),
 			Range:      &btcjson.DescriptorRange{Value: []int{0, descriptor.Depth}},
-			Timestamp:  btcjson.Timestamp{Value: descriptor.Age},
+			Timestamp:  btcjson.TimestampOrNow{Value: descriptor.Age},
 			WatchOnly:  btcjson.Bool(true),
 			KeyPool:    btcjson.Bool(false),
 			Internal:   btcjson.Bool(false),

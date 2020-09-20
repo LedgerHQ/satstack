@@ -1,7 +1,6 @@
 package svc
 
 import (
-	"ledger-sats-stack/config"
 	"ledger-sats-stack/types"
 )
 
@@ -24,14 +23,9 @@ type ExplorerService interface {
 	GetFees(targets []int64, mode string) map[string]interface{}
 }
 
-type CoreService interface {
-	ImportAccounts(config config.Configuration) error
-}
-
 type ServiceInterface interface {
 	BlocksService
 	TransactionsService
 	AddressesService
 	ExplorerService
-	CoreService
 }

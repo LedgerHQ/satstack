@@ -3,7 +3,7 @@ module ledger-sats-stack
 go 1.15
 
 require (
-	github.com/btcsuite/btcd v0.20.1-beta.0.20200414114020-8b54b0b96418
+	github.com/btcsuite/btcd v0.21.0-beta.0.20200917130352-e5521de65213
 	github.com/btcsuite/btcutil v1.0.2
 	github.com/gin-gonic/gin v1.6.3
 	github.com/golang/protobuf v1.4.2 // indirect
@@ -21,4 +21,4 @@ require (
 )
 
 // Comment the line below to disable experimental JSON-RPC features.
-replace github.com/btcsuite/btcd v0.20.1-beta.0.20200414114020-8b54b0b96418 => github.com/onyb/btcd v0.20.1-beta.0.20200906184140-3b4806e41cf6
+replace github.com/btcsuite/btcd v0.21.0-beta.0.20200917130352-e5521de65213 => github.com/onyb/btcd v0.20.1-beta.0.20200920134632-1f3e2ac5da1c
