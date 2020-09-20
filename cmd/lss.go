@@ -54,18 +54,27 @@ func main() {
 		"txindex": b.TxIndex,
 	}).Info("RPC connection established")
 
-	bus.WaitForNodeSync(b)
-
 	s := &svc.Service{
 		Bus: b,
 	}
 
-	if err := s.ImportAccounts(*configuration); err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).Fatal("Failed to import accounts")
-	}
+	go func() {
+		if err := b.WaitForNodeSync(); err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).Fatal("Failed during node sync")
+		}
+
+		if err := b.ImportAccounts(configuration.Accounts); err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).Fatal("Failed to import accounts")
+		}
+
+		b.Status = bus.Ready
+	}()
 
 	engine := httpd.GetRouter(s)
+
 	_ = engine.Run(":20000")
 }

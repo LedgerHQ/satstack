@@ -2,11 +2,8 @@ package bus
 
 import (
 	"fmt"
-	"time"
-
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/patrickmn/go-cache"
-	log "github.com/sirupsen/logrus"
 )
 
 type Bus struct {
@@ -14,7 +11,8 @@ type Bus struct {
 	Chain    string
 	Pruned   bool
 	TxIndex  bool
-	Currency Currency     // Based on Chain value, for interoperability with libcore
+	Currency Currency // Based on Chain value, for interoperability with libcore
+	Status   Status
 	Cache    *cache.Cache // Thread-safe Bus cache, to query results typically by hash
 }
 
@@ -57,6 +55,7 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 		TxIndex:  txIndex,
 		Currency: currency,
 		Cache:    nil, // Disabled by default
+		Status:   Initializing,
 	}, nil
 }
 
@@ -64,27 +63,3 @@ func (b *Bus) Close() {
 	b.Client.Shutdown()
 }
 
-func WaitForNodeSync(bus *Bus) {
-	for {
-		info, err := bus.Client.GetBlockChainInfo()
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-			}).Fatal("Failed to connect to RPC server")
-		}
-
-		if info.Blocks == info.Headers {
-			log.WithFields(log.Fields{
-				"blocks":        info.Blocks,
-				"bestblockhash": info.BestBlockHash,
-			}).Info("Sychronization completed")
-			return
-		}
-
-		log.WithFields(log.Fields{
-			"progress": fmt.Sprintf("%.2f%%", info.VerificationProgress*100),
-		}).Info("Sychronizing node")
-
-		time.Sleep(10 * time.Second)
-	}
-}

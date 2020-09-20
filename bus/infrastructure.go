@@ -2,9 +2,17 @@ package bus
 
 import (
 	"fmt"
-	"github.com/btcsuite/btcd/rpcclient"
+	"ledger-sats-stack/config"
+	"ledger-sats-stack/types"
 	"ledger-sats-stack/utils"
+	"strings"
+	"time"
+
+	"github.com/btcsuite/btcd/rpcclient"
+	log "github.com/sirupsen/logrus"
 )
+
+const defaultAccountDepth = 1000
 
 // Currency represents the currency type (btc) and the network params
 // (Mainnet, testnet3, regtest, etc) in libcore parlance.
@@ -64,4 +72,110 @@ func TxIndexEnabled(client *rpcclient.Client) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (b *Bus) WaitForNodeSync() error {
+	b.Status = Syncing
+	for {
+		info, err := b.Client.GetBlockChainInfo()
+		if err != nil {
+			return err
+		}
+
+		log.WithFields(log.Fields{
+			"progress": fmt.Sprintf("%.2f%%", info.VerificationProgress*100),
+		}).Info("Sychronizing node")
+
+		if info.Blocks == info.Headers {
+			log.WithFields(log.Fields{
+				"blockHeight": info.Blocks,
+				"blockHash":   info.BestBlockHash,
+			}).Info("Sychronization complete")
+			return nil
+		}
+
+		time.Sleep(10 * time.Second)
+	}
+}
+
+// ImportAccounts will import the descriptors corresponding to the accounts
+// into the Bitcoin Core wallet. This is a blocking operation.
+func (b *Bus) ImportAccounts(accounts []config.Account) error {
+	b.Status = Scanning
+
+	var allDescriptors []types.Descriptor
+	for _, account := range accounts {
+		accountDescriptors, err := b.Descriptors(account)
+		if err != nil {
+			return err // return bare error, since it already has a ctx
+		}
+
+		allDescriptors = append(allDescriptors, accountDescriptors...)
+	}
+
+	var descriptorsToImport []types.Descriptor
+	for _, descriptor := range allDescriptors {
+		address, err := b.DeriveAddress(descriptor.Value, descriptor.Depth)
+		if err != nil {
+			return fmt.Errorf("%s (%s - #%d): %w",
+				ErrDeriveAddress, descriptor.Value, descriptor.Depth, err)
+		}
+
+		addressInfo, err := b.GetAddressInfo(*address)
+		if err != nil {
+			return fmt.Errorf("%s (%s): %w", ErrAddressInfo, *address, err)
+		}
+
+		if !addressInfo.IsWatchOnly {
+			descriptorsToImport = append(descriptorsToImport, descriptor)
+		}
+	}
+
+	if len(descriptorsToImport) == 0 {
+		log.Warn("No (new) addresses to import")
+		return nil
+	}
+
+	return b.ImportDescriptors(descriptorsToImport)
+}
+
+// Descriptors returns canonical descriptors from the account configuration.
+func (b *Bus) Descriptors(account config.Account) ([]types.Descriptor, error) {
+	var ret []types.Descriptor
+
+	var depth int
+	switch account.Depth {
+	case nil:
+		depth = defaultAccountDepth
+	default:
+		depth = *account.Depth
+	}
+
+	var age uint32
+	switch account.Birthday {
+	case nil:
+		age = uint32(config.BIP0039Genesis.Unix())
+	default:
+		age = uint32(account.Birthday.Unix())
+	}
+
+	rawDescs := []string{
+		strings.Split(*account.External, "#")[0], // strip out the checksum
+		strings.Split(*account.Internal, "#")[0], // strip out the checksum
+	}
+
+	for _, desc := range rawDescs {
+		canonicalDesc, err := b.GetCanonicalDescriptor(desc)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", ErrInvalidDescriptor, err)
+		}
+
+		ret = append(ret, types.Descriptor{
+			Value: *canonicalDesc,
+			Depth: depth,
+			Age:   age,
+		})
+	}
+
+	return ret, nil
 }

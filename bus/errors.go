@@ -26,4 +26,16 @@ var (
 	// to detect presence of a transaction index. Normally, this error should
 	// not be ignored silently.
 	ErrFailedToDetectTxIndex = errors.New("failed to detect txindex")
+
+	// ErrInvalidDescriptor indicates that a malformed descriptor was
+	// encountered.
+	ErrInvalidDescriptor = errors.New("invalid descriptor")
+
+	// ErrDeriveAddress indicates that an address could not be derived from a
+	// descriptor.
+	ErrDeriveAddress = errors.New("failed to derive address")
+
+	// ErrAddressInfo indicates that an error was encountered while trying to
+	// fetch address info.
+	ErrAddressInfo = errors.New("failed to get address info")
 )
