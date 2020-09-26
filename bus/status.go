@@ -22,3 +22,15 @@ const (
 	// importing account descriptors into its wallet.
 	Scanning Status = "scanning"
 )
+
+// ExplorerStatus represents the structure of payload returned by GetStatus
+// service method.
+type ExplorerStatus struct {
+	TxIndex      bool     `json:"txindex"`
+	Pruned       bool     `json:"pruned"`
+	Chain        string   `json:"chain"`
+	Currency     Currency `json:"currency"`
+	Status       Status   `json:"status"`
+	SyncProgress *float64 `json:"sync_progress,omitempty"`
+	ScanProgress *float64 `json:"scan_progress,omitempty"`
+}

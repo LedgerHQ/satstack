@@ -53,3 +53,15 @@ func GetTimestamp() gin.HandlerFunc {
 		})
 	}
 }
+
+func GetStatus(s svc.ExplorerService) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		status, err := s.GetStatus()
+		if err != nil {
+			ctx.JSON(http.StatusServiceUnavailable, err)
+			return
+		}
+
+		ctx.JSON(http.StatusOK, status)
+	}
+}

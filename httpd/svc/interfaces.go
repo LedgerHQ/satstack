@@ -1,6 +1,7 @@
 package svc
 
 import (
+	"ledger-sats-stack/bus"
 	"ledger-sats-stack/types"
 )
 
@@ -20,6 +21,7 @@ type AddressesService interface {
 
 type ExplorerService interface {
 	GetHealth() error
+	GetStatus() (*bus.ExplorerStatus, error)
 	GetFees(targets []int64, mode string) map[string]interface{}
 }
 
