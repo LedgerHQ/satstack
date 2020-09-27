@@ -8,17 +8,11 @@
 Ledger Sats Stack is a lightweight bridge to connect Ledger Live with your personal Bitcoin full node. It's designed to allow Ledger Live users use Bitcoin without compromising on privacy, or relying on Ledger's infrastructure.
 
 <p>
+  <img src="https://github.com/onyb/ledger-sats-stack/workflows/Build/badge.svg" />
   <img src="https://img.shields.io/github/v/release/onyb/ledger-sats-stack?include_prereleases" />
   <img src="https://img.shields.io/github/downloads/onyb/ledger-sats-stack/total">
   <img src="https://img.shields.io/badge/Go-%3E%3D1.15-04ADD8.svg" />
 </p>
-
-<p>
-  <img src="https://github.com/onyb/ledger-sats-stack/workflows/Build/badge.svg" />
-  <img src="https://github.com/onyb/ledger-sats-stack/workflows/Integration%20tests/badge.svg" />
-  <img src="https://github.com/onyb/ledger-sats-stack/workflows/Regression%20tests/badge.svg" />
-</p>
-
 
 <img src="docs/txindex_enabled.gif" align="center" />
 
