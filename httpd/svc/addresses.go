@@ -2,7 +2,6 @@ package svc
 
 import (
 	"github.com/btcsuite/btcd/btcjson"
-	"github.com/patrickmn/go-cache"
 	"ledger-sats-stack/types"
 	"ledger-sats-stack/utils"
 
@@ -10,19 +9,11 @@ import (
 )
 
 func (s *Service) GetAddresses(addresses []string, blockHash *string) (types.Addresses, error) {
-	// Thread-safe Bus cache, to cache result of GetTransaction from the Bus
-	// against the TxID.
-	//
-	// cleanupInterval is set to 0 to avoid spinning up the janitor
-	// goroutine.
-	s.Bus.Cache = cache.New(cache.NoExpiration, 0)
-	defer func() {
-		if s.Bus.Cache != nil {
-			s.Bus.Cache.Flush()
-		}
-
-		s.Bus.Cache = nil
-	}()
+	// Cache the results of GetTransaction calls against the TxID. The avoids
+	// wasteful querying of the Bitcoin node for the same TxID, within the
+	// lifecycle of this function invocation.
+	s.Bus.NewCache()
+	defer s.Bus.FlushCache()
 
 	txResults, err := s.Bus.ListTransactions(blockHash)
 	if err != nil {
