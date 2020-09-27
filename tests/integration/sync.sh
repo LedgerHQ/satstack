@@ -5,17 +5,31 @@ CYAN='\033[0;36m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
+pkh="^pkh\(.*(tpub[a-zA-Z0-9]+).*"
+wpkh="^wpkh\(.*(tpub[a-zA-Z0-9]+).*"
+sh_wpkh="^sh\(wpkh\(.*(tpub[a-zA-Z0-9]+).*"
 
-for account in $(jq -r ".accounts[] | [.xpub,.derivationMode] | @csv" < ~/.lss.json | sed "s/\"//g")
+
+for descriptor in $(jq -r ".accounts[] | [.external] | @csv" < lss.json | sed "s/\"//g")
 do
-    xpub=$(echo "$account" | cut -d"," -f1)
-    scheme=$(echo "$account" | cut -d"," -f2)
+    if [[ $descriptor =~ $pkh ]]; then
+      xpub="${BASH_REMATCH[1]}"
+      scheme=""
+    elif [[ $descriptor =~ $sh_wpkh ]]; then
+      xpub="${BASH_REMATCH[1]}"
+      scheme="segwit"
+    elif [[ $descriptor =~ $wpkh ]]; then
+      xpub="${BASH_REMATCH[1]}"
+      scheme="native_segwit"
+    else
+      exit 1
+    fi
 
     echo -e ""
     echo -e "${CYAN}SCHEME:${NC}         ${scheme}"
     echo -e "${CYAN}XPUB:${NC}           ${xpub}"
 
-    cmd="time ledger-live sync --xpub $xpub -c bitcoin_testnet -s ${scheme/standard/} -f summary"
+    cmd="time ledger-live sync --xpub $xpub -c bitcoin_testnet -s $scheme -f stats"
 
     ledger-live libcoreReset
     echo -e "${CYAN}SYNC NOCACHE:${NC}   explorers.api.live.ledger.com"
@@ -25,10 +39,10 @@ do
 
     ledger-live libcoreReset
     echo -e "${CYAN}SYNC NOCACHE:${NC}   0.0.0.0:20000"
-    gotnc=$(EXPERIMENTAL_EXPLORERS=1 EXPLORER="http://0.0.0.0:20000" $cmd)
+    gotnc=$(EXPLORER="http://0.0.0.0:20000" $cmd)
 
     echo -e "${CYAN}SYNC CACHE:${NC}     0.0.0.0:20000"
-    gotc=$(EXPERIMENTAL_EXPLORERS=1 EXPLORER="http://0.0.0.0:20000" $cmd)
+    gotc=$(EXPLORER="http://0.0.0.0:20000" $cmd)
 
     if [ "$gotnc" = "$wantnc" ]; then
       echo -e "${CYAN}OUTPUT:${NC}         $gotnc"
