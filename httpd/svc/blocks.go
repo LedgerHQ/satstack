@@ -2,10 +2,11 @@ package svc
 
 import (
 	"fmt"
-	"ledger-sats-stack/types"
-	"ledger-sats-stack/utils"
 	"strconv"
 	"strings"
+
+	"github.com/onyb/sat-stack/types"
+	"github.com/onyb/sat-stack/utils"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )

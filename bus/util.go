@@ -1,7 +1,7 @@
 package bus
 
 import (
-	"ledger-sats-stack/utils"
+	"github.com/onyb/sat-stack/utils"
 
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcutil"

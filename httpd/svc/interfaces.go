@@ -1,8 +1,8 @@
 package svc
 
 import (
-	"ledger-sats-stack/bus"
-	"ledger-sats-stack/types"
+	"github.com/onyb/sat-stack/bus"
+	"github.com/onyb/sat-stack/types"
 )
 
 type TransactionsService interface {

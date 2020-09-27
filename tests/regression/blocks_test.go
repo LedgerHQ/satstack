@@ -3,14 +3,15 @@ package regression
 import (
 	"encoding/json"
 	"fmt"
-	"ledger-sats-stack/bus"
-	"ledger-sats-stack/httpd"
-	"ledger-sats-stack/httpd/svc"
-	utils "ledger-sats-stack/tests"
 	"net/http/httptest"
 	"os"
 	"reflect"
 	"testing"
+
+	"github.com/onyb/sat-stack/bus"
+	"github.com/onyb/sat-stack/httpd"
+	"github.com/onyb/sat-stack/httpd/svc"
+	utils "github.com/onyb/sat-stack/tests"
 )
 
 func TestBlocksRegression(t *testing.T) {

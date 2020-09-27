@@ -1,8 +1,8 @@
 package svc
 
 import (
-	"ledger-sats-stack/types"
-	"ledger-sats-stack/utils"
+	"github.com/onyb/sat-stack/types"
+	"github.com/onyb/sat-stack/utils"
 
 	"github.com/btcsuite/btcd/btcjson"
 

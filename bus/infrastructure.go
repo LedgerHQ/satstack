@@ -2,11 +2,12 @@ package bus
 
 import (
 	"fmt"
-	"ledger-sats-stack/config"
-	"ledger-sats-stack/utils"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/onyb/sat-stack/config"
+	"github.com/onyb/sat-stack/utils"
 
 	"github.com/patrickmn/go-cache"
 

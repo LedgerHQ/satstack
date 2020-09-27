@@ -1,9 +1,10 @@
 package svc
 
 import (
-	"ledger-sats-stack/bus"
 	"strconv"
 	"time"
+
+	"github.com/onyb/sat-stack/bus"
 
 	"github.com/btcsuite/btcd/btcjson"
 )

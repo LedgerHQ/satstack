@@ -1,9 +1,10 @@
 package handlers
 
 import (
-	"ledger-sats-stack/httpd/svc"
-	"ledger-sats-stack/types"
 	"net/http"
+
+	"github.com/onyb/sat-stack/httpd/svc"
+	"github.com/onyb/sat-stack/types"
 
 	"github.com/gin-gonic/gin"
 )

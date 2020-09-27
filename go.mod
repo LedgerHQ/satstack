@@ -1,4 +1,4 @@
-module ledger-sats-stack
+module github.com/onyb/sat-stack
 
 go 1.15
 

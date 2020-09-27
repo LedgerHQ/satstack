@@ -3,7 +3,8 @@ package bus
 import (
 	"encoding/hex"
 	"errors"
-	"ledger-sats-stack/utils"
+
+	"github.com/onyb/sat-stack/utils"
 
 	"github.com/patrickmn/go-cache"
 
