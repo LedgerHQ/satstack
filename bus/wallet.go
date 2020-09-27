@@ -3,7 +3,6 @@ package bus
 import (
 	"encoding/hex"
 	"errors"
-	"ledger-sats-stack/types"
 	"ledger-sats-stack/utils"
 
 	"github.com/patrickmn/go-cache"
@@ -104,7 +103,7 @@ func (b *Bus) GetWalletInfo() (*btcjson.GetWalletInfoResult, error) {
 	return client.GetWalletInfo()
 }
 
-func (b *Bus) ImportDescriptors(descriptors []types.Descriptor) error {
+func (b *Bus) ImportDescriptors(descriptors []descriptor) error {
 	var requests []btcjson.ImportMultiRequest
 	for _, descriptor := range descriptors {
 		requests = append(requests, btcjson.ImportMultiRequest{

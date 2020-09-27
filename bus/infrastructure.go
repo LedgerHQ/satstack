@@ -3,16 +3,136 @@ package bus
 import (
 	"fmt"
 	"ledger-sats-stack/config"
-	"ledger-sats-stack/types"
 	"ledger-sats-stack/utils"
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/patrickmn/go-cache"
 
 	"github.com/btcsuite/btcd/rpcclient"
 	log "github.com/sirupsen/logrus"
 )
 
-const defaultAccountDepth = 1000
+const (
+	// defaultAccountDepth indicates the number of addresses to derive and
+	// import in the Bitcoin wallet.
+	defaultAccountDepth = 1000
+
+	// connPoolSize indicates the number of *rpcclient.Client objects that
+	// are available to use for communicating to the Bitcoin node.
+	//
+	// Set this to the maximum number of concurrent RPC operations that may be
+	// performed on the Bitcoin node.
+	connPoolSize = 2
+)
+
+// Bus represents a transport allowing access to Bitcoin RPC methods.
+//
+// It maintains a pool of btcd rpcclient objects in a buffered channel to allow
+// concurrent invocation of RPC methods.
+type Bus struct {
+	// Informational fields
+	Chain    string
+	Pruned   bool
+	TxIndex  bool
+	Currency Currency // Based on Chain value, for interoperability with libcore
+	Status   Status
+
+	// Thread-safe Bus cache, to query results typically by hash
+	Cache *cache.Cache
+
+	// Connection pool management infrastructure
+	connChan chan *rpcclient.Client
+	wg       sync.WaitGroup
+}
+
+type descriptor struct {
+	Value string
+	Depth int
+	Age   uint32
+}
+
+// New initializes a Bus struct that embeds a btcd RPC client.
+func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
+	// Prepare the connection config to initialize the rpcclient.Client
+	// pool with.
+	connCfg := &rpcclient.ConnConfig{
+		Host:         host,
+		User:         user,
+		Pass:         pass,
+		HTTPPostMode: true,
+		DisableTLS:   noTLS,
+	}
+
+	// Initialize a buffered channel of *rpcclient.Client objects with capacity
+	// of connPoolSize.
+	pool := make(chan *rpcclient.Client, connPoolSize)
+
+	// Prefill the buffered channel with *rpcclient.Client objects in advance.
+	for i := 0; i < cap(pool); i++ {
+		client, err := rpcclient.New(connCfg, nil)
+		if err != nil {
+			return nil, err // error ctx not required
+		}
+		pool <- client
+	}
+
+	// Obtain one client from the channel to perform connectivity checks and
+	// extract information required for initializing the Bus struct.
+	client := <-pool
+	defer func() { pool <- client }()
+
+	info, err := client.GetBlockChainInfo()
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", ErrBitcoindUnreachable, err)
+	}
+
+	txIndex, err := txIndexEnabled(client)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", ErrFailedToDetectTxIndex, err)
+	}
+
+	currency, err := CurrencyFromChain(info.Chain)
+	if err != nil {
+		return nil, err
+	}
+
+	b := &Bus{
+		connChan: pool,
+		Pruned:   info.Pruned,
+		Chain:    info.Chain,
+		TxIndex:  txIndex,
+		Currency: currency,
+		Cache:    nil, // Disabled by default
+		Status:   Initializing,
+		wg:       sync.WaitGroup{},
+	}
+
+	return b, nil
+}
+
+// Close performs cleanup operations on the Bus, notably shutting down the
+// rpcclient connections.
+func (b *Bus) Close() {
+	b.wg.Wait()
+
+	for i := 0; i < cap(b.connChan); i++ {
+		client := <-b.connChan
+		client.WaitForShutdown()
+		client.Shutdown()
+	}
+
+	close(b.connChan)
+}
+
+func (b *Bus) getClient() *rpcclient.Client {
+	return <-b.connChan
+}
+
+func (b *Bus) recycleClient(client *rpcclient.Client) {
+	b.connChan <- client
+}
 
 // Currency represents the currency type (btc) and the network params
 // (Mainnet, testnet3, regtest, etc) in libcore parlance.
@@ -36,7 +156,7 @@ func CurrencyFromChain(chain string) (Currency, error) {
 	}
 }
 
-// TxIndexEnabled can be used to detect if the bitcoind server being connected
+// txIndexEnabled can be used to detect if the bitcoind server being connected
 // has a transaction index (enabled by option txindex=1).
 //
 // It works by fetching the first (coinbase) transaction from the block at
@@ -45,7 +165,7 @@ func CurrencyFromChain(chain string) (Currency, error) {
 //
 // If an irrecoverable error is encountered, it returns an error. In such
 // cases, the caller may stop program execution.
-func TxIndexEnabled(client *rpcclient.Client) (bool, error) {
+func txIndexEnabled(client *rpcclient.Client) (bool, error) {
 	blockHash, err := client.GetBlockHash(1)
 	if err != nil {
 		return false, ErrFailedToGetBlock
@@ -106,9 +226,9 @@ func (b *Bus) WaitForNodeSync() error {
 func (b *Bus) ImportAccounts(accounts []config.Account) error {
 	b.Status = Scanning
 
-	var allDescriptors []types.Descriptor
+	var allDescriptors []descriptor
 	for _, account := range accounts {
-		accountDescriptors, err := b.Descriptors(account)
+		accountDescriptors, err := b.descriptors(account)
 		if err != nil {
 			return err // return bare error, since it already has a ctx
 		}
@@ -116,7 +236,7 @@ func (b *Bus) ImportAccounts(accounts []config.Account) error {
 		allDescriptors = append(allDescriptors, accountDescriptors...)
 	}
 
-	var descriptorsToImport []types.Descriptor
+	var descriptorsToImport []descriptor
 	for _, descriptor := range allDescriptors {
 		address, err := b.DeriveAddress(descriptor.Value, descriptor.Depth)
 		if err != nil {
@@ -142,9 +262,9 @@ func (b *Bus) ImportAccounts(accounts []config.Account) error {
 	return b.ImportDescriptors(descriptorsToImport)
 }
 
-// Descriptors returns canonical descriptors from the account configuration.
-func (b *Bus) Descriptors(account config.Account) ([]types.Descriptor, error) {
-	var ret []types.Descriptor
+// descriptors returns canonical descriptors from the account configuration.
+func (b *Bus) descriptors(account config.Account) ([]descriptor, error) {
+	var ret []descriptor
 
 	var depth int
 	switch account.Depth {
@@ -173,7 +293,7 @@ func (b *Bus) Descriptors(account config.Account) ([]types.Descriptor, error) {
 			return nil, fmt.Errorf("%s: %w", ErrInvalidDescriptor, err)
 		}
 
-		ret = append(ret, types.Descriptor{
+		ret = append(ret, descriptor{
 			Value: *canonicalDesc,
 			Depth: depth,
 			Age:   age,

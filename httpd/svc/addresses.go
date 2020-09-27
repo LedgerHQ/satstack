@@ -1,9 +1,10 @@
 package svc
 
 import (
-	"github.com/btcsuite/btcd/btcjson"
 	"ledger-sats-stack/types"
 	"ledger-sats-stack/utils"
+
+	"github.com/btcsuite/btcd/btcjson"
 
 	log "github.com/sirupsen/logrus"
 )

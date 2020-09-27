@@ -1,10 +1,11 @@
 package svc
 
 import (
-	"github.com/btcsuite/btcd/btcjson"
 	"ledger-sats-stack/bus"
 	"strconv"
 	"time"
+
+	"github.com/btcsuite/btcd/btcjson"
 )
 
 func (s *Service) GetHealth() error {

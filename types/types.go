@@ -4,12 +4,6 @@ import (
 	"github.com/btcsuite/btcutil"
 )
 
-type Descriptor struct {
-	Value string
-	Depth int
-	Age   uint32
-}
-
 type OutputIdentifier struct {
 	Hash  string
 	Index uint32
