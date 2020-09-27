@@ -18,7 +18,7 @@ builds:
 
     main: ./cmd/lss.go
 
-    ldflags: -s -w -X ledger-sats-stack/version.GitCommit={{.ShortCommit}} -X ledger-sats-stack/version.Build=release
+    ldflags: -s -w -X sat-stack/version.GitCommit={{.ShortCommit}} -X sat-stack/version.Build=release
 
     env:
       - GIN_MODE=release
@@ -49,4 +49,4 @@ archives:
 release:
   github:
     owner: onyb
-    name: ledger-sats-stack
+    name: sat-stack

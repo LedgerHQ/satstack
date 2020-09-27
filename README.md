@@ -1,16 +1,16 @@
-# Ledger Sats Stack
+# Ledger Sat Stack
 
 <img src="/docs/logo.png" align="right" 
-    alt="Legder Sats Stack logo by Anton Lovchikov" width="150">
+    alt="sat-stack logo" width="150">
 
 </h1>
 
-Ledger Sats Stack is a lightweight bridge to connect Ledger Live with your personal Bitcoin full node. It's designed to allow Ledger Live users use Bitcoin without compromising on privacy, or relying on Ledger's infrastructure.
+Ledger Sat Stack is a lightweight bridge to connect Ledger Live with your personal Bitcoin full node. It's designed to allow Ledger Live users use Bitcoin without compromising on privacy, or relying on Ledger's infrastructure.
 
 <p>
-  <img src="https://github.com/onyb/ledger-sats-stack/workflows/Build/badge.svg" />
-  <img src="https://img.shields.io/github/v/release/onyb/ledger-sats-stack?include_prereleases" />
-  <img src="https://img.shields.io/github/downloads/onyb/ledger-sats-stack/total">
+  <img src="https://github.com/onyb/sat-stack/workflows/Build/badge.svg" />
+  <img src="https://img.shields.io/github/v/release/onyb/sat-stack?include_prereleases" />
+  <img src="https://img.shields.io/github/downloads/onyb/sat-stack/total">
   <img src="https://img.shields.io/badge/Go-%3E%3D1.15-04ADD8.svg" />
 </p>
 
@@ -31,12 +31,12 @@ Running a full node is the only way you can use Bitcoin in a completely trustles
 
 Running a node can be difficult for some users, and has [associated costs](https://bitcoin.org/en/full-node#costs-and-warnings) in terms of network bandwidth and disk usage. This is why Live connects to Bitcoin nodes running on Ledger's infrastucture, wrapped around by indexer and explorer services to ensure fast queries. While security and privacy is core to Ledger, one can make a theoretical case that Ledger can spy on transaction details, or even censor certain addresses from using Ledger's services.
 
-Sats Stack aims to render Ledger's infrastructure dispensable, by allowing users to connect Ledger Live with their personal Bitcoin full node.
+Sat Stack aims to render Ledger's infrastructure dispensable, by allowing users to connect Ledger Live with their personal Bitcoin full node.
 
 
 ## Architecture
 
-Ledger Sats Stack is a standalone Go application, that acts as a bridge between the [Ledger Live](http://ledger.com/live) application and a Bitcoin Core full-node. It exposes a REST interface to the open-source C++ library [libcore](https://github.com/LedgerHQ/lib-ledger-core), embedded by Live, and communicates to the Bitcoin node over RPC. It utilizes the transport layer and data-structures of [btcd](https://github.com/btcsuite/btcd).
+Ledger Sat Stack is a standalone Go application, that acts as a bridge between the [Ledger Live](http://ledger.com/live) application and a Bitcoin Core full-node. It exposes a REST interface to the open-source C++ library [libcore](https://github.com/LedgerHQ/lib-ledger-core), embedded by Live, and communicates to the Bitcoin node over RPC. It utilizes the transport layer and data-structures of [btcd](https://github.com/btcsuite/btcd).
 
 <p align="center">
   <img src="/docs/architecture.png"/>
@@ -74,7 +74,7 @@ wpkh([6e6a1271/84'/0'/3']xpubDCHCguj...mFJejwC/0/*)
 #### Create configuration file
 
 Create a config file **`lss.json`** in your home directory.
-You can use [this](https://github.com/onyb/ledger-sats-stack/blob/master/lss.mainnet.json) sample config file as a template.
+You can use [this](https://github.com/onyb/sat-stack/blob/master/lss.mainnet.json) sample config file as a template.
 
 ###### Optional account fields
 
@@ -109,9 +109,9 @@ Then launch `bitcoind` like this:
 $ bitcoind
 ```
 
-#### Launch Sats Stack
+#### Launch Sat Stack
 
-Pre-built binaries are available for download on the [releases](https://github.com/onyb/ledger-sats-stack/releases)
+Pre-built binaries are available for download on the [releases](https://github.com/onyb/sat-stack/releases)
 page (Linux, Windows, MacOS). Extract the tarball, and launch it as:
 
 ```sh
@@ -126,7 +126,7 @@ If you want to build `lss` yourself, just do the following:
 $ mage release  # or "mage build" for a development build
 ```
 
-On startup, Sats Stack will wait for the Bitcoin node to be fully synced,
+On startup, Sat Stack will wait for the Bitcoin node to be fully synced,
 and import your accounts. This can take a while.
 
 #### Launch Ledger Live Desktop

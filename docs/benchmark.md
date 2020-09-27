@@ -20,7 +20,7 @@ and/or **Goroutines** are probably going to have the biggest impact.
 
 * **Ops** = Number of operations (`libcore` abstraction for transactions)
 * **LBE** = Ledger Blockchain Explorer
-* **LSS** = Ledger Sats Stack 
+* **LSS** = Ledger Sat Stack
 * **reset** = reset libcore DB and sync from scratch
 
 #### With `txindex=1` + Bus Cache
@@ -38,7 +38,7 @@ and/or **Goroutines** are probably going to have the biggest impact.
 
 #### With `txindex=1` + Bus Cache disabled
 
-🗄️ Benchmark only for posterity; archived as of commit [4cbae0d](https://github.com/onyb/ledger-sats-stack/tree/4cbae0db8f2a862d9b280601940af8b5662e99a3).
+🗄️ Benchmark only for posterity; archived as of commit [4cbae0d](https://github.com/onyb/sat-stack/tree/4cbae0db8f2a862d9b280601940af8b5662e99a3).
 
 | xpub                  | Ops | LBE (reset) | LSS (reset) | LBE         | LSS         |
 | :--------------------:|----:|------------:|------------:|------------:|------------:|

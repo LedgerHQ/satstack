@@ -9,7 +9,7 @@ config:
 
   # Specify the current working directory path
   # the default is the current working directory path
-  cwd: /Users/abose/repos/onyb/ledger-sats-stack
+  cwd: /Users/abose/repos/onyb/sat-stack
 
   # Export additional ENV variables
   env:
@@ -50,7 +50,7 @@ config:
   # Don't forget to add a backgroundColor style with a null as type
   frameBox:
     type: floating
-    title: Ledger Sats Stack
+    title: Ledger Sat Stack
     style:
       border: 0px black solid
       # boxShadow: none

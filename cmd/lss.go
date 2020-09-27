@@ -24,7 +24,7 @@ func main() {
 		"commit":  version.GitCommit,
 		"runtime": version.GoVersion,
 		"arch":    version.OsArch,
-	}).Infof("Ledger Sats Stack (lss) %s", version.Version)
+	}).Infof("Ledger Sat Stack (lss) %s", version.Version)
 
 	configuration, err := config.Load()
 	if err != nil {
