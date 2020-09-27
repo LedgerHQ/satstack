@@ -32,7 +32,7 @@ func (s *Service) GetFees(targets []int64, mode string) map[string]interface{} {
 func (s *Service) GetStatus() (*bus.ExplorerStatus, error) {
 	var syncProgress *float64
 	if s.Bus.Status == bus.Syncing {
-		info, err := s.Bus.Client.GetBlockChainInfo()
+		info, err := s.Bus.GetBlockChainInfo()
 		if err != nil {
 			return nil, err
 		}
@@ -42,7 +42,7 @@ func (s *Service) GetStatus() (*bus.ExplorerStatus, error) {
 
 	var scanProgress *float64
 	if s.Bus.Status == bus.Scanning {
-		info, err := s.Bus.Client.GetWalletInfo()
+		info, err := s.Bus.GetWalletInfo()
 		if err != nil {
 			return nil, err
 		}

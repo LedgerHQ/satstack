@@ -9,15 +9,24 @@ import (
 )
 
 func (b *Bus) GetBestBlockHash() (*chainhash.Hash, error) {
-	return b.Client.GetBestBlockHash()
+	client := b.getClient()
+	defer b.recycleClient(client)
+
+	return client.GetBestBlockHash()
 }
 
 func (b *Bus) GetBlockHash(height int64) (*chainhash.Hash, error) {
-	return b.Client.GetBlockHash(height)
+	client := b.getClient()
+	defer b.recycleClient(client)
+
+	return client.GetBlockHash(height)
 }
 
 func (b *Bus) GetBlock(hash *chainhash.Hash) (*types.Block, error) {
-	nativeBlock, err := b.Client.GetBlockVerbose(hash)
+	client := b.getClient()
+	defer b.recycleClient(client)
+
+	nativeBlock, err := client.GetBlockVerbose(hash)
 	if err != nil {
 		return nil, err
 	}
@@ -38,5 +47,8 @@ func (b *Bus) GetBlock(hash *chainhash.Hash) (*types.Block, error) {
 }
 
 func (b *Bus) GetBlockChainInfo() (*btcjson.GetBlockChainInfoResult, error) {
-	return b.Client.GetBlockChainInfo()
+	client := b.getClient()
+	defer b.recycleClient(client)
+
+	return client.GetBlockChainInfo()
 }

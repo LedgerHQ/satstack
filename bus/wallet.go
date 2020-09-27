@@ -15,6 +15,9 @@ import (
 )
 
 func (b *Bus) ListTransactions(blockHash *string) ([]btcjson.ListTransactionsResult, error) {
+	client := b.getClient()
+	defer b.recycleClient(client)
+
 	var blockHashNative *chainhash.Hash
 	if blockHash != nil {
 		var err error
@@ -24,7 +27,7 @@ func (b *Bus) ListTransactions(blockHash *string) ([]btcjson.ListTransactionsRes
 		}
 	}
 
-	txs, err := b.Client.ListSinceBlockMinConfWatchOnly(blockHashNative, 1, true)
+	txs, err := client.ListSinceBlockMinConfWatchOnly(blockHashNative, 1, true)
 	if err != nil {
 		return nil, err
 	}
@@ -39,9 +42,12 @@ func (b *Bus) GetTransaction(hash *chainhash.Hash) (*btcjson.TxRawResult, error)
 		}
 	}
 
+	client := b.getClient()
+	defer b.recycleClient(client)
+
 	switch b.TxIndex {
 	case true:
-		txRaw, err := b.Client.GetRawTransactionVerbose(hash)
+		txRaw, err := client.GetRawTransactionVerbose(hash)
 		if err != nil {
 			return nil, err
 		}
@@ -52,7 +58,7 @@ func (b *Bus) GetTransaction(hash *chainhash.Hash) (*btcjson.TxRawResult, error)
 
 		return txRaw, nil
 	default:
-		tx, err := b.Client.GetTransactionWatchOnly(hash, true)
+		tx, err := client.GetTransactionWatchOnly(hash, true)
 		if err != nil {
 			return nil, err
 		}
@@ -62,7 +68,7 @@ func (b *Bus) GetTransaction(hash *chainhash.Hash) (*btcjson.TxRawResult, error)
 			return nil, err
 		}
 
-		txRaw, err := b.Client.DecodeRawTransaction(serializedTx)
+		txRaw, err := client.DecodeRawTransaction(serializedTx)
 		if err != nil {
 			return nil, err
 		}
@@ -85,7 +91,17 @@ func (b *Bus) GetTransaction(hash *chainhash.Hash) (*btcjson.TxRawResult, error)
 }
 
 func (b *Bus) GetAddressInfo(address string) (*btcjson.GetAddressInfoResult, error) {
-	return b.Client.GetAddressInfo(address)
+	client := b.getClient()
+	defer b.recycleClient(client)
+
+	return client.GetAddressInfo(address)
+}
+
+func (b *Bus) GetWalletInfo() (*btcjson.GetWalletInfoResult, error) {
+	client := b.getClient()
+	defer b.recycleClient(client)
+
+	return client.GetWalletInfo()
 }
 
 func (b *Bus) ImportDescriptors(descriptors []types.Descriptor) error {
@@ -106,7 +122,10 @@ func (b *Bus) ImportDescriptors(descriptors []types.Descriptor) error {
 		"N":      len(requests),
 	}).Info("Importing descriptors")
 
-	results, err := b.Client.ImportMulti(requests, &btcjson.ImportMultiOptions{Rescan: true})
+	client := b.getClient()
+	defer b.recycleClient(client)
+
+	results, err := client.ImportMulti(requests, &btcjson.ImportMultiOptions{Rescan: true})
 	if err != nil {
 		return err
 	}

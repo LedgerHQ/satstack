@@ -11,7 +11,10 @@ import (
 const fallbackFee = btcutil.Amount(1)
 
 func (b *Bus) EstimateSmartFee(target int64, mode string) btcutil.Amount {
-	fee, err := b.Client.EstimateSmartFee(target, getMode(mode))
+	client := b.getClient()
+	defer b.recycleClient(client)
+
+	fee, err := client.EstimateSmartFee(target, getMode(mode))
 
 	// If failed to get smart fee estimate, fallback to fallbackFee.
 	// Example: if the full-node is a regtest chain, there are normally
@@ -40,7 +43,10 @@ func (b *Bus) EstimateSmartFee(target int64, mode string) btcutil.Amount {
 }
 
 func (b *Bus) DeriveAddress(descriptor string, index int) (*string, error) {
-	addresses, err := b.Client.DeriveAddresses(
+	client := b.getClient()
+	defer b.recycleClient(client)
+
+	addresses, err := client.DeriveAddresses(
 		descriptor,
 
 		// Since we're interested in only the address at addressIndex,
@@ -63,8 +69,10 @@ func (b *Bus) DeriveAddress(descriptor string, index int) (*string, error) {
 // GetCanonicalDescriptor returns the descriptor in canonical form, along with
 // its computed checksum.
 func (b *Bus) GetCanonicalDescriptor(descriptor string) (*string, error) {
+	client := b.getClient()
+	defer b.recycleClient(client)
 
-	info, err := b.Client.GetDescriptorInfo(descriptor)
+	info, err := client.GetDescriptorInfo(descriptor)
 	if err != nil {
 		return nil, err
 	}

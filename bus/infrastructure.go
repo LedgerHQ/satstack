@@ -75,9 +75,12 @@ func TxIndexEnabled(client *rpcclient.Client) (bool, error) {
 }
 
 func (b *Bus) WaitForNodeSync() error {
+	client := b.getClient()
+	defer b.recycleClient(client)
+
 	b.Status = Syncing
 	for {
-		info, err := b.Client.GetBlockChainInfo()
+		info, err := client.GetBlockChainInfo()
 		if err != nil {
 			return err
 		}
