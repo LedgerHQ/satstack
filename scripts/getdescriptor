@@ -2,7 +2,8 @@
 
 import hashlib
 from dataclasses import dataclass, field
-from typing import List, Literal
+from enum import IntEnum
+from typing import Callable, List, Literal
 
 import base58
 import click
@@ -26,6 +27,11 @@ GetPubKey = Struct(
     address=PascalString(Int8ub, "utf-8"),
     chain_code=Bytes(32),
 )
+
+
+class Change(IntEnum):
+    External = 0
+    Internal = 1
 
 
 @dataclass
@@ -97,10 +103,11 @@ class ExtendedPublicKey:
         checksum = hash256(extended_key_bytes)[:4]
         return base58.b58encode(extended_key_bytes + checksum).decode()
 
-    def to_descriptor(self, scheme: SCHEME, derivation: Derivation) -> str:
+    def to_descriptor(
+        self, scheme: SCHEME, derivation: Derivation, change: Change
+    ) -> str:
         key_origin = f"{self.parent_fingerprint.hex()}/{derivation.path}"
 
-        change = 0  # hard-code to external chain for simpler UX
         fragment = f"[{key_origin}]{self.serialize()}/{change}/*"
 
         if scheme == "legacy":
@@ -193,24 +200,35 @@ def get_derivation_from_scheme(
 
 def derive_output_descriptors(
     client: LedgerClient, scheme: SCHEME, chain: CHAIN, account: int
-) -> str:
+) -> Callable[[Change], str]:
     derivation = get_derivation_from_scheme(scheme, chain, account)
     extended_key = derive_extended_public_key(client, chain, derivation)
-    return extended_key.to_descriptor(scheme=scheme, derivation=derivation)
+
+    def g(change: Change):
+        return extended_key.to_descriptor(
+            scheme=scheme, derivation=derivation, change=change
+        )
+
+    return g
 
 
 @click.command()
 @click.option(
-    "--scheme", type=click.Choice(SCHEME.__args__), required=True,
+    "--scheme",
+    type=click.Choice(SCHEME.__args__),
+    required=True,
 )
 @click.option(
-    "--chain", type=click.Choice(CHAIN.__args__), required=True,
+    "--chain",
+    type=click.Choice(CHAIN.__args__),
+    required=True,
 )
 @click.option("--account", type=int, required=True)
 def main(scheme: SCHEME, chain: CHAIN, account):
     client = get_client()
-    descriptor = derive_output_descriptors(client, scheme, chain, account)
-    click.echo(descriptor)
+    descriptor_factory = derive_output_descriptors(client, scheme, chain, account)
+    click.echo(f"External: {descriptor_factory(Change.External)}")
+    click.echo(f"Internal: {descriptor_factory(Change.Internal)}")
 
 
 if __name__ == "__main__":
