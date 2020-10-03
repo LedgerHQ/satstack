@@ -5,8 +5,7 @@ before:
     - go mod download
 
 builds:
-  -
-    goos:
+  - goos:
       - linux
       - windows
       - darwin
@@ -31,8 +30,7 @@ snapshot:
   name_template: SNAPSHOT-{{ .Commit }}
 
 archives:
-  -
-    name_template: "{{ tolower .ProjectName }}_{{.Version}}_{{.Os}}-{{.Arch}}"
+  - name_template: "{{ tolower .ProjectName }}_{{.Version}}_{{.Os}}-{{.Arch}}"
     replacements:
       darwin: macOS
       linux: Linux
@@ -46,6 +44,10 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
+
+signs:
+  - artifacts: checksum
+    args: [ "--batch", "-u", "{{ .Env.GPG_FINGERPRINT }}", "--output", "${signature}", "--detach-sign", "${artifact}" ]
 
 release:
   github:
