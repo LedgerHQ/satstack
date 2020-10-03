@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/onyb/sat-stack/httpd/svc"
+	"github.com/ledgerhq/satstack/httpd/svc"
 
 	"github.com/gin-gonic/gin"
 )

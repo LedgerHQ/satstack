@@ -3,8 +3,8 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/onyb/sat-stack/httpd/svc"
-	"github.com/onyb/sat-stack/types"
+	"github.com/ledgerhq/satstack/httpd/svc"
+	"github.com/ledgerhq/satstack/types"
 
 	"github.com/gin-gonic/gin"
 )

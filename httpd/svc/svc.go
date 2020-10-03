@@ -1,6 +1,6 @@
 package svc
 
-import "github.com/onyb/sat-stack/bus"
+import "github.com/ledgerhq/satstack/bus"
 
 type Service struct {
 	Bus *bus.Bus

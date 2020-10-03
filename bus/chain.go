@@ -1,8 +1,8 @@
 package bus
 
 import (
-	"github.com/onyb/sat-stack/types"
-	"github.com/onyb/sat-stack/utils"
+	"github.com/ledgerhq/satstack/types"
+	"github.com/ledgerhq/satstack/utils"
 
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"

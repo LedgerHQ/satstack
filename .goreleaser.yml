@@ -1,6 +1,7 @@
 before:
   hooks:
     - go mod tidy
+    - go mod verify
     - go mod download
 
 builds:
@@ -18,20 +19,20 @@ builds:
 
     main: ./cmd/lss.go
 
-    ldflags: -s -w -X sat-stack/version.GitCommit={{.ShortCommit}} -X sat-stack/version.Build=release
+    ldflags: -s -w -X satstack/version.GitCommit={{.ShortCommit}} -X satstack/version.Build=release
 
     env:
       - GIN_MODE=release
 
 checksum:
-  name_template: '{{.Binary}}_{{.Version}}_checksums.txt'
+  name_template: '{{ tolower .ProjectName }}_{{.Version}}_checksums.txt'
 
 snapshot:
   name_template: SNAPSHOT-{{ .Commit }}
 
 archives:
   -
-    name_template: "lss_{{.Version}}_{{.Os}}-{{.Arch}}"
+    name_template: "{{ tolower .ProjectName }}_{{.Version}}_{{.Os}}-{{.Arch}}"
     replacements:
       darwin: macOS
       linux: Linux
@@ -48,5 +49,5 @@ archives:
 
 release:
   github:
-    owner: onyb
-    name: sat-stack
+    owner: ledgerhq
+    name: satstack

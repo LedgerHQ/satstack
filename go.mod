@@ -1,4 +1,4 @@
-module github.com/onyb/sat-stack
+module github.com/ledgerhq/satstack
 
 go 1.15
 

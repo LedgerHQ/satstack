@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/onyb/sat-stack/bus"
-	"github.com/onyb/sat-stack/config"
-	"github.com/onyb/sat-stack/httpd"
-	"github.com/onyb/sat-stack/httpd/svc"
-	"github.com/onyb/sat-stack/version"
+	"github.com/ledgerhq/satstack/bus"
+	"github.com/ledgerhq/satstack/config"
+	"github.com/ledgerhq/satstack/httpd"
+	"github.com/ledgerhq/satstack/httpd/svc"
+	"github.com/ledgerhq/satstack/version"
 
 	log "github.com/sirupsen/logrus"
 	prefixed "github.com/x-cray/logrus-prefixed-formatter"

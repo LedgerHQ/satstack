@@ -1,8 +1,8 @@
 package httpd
 
 import (
-	"github.com/onyb/sat-stack/httpd/handlers"
-	"github.com/onyb/sat-stack/httpd/svc"
+	"github.com/ledgerhq/satstack/httpd/handlers"
+	"github.com/ledgerhq/satstack/httpd/svc"
 
 	"github.com/gin-gonic/gin"
 )

@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/onyb/sat-stack/httpd/svc"
-	"github.com/onyb/sat-stack/utils"
+	"github.com/ledgerhq/satstack/httpd/svc"
+	"github.com/ledgerhq/satstack/utils"
 
 	"github.com/gin-gonic/gin"
 )

@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/onyb/sat-stack/config"
-	"github.com/onyb/sat-stack/utils"
+	"github.com/ledgerhq/satstack/config"
+	"github.com/ledgerhq/satstack/utils"
 
 	"github.com/patrickmn/go-cache"
 

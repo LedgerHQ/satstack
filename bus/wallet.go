@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"errors"
 
-	"github.com/onyb/sat-stack/utils"
+	"github.com/ledgerhq/satstack/utils"
 
 	"github.com/patrickmn/go-cache"
 

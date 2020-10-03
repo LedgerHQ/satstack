@@ -9,7 +9,7 @@ config:
 
   # Specify the current working directory path
   # the default is the current working directory path
-  cwd: /Users/abose/repos/onyb/sat-stack
+  cwd: /Users/abose/repos/ledgerhq/satstack
 
   # Export additional ENV variables
   env:

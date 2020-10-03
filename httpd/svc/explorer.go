@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/onyb/sat-stack/bus"
+	"github.com/ledgerhq/satstack/bus"
 
 	"github.com/btcsuite/btcd/btcjson"
 )

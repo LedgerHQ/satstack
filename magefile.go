@@ -64,7 +64,7 @@ func flagEnv() map[string]string {
 	}
 
 	return map[string]string{
-		"PACKAGE":     "sat-stack",
+		"PACKAGE":     "satstack",
 		"COMMIT_HASH": hash,
 		"BUILD":       build,
 	}
