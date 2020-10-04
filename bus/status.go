@@ -18,6 +18,11 @@ const (
 	// downloading and validating blocks.
 	Syncing Status = "syncing"
 
+	// PendingScan is a Status to indicate that the Bitcoin Core node has
+	// finished syncing, and is ready to import account descriptors into its
+	// wallet.
+	PendingScan Status = "pending_scan"
+
 	// Scanning is a Status to indicate that the Bitcoin Core node is currently
 	// importing account descriptors into its wallet.
 	Scanning Status = "scanning"

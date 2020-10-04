@@ -2,6 +2,7 @@ package svc
 
 import (
 	"github.com/ledgerhq/satstack/bus"
+	"github.com/ledgerhq/satstack/config"
 	"github.com/ledgerhq/satstack/types"
 )
 
@@ -25,9 +26,14 @@ type ExplorerService interface {
 	GetFees(targets []int64, mode string) map[string]interface{}
 }
 
+type ControlService interface {
+	ImportAccounts(accounts []config.Account)
+}
+
 type ServiceInterface interface {
 	BlocksService
 	TransactionsService
 	AddressesService
 	ExplorerService
+	ControlService
 }

@@ -52,6 +52,7 @@ func SendTransaction(s svc.TransactionsService) gin.HandlerFunc {
 		var request struct {
 			Transaction string `json:"tx" binding:"required"`
 		}
+
 		if err := ctx.BindJSON(&request); err != nil {
 			log.Error("Failed to bind JSON request")
 			ctx.JSON(http.StatusBadRequest, err)

@@ -24,10 +24,6 @@ func (c Configuration) validate() error {
 		return err
 	}
 
-	if len(c.Accounts) == 0 {
-		return ErrMissingAccounts
-	}
-
 	for _, account := range c.Accounts {
 		if err := validateStringField("external", account.External); err != nil {
 			return err

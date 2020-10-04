@@ -3,10 +3,6 @@ package config
 import "errors"
 
 var (
-	// ErrMissingAccounts indicates that the configuration file did not
-	// provide any accounts to import.
-	ErrMissingAccounts = errors.New("no accounts found")
-
 	// ErrMissingKey indicates that a key was expected in the config,
 	// but was not found.
 	ErrMissingKey = errors.New("missing key")

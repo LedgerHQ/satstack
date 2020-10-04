@@ -66,6 +66,14 @@ func main() {
 			}).Fatal("Failed during node sync")
 		}
 
+		b.Status = bus.PendingScan
+
+		// Skip import of descriptors, if no account config found. SatStack
+		// will run in zero-configuration mode.
+		if configuration.Accounts == nil {
+			return
+		}
+
 		if err := b.ImportAccounts(configuration.Accounts); err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
