@@ -7,6 +7,10 @@ var (
 	// was not successful. Use this error during sanity checks.
 	ErrBitcoindUnreachable = errors.New("bitcoind unreachable")
 
+	// ErrUnsupportedBitcoindVersion indicates that the connected bitcoind node
+	// has a version that is not supported by SatStack.
+	ErrUnsupportedBitcoindVersion = errors.New("unsupported bitcoind version")
+
 	// ErrUnrecognizedChain indicates that the Chain returned by bitcoind in
 	// its response to the getblockchaininfo RPC, is unrecognized by LSS.
 	//

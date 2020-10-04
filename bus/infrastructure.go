@@ -30,6 +30,10 @@ const (
 	// Set this to the maximum number of concurrent RPC operations that may be
 	// performed on the Bitcoin node.
 	connPoolSize = 2
+
+	// minimumSupportedBitcoindVersion indicates the minimum version that is
+	// supported by SatStack.
+	minSupportedBitcoindVersion = 200000
 )
 
 // Bus represents a transport allowing access to Bitcoin RPC methods.
@@ -92,6 +96,15 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 	info, err := client.GetBlockChainInfo()
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrBitcoindUnreachable, err)
+	}
+
+	networkInfo, err := client.GetNetworkInfo()
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", ErrBitcoindUnreachable, err)
+	}
+
+	if v := networkInfo.Version; v < minSupportedBitcoindVersion {
+		return nil, fmt.Errorf("%s: %d", ErrUnsupportedBitcoindVersion, v)
 	}
 
 	blockFilter, err := blockFilterEnabled(client, info.BestBlockHash)
