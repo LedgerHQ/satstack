@@ -68,6 +68,12 @@ func main() {
 
 		b.Status = bus.PendingScan
 
+		if err := b.RunTheNumbers(); err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).Fatal("Inflation checks failed")
+		}
+
 		// Skip import of descriptors, if no account config found. SatStack
 		// will run in zero-configuration mode.
 		if configuration.Accounts == nil {

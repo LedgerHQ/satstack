@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/btcsuite/btcutil"
+
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 
 	"github.com/ledgerhq/satstack/config"
@@ -335,4 +337,48 @@ func (b *Bus) descriptors(account config.Account) ([]descriptor, error) {
 	}
 
 	return ret, nil
+}
+
+// RunTheNumbers performs inflation checks against the connected full node.
+//
+// It does NOT perform any equality comparison between expected and actual
+// supply.
+func (b *Bus) RunTheNumbers() error {
+	client := b.getClient()
+	defer b.recycleClient(client)
+
+	log.Info("Running inflation checks")
+
+	info, err := client.GetTxOutSetInfo()
+	if err != nil {
+		return err
+	}
+
+	const halvingBlocks = 210000
+
+	var (
+		subsidy float64 = 50
+		supply  float64 = 0
+	)
+
+	i := int64(0)
+	for ; i < info.Height/halvingBlocks; i++ {
+		supply += halvingBlocks * subsidy
+		subsidy /= 2
+	}
+
+	supply += subsidy * float64(info.Height-(halvingBlocks*i))
+
+	supplyBTC, err := btcutil.NewAmount(supply)
+	if err != nil {
+		return err
+	}
+
+	log.WithFields(log.Fields{
+		"height":         info.Height,
+		"expectedSupply": supplyBTC,
+		"actualSupply":   info.TotalAmount,
+	}).Info("#RunTheNumbers OK️")
+
+	return nil
 }
