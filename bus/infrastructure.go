@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+
 	"github.com/ledgerhq/satstack/config"
 	"github.com/ledgerhq/satstack/utils"
 
@@ -34,11 +36,12 @@ const (
 // concurrent invocation of RPC methods.
 type Bus struct {
 	// Informational fields
-	Chain    string
-	Pruned   bool
-	TxIndex  bool
-	Currency Currency // Based on Chain value, for interoperability with libcore
-	Status   Status
+	Chain       string
+	Pruned      bool
+	TxIndex     bool
+	BlockFilter bool
+	Currency    Currency // Based on Chain value, for interoperability with libcore
+	Status      Status
 
 	// Thread-safe Bus cache, to query results typically by hash
 	Cache *cache.Cache
@@ -89,6 +92,11 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 		return nil, fmt.Errorf("%s: %w", ErrBitcoindUnreachable, err)
 	}
 
+	blockFilter, err := blockFilterEnabled(client, info.BestBlockHash)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", ErrFailedToDetectBlockFilter, err)
+	}
+
 	txIndex, err := txIndexEnabled(client)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrFailedToDetectTxIndex, err)
@@ -100,14 +108,15 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 	}
 
 	b := &Bus{
-		connChan: pool,
-		Pruned:   info.Pruned,
-		Chain:    info.Chain,
-		TxIndex:  txIndex,
-		Currency: currency,
-		Cache:    nil, // Disabled by default
-		Status:   Initializing,
-		wg:       sync.WaitGroup{},
+		connChan:    pool,
+		Pruned:      info.Pruned,
+		Chain:       info.Chain,
+		BlockFilter: blockFilter,
+		TxIndex:     txIndex,
+		Currency:    currency,
+		Cache:       nil, // Disabled by default
+		Status:      Initializing,
+		wg:          sync.WaitGroup{},
 	}
 
 	return b, nil
@@ -189,6 +198,30 @@ func txIndexEnabled(client *rpcclient.Client) (bool, error) {
 	}
 
 	if _, err := client.GetRawTransaction(tx); err != nil {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+// blockFilterEnabled can be used to detect if the bitcoind server being
+// connected has a BIP-0157 Compact Block Filter index enabled (enabled by
+// option blockfilterindex=1 in bitcoin.conf).
+//
+// Compact block filters use Golomb-Rice coding for compression and can give a
+// probabilistic answer to the question "does the block contain x?". There are
+// no false negatives.
+//
+// If this function returns true, blockchain rescans will be significantly
+// faster, as bitcoind can avoid iterating through every transaction in every
+// block.
+func blockFilterEnabled(client *rpcclient.Client, hash string) (bool, error) {
+	chainHash, err := chainhash.NewHashFromStr(hash)
+	if err != nil {
+		return false, err
+	}
+
+	if _, err := client.GetBlockFilter(*chainHash, nil); err != nil {
 		return false, nil
 	}
 

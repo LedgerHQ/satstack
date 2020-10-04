@@ -24,7 +24,7 @@ func main() {
 		"commit":  version.GitCommit,
 		"runtime": version.GoVersion,
 		"arch":    version.OsArch,
-	}).Infof("Ledger Sat Stack (lss) %s", version.Version)
+	}).Infof("Ledger SatStack (lss) %s", version.Version)
 
 	configuration, err := config.Load()
 	if err != nil {
@@ -49,9 +49,10 @@ func main() {
 	defer b.Close()
 
 	log.WithFields(log.Fields{
-		"chain":   b.Chain,
-		"pruned":  b.Pruned,
-		"txindex": b.TxIndex,
+		"chain":       b.Chain,
+		"pruned":      b.Pruned,
+		"txindex":     b.TxIndex,
+		"blockFilter": b.BlockFilter,
 	}).Info("RPC connection established")
 
 	s := &svc.Service{

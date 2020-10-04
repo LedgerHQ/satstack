@@ -27,6 +27,7 @@ const (
 // service method.
 type ExplorerStatus struct {
 	TxIndex      bool     `json:"txindex"`
+	BlockFilter  bool     `json:"block_filter"`
 	Pruned       bool     `json:"pruned"`
 	Chain        string   `json:"chain"`
 	Currency     Currency `json:"currency"`

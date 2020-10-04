@@ -27,6 +27,11 @@ var (
 	// not be ignored silently.
 	ErrFailedToDetectTxIndex = errors.New("failed to detect txindex")
 
+	// ErrFailedToDetectBlockFilter indicates an irrecoverable error while trying
+	// to detect presence of a compact block filter index. Normally, this error
+	// should not be ignored silently.
+	ErrFailedToDetectBlockFilter = errors.New("failed to detect block filter")
+
 	// ErrInvalidDescriptor indicates that a malformed descriptor was
 	// encountered.
 	ErrInvalidDescriptor = errors.New("invalid descriptor")
