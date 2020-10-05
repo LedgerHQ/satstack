@@ -1,6 +1,6 @@
 # Ledger SatStack
 
-<img src="/share/logo.svg" align="right" alt="satstack logo" width="150">
+<img src="/share/logo.svg" align="right" alt="satstack logo" width="200">
 
 </h1>
 
@@ -38,7 +38,7 @@ SatStack aims to render Ledger's infrastructure dispensable, by allowing users t
 Ledger SatStack is a standalone Go application, that acts as a bridge between the [Ledger Live](http://ledger.com/live) application and a Bitcoin Core full-node. It exposes a REST interface to the open-source C++ library [libcore](https://github.com/LedgerHQ/lib-ledger-core), embedded by Live, and communicates to the Bitcoin node over RPC. It utilizes the transport layer and data-structures of [btcd](https://github.com/btcsuite/btcd).
 
 <p align="center">
-  <img src="/share/architecture.png"/>
+  <img src="/share/architecture.svg"/>
 </p>
 
 ## Requirements
