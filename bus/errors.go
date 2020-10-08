@@ -7,6 +7,10 @@ var (
 	// was not successful. Use this error during sanity checks.
 	ErrBitcoindUnreachable = errors.New("bitcoind unreachable")
 
+	// ErrWalletDisabled indicates that wallet features have been disabled on
+	// the connected Bitcoin node. SatStack relies on wallet RPCs to function.
+	ErrWalletDisabled = errors.New("bitcoind wallet is disabled")
+
 	// ErrUnsupportedBitcoindVersion indicates that the connected bitcoind node
 	// has a version that is not supported by SatStack.
 	ErrUnsupportedBitcoindVersion = errors.New("unsupported bitcoind version")

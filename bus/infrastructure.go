@@ -6,16 +6,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/btcsuite/btcutil"
-
+	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-
+	"github.com/btcsuite/btcd/rpcclient"
+	"github.com/btcsuite/btcutil"
 	"github.com/ledgerhq/satstack/config"
 	"github.com/ledgerhq/satstack/utils"
-
 	"github.com/patrickmn/go-cache"
-
-	"github.com/btcsuite/btcd/rpcclient"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -92,6 +89,10 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 	// extract information required for initializing the Bus struct.
 	client := <-pool
 	defer func() { pool <- client }()
+
+	if walletDisabled(client) {
+		return nil, ErrWalletDisabled
+	}
 
 	info, err := client.GetBlockChainInfo()
 	if err != nil {
@@ -179,6 +180,20 @@ func CurrencyFromChain(chain string) (Currency, error) {
 	default:
 		return "", ErrUnrecognizedChain
 	}
+}
+
+// walletDisabled detects if wallet features have been disabled in the Bitcoin
+// node, and returns a boolean value accordingly.
+//
+// This maps to the option disablewallet=1 in bitcoin.conf.
+func walletDisabled(client *rpcclient.Client) bool {
+	if _, err := client.GetWalletInfo(); err != nil {
+		if err.(*btcjson.RPCError).Code == btcjson.ErrRPCMethodNotFound.Code {
+			return true
+		}
+	}
+
+	return false
 }
 
 // txIndexEnabled can be used to detect if the bitcoind server being connected
