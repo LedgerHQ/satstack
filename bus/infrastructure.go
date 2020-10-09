@@ -90,8 +90,11 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 	client := <-pool
 	defer func() { pool <- client }()
 
-	if walletDisabled(client) {
-		return nil, ErrWalletDisabled
+	isWalletDisabled, err := walletDisabled(client)
+	if isWalletDisabled {
+		return nil, err
+	} else if err != nil {
+		return nil, fmt.Errorf("%s: %w", ErrWalletRPCFailed, err)
 	}
 
 	info, err := client.GetBlockChainInfo()
@@ -186,14 +189,16 @@ func CurrencyFromChain(chain string) (Currency, error) {
 // node, and returns a boolean value accordingly.
 //
 // This maps to the option disablewallet=1 in bitcoin.conf.
-func walletDisabled(client *rpcclient.Client) bool {
+func walletDisabled(client *rpcclient.Client) (bool, error) {
 	if _, err := client.GetWalletInfo(); err != nil {
 		if err.(*btcjson.RPCError).Code == btcjson.ErrRPCMethodNotFound.Code {
-			return true
+			return true, ErrWalletDisabled
 		}
+
+		return false, err
 	}
 
-	return false
+	return false, nil
 }
 
 // txIndexEnabled can be used to detect if the bitcoind server being connected
