@@ -94,21 +94,6 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 	client := <-pool
 	defer func() { pool <- client }()
 
-	isNewWallet, err := loadOrCreateWallet(client)
-	if err != nil {
-		return nil, err
-	}
-
-	if isNewWallet {
-		log.WithFields(log.Fields{
-			"wallet": walletName,
-		}).Info("Created new wallet")
-	} else {
-		log.WithFields(log.Fields{
-			"wallet": walletName,
-		}).Info("Loaded existing wallet")
-	}
-
 	info, err := client.GetBlockChainInfo()
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrBitcoindUnreachable, err)
@@ -136,6 +121,21 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 	currency, err := CurrencyFromChain(info.Chain)
 	if err != nil {
 		return nil, err
+	}
+
+	isNewWallet, err := loadOrCreateWallet(client)
+	if err != nil {
+		return nil, err
+	}
+
+	if isNewWallet {
+		log.WithFields(log.Fields{
+			"wallet": walletName,
+		}).Info("Created new wallet")
+	} else {
+		log.WithFields(log.Fields{
+			"wallet": walletName,
+		}).Info("Loaded existing wallet")
 	}
 
 	b := &Bus{
