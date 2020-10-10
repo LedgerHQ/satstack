@@ -424,7 +424,7 @@ func (b *Bus) RunTheNumbers() error {
 	client := b.getClient()
 	defer b.recycleClient(client)
 
-	log.Info("Running inflation checks")
+	log.Info("Running inflation checks...")
 
 	info, err := client.GetTxOutSetInfo()
 	if err != nil {
@@ -455,7 +455,7 @@ func (b *Bus) RunTheNumbers() error {
 		"height":         info.Height,
 		"expectedSupply": supplyBTC,
 		"actualSupply":   info.TotalAmount,
-	}).Info("#RunTheNumbers OK️")
+	}).Info("RunTheNumbers successful")
 
 	return nil
 }
