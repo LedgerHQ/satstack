@@ -11,8 +11,13 @@ var (
 	// the connected Bitcoin node. SatStack relies on wallet RPCs to function.
 	ErrWalletDisabled = errors.New("bitcoind wallet is disabled")
 
-	// ErrWalletRPCFailed indicates that a wallet RPC did not succeed.
-	ErrWalletRPCFailed = errors.New("bitcoind wallet RPC failed")
+	// ErrCreateWallet indicates that the wallet RPC createwallet was not
+	// successful.
+	ErrCreateWallet = errors.New("failed to create wallet")
+
+	// ErrLoadWallet indicates that the wallet RPC loadwallet was not
+	// successful.
+	ErrLoadWallet = errors.New("failed to load wallet")
 
 	// ErrUnsupportedBitcoindVersion indicates that the connected bitcoind node
 	// has a version that is not supported by SatStack.

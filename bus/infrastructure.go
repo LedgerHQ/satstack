@@ -31,6 +31,12 @@ const (
 	// minimumSupportedBitcoindVersion indicates the minimum version that is
 	// supported by SatStack.
 	minSupportedBitcoindVersion = 200000
+
+	// walletName indicates the name of the wallet created by SatStack in
+	// bitcoind's wallet.
+	walletName = "satstack"
+
+	errDuplicateWalletLoadMsg = "Duplicate -wallet filename specified."
 )
 
 // Bus represents a transport allowing access to Bitcoin RPC methods.
@@ -90,11 +96,8 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 	client := <-pool
 	defer func() { pool <- client }()
 
-	isWalletDisabled, err := walletDisabled(client)
-	if isWalletDisabled {
+	if err := loadOrCreateWallet(client); err != nil {
 		return nil, err
-	} else if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrWalletRPCFailed, err)
 	}
 
 	info, err := client.GetBlockChainInfo()
@@ -144,6 +147,12 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 // Close performs cleanup operations on the Bus, notably shutting down the
 // rpcclient connections.
 func (b *Bus) Close() {
+	if err := b.unloadWallet(); err != nil {
+		log.WithFields(log.Fields{
+			"wallet": walletName,
+		}).Error("failed to unload wallet")
+	}
+
 	b.wg.Wait()
 
 	for i := 0; i < cap(b.connChan); i++ {
@@ -185,20 +194,51 @@ func CurrencyFromChain(chain string) (Currency, error) {
 	}
 }
 
-// walletDisabled detects if wallet features have been disabled in the Bitcoin
-// node, and returns a boolean value accordingly.
+// loadOrCreateWallet attempts to load the default SatStack wallet, and if not
+// found, creates the same.
 //
-// This maps to the option disablewallet=1 in bitcoin.conf.
-func walletDisabled(client *rpcclient.Client) (bool, error) {
-	if _, err := client.GetWalletInfo(); err != nil {
-		if err.(*btcjson.RPCError).Code == btcjson.ErrRPCMethodNotFound.Code {
-			return true, ErrWalletDisabled
-		}
-
-		return false, err
+// This method also detects if wallet features have been disabled in the
+// Bitcoin node, and returns an error in such a case. This is typically the
+// case when the option disablewallet=1 is specified in bitcoin.conf.
+//
+// In case a new wallet is created, it'll be in loaded state by default.
+func loadOrCreateWallet(client *rpcclient.Client) error {
+	// Try to load wallet first.
+	err := client.LoadWallet(walletName)
+	if err == nil {
+		return nil
 	}
 
-	return false, nil
+	// Convert native error to btcjson.RPCError
+	rpcErr := err.(*btcjson.RPCError)
+
+	// Check if wallet RPC is disabled.
+	if rpcErr.Code == btcjson.ErrRPCMethodNotFound.Code {
+		return ErrWalletDisabled
+	}
+
+	// Wallet is already loaded. Ignore the error and return.
+	if rpcErr.Code == btcjson.ErrRPCWallet && strings.Contains(rpcErr.Message, errDuplicateWalletLoadMsg) {
+		log.WithFields(log.Fields{
+			"wallet": walletName,
+			"msg":    rpcErr,
+		}).Warn("wallet already loaded")
+		return nil
+	}
+
+	// Wallet to load could not be found - create it.
+	if rpcErr.Code == btcjson.ErrRPCWalletNotFound {
+		if _, err := client.CreateWallet(
+			walletName,
+			rpcclient.WithCreateWalletDisablePrivateKeys(),
+		); err != nil {
+			return fmt.Errorf("%s: %w", ErrCreateWallet, err)
+		}
+
+		return nil
+	}
+
+	return fmt.Errorf("%s: %w", ErrLoadWallet, rpcErr)
 }
 
 // txIndexEnabled can be used to detect if the bitcoind server being connected
@@ -414,4 +454,11 @@ func (b *Bus) RunTheNumbers() error {
 	}).Info("#RunTheNumbers OK️")
 
 	return nil
+}
+
+func (b *Bus) unloadWallet() error {
+	client := b.getClient()
+	defer b.recycleClient(client)
+
+	return client.UnloadWallet(walletName)
 }
