@@ -94,8 +94,19 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 	client := <-pool
 	defer func() { pool <- client }()
 
-	if err := loadOrCreateWallet(client); err != nil {
+	isNewWallet, err := loadOrCreateWallet(client)
+	if err != nil {
 		return nil, err
+	}
+
+	if isNewWallet {
+		log.WithFields(log.Fields{
+			"wallet": walletName,
+		}).Info("Created new wallet")
+	} else {
+		log.WithFields(log.Fields{
+			"wallet": walletName,
+		}).Info("Loaded existing wallet")
 	}
 
 	info, err := client.GetBlockChainInfo()
@@ -147,16 +158,13 @@ func (b *Bus) Close() {
 	if err := b.unloadWallet(); err != nil {
 		log.WithFields(log.Fields{
 			"wallet": walletName,
-		}).Error("failed to unload wallet")
+			"error":  err,
+		}).Warn("Unable to unload wallet")
 	}
 
-	b.wg.Wait()
-
-	for i := 0; i < cap(b.connChan); i++ {
-		client := <-b.connChan
-		client.WaitForShutdown()
-		client.Shutdown()
-	}
+	log.WithFields(log.Fields{
+		"wallet": walletName,
+	}).Info("Unloaded wallet successfully")
 
 	close(b.connChan)
 }
@@ -198,12 +206,15 @@ func CurrencyFromChain(chain string) (Currency, error) {
 // Bitcoin node, and returns an error in such a case. This is typically the
 // case when the option disablewallet=1 is specified in bitcoin.conf.
 //
+// The function returns a bool to indicate whether the wallet was created
+// (true) or loaded (false). The value is meaningless if an error is returned.
+//
 // In case a new wallet is created, it'll be in loaded state by default.
-func loadOrCreateWallet(client *rpcclient.Client) error {
+func loadOrCreateWallet(client *rpcclient.Client) (bool, error) {
 	// Try to load wallet first.
 	err := client.LoadWallet(walletName)
 	if err == nil {
-		return nil
+		return false, nil
 	}
 
 	// Convert native error to btcjson.RPCError
@@ -211,16 +222,12 @@ func loadOrCreateWallet(client *rpcclient.Client) error {
 
 	// Check if wallet RPC is disabled.
 	if rpcErr.Code == btcjson.ErrRPCMethodNotFound.Code {
-		return ErrWalletDisabled
+		return false, ErrWalletDisabled
 	}
 
-	// Wallet is already loaded. Ignore the error and return.
 	if rpcErr.Code == btcjson.ErrRPCWallet && strings.Contains(rpcErr.Message, errDuplicateWalletLoadMsg) {
-		log.WithFields(log.Fields{
-			"wallet": walletName,
-			"msg":    rpcErr,
-		}).Warn("wallet already loaded")
-		return nil
+		// wallet already loaded. Ignore the error and return.
+		return false, nil
 	}
 
 	// Wallet to load could not be found - create it.
@@ -229,13 +236,13 @@ func loadOrCreateWallet(client *rpcclient.Client) error {
 			walletName,
 			rpcclient.WithCreateWalletDisablePrivateKeys(),
 		); err != nil {
-			return fmt.Errorf("%s: %w", ErrCreateWallet, err)
+			return false, fmt.Errorf("%s: %w", ErrCreateWallet, err)
 		}
 
-		return nil
+		return true, nil
 	}
 
-	return fmt.Errorf("%s: %w", ErrLoadWallet, rpcErr)
+	return false, fmt.Errorf("%s: %w", ErrLoadWallet, rpcErr)
 }
 
 // txIndexEnabled can be used to detect if the bitcoind server being connected
