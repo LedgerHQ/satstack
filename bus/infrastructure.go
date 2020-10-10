@@ -3,7 +3,6 @@ package bus
 import (
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/btcsuite/btcd/btcjson"
@@ -57,7 +56,6 @@ type Bus struct {
 
 	// Connection pool management infrastructure
 	connChan chan *rpcclient.Client
-	wg       sync.WaitGroup
 }
 
 type descriptor struct {
@@ -138,7 +136,6 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 		Currency:    currency,
 		Cache:       nil, // Disabled by default
 		Status:      Initializing,
-		wg:          sync.WaitGroup{},
 	}
 
 	return b, nil
