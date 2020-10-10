@@ -71,7 +71,7 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 	// Prepare the connection config to initialize the rpcclient.Client
 	// pool with.
 	connCfg := &rpcclient.ConnConfig{
-		Host:         host,
+		Host:         fmt.Sprintf("%s/wallet/%s", host, walletName),
 		User:         user,
 		Pass:         pass,
 		HTTPPostMode: true,
@@ -460,5 +460,5 @@ func (b *Bus) unloadWallet() error {
 	client := b.getClient()
 	defer b.recycleClient(client)
 
-	return client.UnloadWallet(walletName)
+	return client.UnloadWallet(nil)
 }
