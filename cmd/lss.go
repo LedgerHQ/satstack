@@ -1,17 +1,23 @@
 package main
 
 import (
+	"context"
+	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
+	"time"
+
 	"github.com/ledgerhq/satstack/bus"
 	"github.com/ledgerhq/satstack/config"
 	"github.com/ledgerhq/satstack/httpd"
 	"github.com/ledgerhq/satstack/httpd/svc"
 	"github.com/ledgerhq/satstack/version"
-
 	log "github.com/sirupsen/logrus"
 	prefixed "github.com/x-cray/logrus-prefixed-formatter"
 )
 
-func main() {
+func startup() *svc.Service {
 	log.SetFormatter(&prefixed.TextFormatter{
 		TimestampFormat:  "2006/01/02 - 15:04:05",
 		FullTimestamp:    true,
@@ -31,7 +37,7 @@ func main() {
 		log.WithFields(log.Fields{
 			"error": err.Error(),
 		}).Fatal("Failed to load config")
-		return
+		return nil
 	}
 
 	b, err := bus.New(
@@ -44,9 +50,8 @@ func main() {
 		log.WithFields(log.Fields{
 			"error": err,
 		}).Fatal("Failed to initialize Bus")
-		return
+		return nil
 	}
-	defer b.Close()
 
 	log.WithFields(log.Fields{
 		"chain":       b.Chain,
@@ -89,7 +94,41 @@ func main() {
 		b.Status = bus.Ready
 	}()
 
+	return s
+}
+
+func main() {
+	s := startup()
 	engine := httpd.GetRouter(s)
 
-	_ = engine.Run(":20000")
+	srv := &http.Server{
+		Addr:    ":20000",
+		Handler: engine,
+	}
+
+	go func() {
+		// service connections
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).Fatal("Failed to listen and serve")
+		}
+	}()
+
+	// Wait for interrupt signal to gracefully shutdown the server with
+	// a timeout of 5 seconds.
+	quit := make(chan os.Signal)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+
+	fmt.Println()
+	log.Info("Shutting down server...")
+
+	s.Bus.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatal("Server Shutdown:", err)
+	}
 }
