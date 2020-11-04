@@ -144,3 +144,6 @@ If you liked this project, show us some love by tweeting to us
 
 Contributions in the form of code improvements, documentation, tutorials,
 and feedback are most welcome.
+
+Beta testers who want to test the full node are invited to send their feedback by contacting their program manager.
+If you are not part of the Ledger beta program and you want to join, register to [this form](https://www.ledger.com/ledger-beta-testing-program).
