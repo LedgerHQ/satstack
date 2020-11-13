@@ -212,7 +212,7 @@ func CurrencyFromChain(chain string) (Currency, error) {
 // In case a new wallet is created, it'll be in loaded state by default.
 func loadOrCreateWallet(client *rpcclient.Client) (bool, error) {
 	// Try to load wallet first.
-	err := client.LoadWallet(walletName)
+	_, err := client.LoadWallet(walletName)
 	if err == nil {
 		return false, nil
 	}
