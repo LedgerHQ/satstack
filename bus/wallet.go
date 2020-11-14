@@ -1,8 +1,10 @@
 package bus
 
 import (
-	"encoding/hex"
 	"errors"
+
+	"github.com/ledgerhq/satstack/protocol"
+	"github.com/ledgerhq/satstack/types"
 
 	"github.com/ledgerhq/satstack/utils"
 
@@ -35,59 +37,16 @@ func (b *Bus) ListTransactions(blockHash *string) ([]btcjson.ListTransactionsRes
 	return txs.Transactions, nil
 }
 
-func (b *Bus) GetTransaction(hash *chainhash.Hash) (*btcjson.TxRawResult, error) {
-	if b.Cache != nil { // Cache has been enabled at the svc level
-		if tx, found := b.Cache.Get(hash.String()); found {
-			return tx.(*btcjson.TxRawResult), nil
-		}
-	}
-
+func (b *Bus) GetTransactionHex(hash *chainhash.Hash) (string, error) {
 	client := b.getClient()
 	defer b.recycleClient(client)
 
-	switch b.TxIndex {
-	case true:
-		txRaw, err := client.GetRawTransactionVerbose(hash)
-		if err != nil {
-			return nil, err
-		}
-
-		if b.Cache != nil {
-			b.Cache.Set(hash.String(), txRaw, cache.NoExpiration)
-		}
-
-		return txRaw, nil
-	default:
-		tx, err := client.GetTransactionWatchOnly(hash, true)
-		if err != nil {
-			return nil, err
-		}
-
-		serializedTx, err := hex.DecodeString(tx.Hex)
-		if err != nil {
-			return nil, err
-		}
-
-		txRaw, err := client.DecodeRawTransaction(serializedTx)
-		if err != nil {
-			return nil, err
-		}
-
-		// The decoded transaction hex doesn't contain confirmation number and
-		// block height/hash; it must be fetched from the GetTransactionResult
-		// instance.
-		txRaw.Confirmations = uint64(tx.Confirmations)
-		txRaw.BlockHash = tx.BlockHash
-		txRaw.Time = tx.Time
-		txRaw.Blocktime = tx.BlockTime
-		txRaw.Hex = tx.Hex
-
-		if b.Cache != nil {
-			b.Cache.Set(hash.String(), txRaw, cache.NoExpiration)
-		}
-
-		return txRaw, nil
+	tx, err := client.GetTransactionWatchOnly(hash, true)
+	if err != nil {
+		return "", err
 	}
+
+	return tx.Hex, nil
 }
 
 func (b *Bus) GetAddressInfo(address string) (*btcjson.GetAddressInfoResult, error) {
@@ -163,4 +122,31 @@ func (b *Bus) ImportDescriptors(descriptors []descriptor) error {
 	}
 
 	return nil
+}
+
+func (b *Bus) GetTransaction(hash *chainhash.Hash) (*types.Transaction, error) {
+	if b.Cache != nil { // Cache has been enabled at the svc level
+		if tx, found := b.Cache.Get(hash.String()); found {
+			return tx.(*types.Transaction), nil
+		}
+	}
+
+	client := b.getClient()
+	defer b.recycleClient(client)
+
+	txRaw, err := client.GetTransactionWatchOnly(hash, true)
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := protocol.DecodeRawTransaction(txRaw.Hex, b.Params)
+	if err != nil {
+		return nil, err
+	}
+
+	if b.Cache != nil {
+		b.Cache.Set(hash.String(), tx, cache.NoExpiration)
+	}
+
+	return tx, nil
 }

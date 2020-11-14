@@ -16,6 +16,11 @@ func (s *Service) GetAddresses(addresses []string, blockHash *string) (types.Add
 	s.Bus.NewCache()
 	defer s.Bus.FlushCache()
 
+	blockchainInfo, err := s.Bus.GetBlockChainInfo()
+	if err != nil {
+		return types.Addresses{}, err
+	}
+
 	txResults, err := s.Bus.ListTransactions(blockHash)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -23,12 +28,12 @@ func (s *Service) GetAddresses(addresses []string, blockHash *string) (types.Add
 			"blockHash": nil,
 		}).Error("Unable to fetch transaction")
 	}
-	walletTxs := s.filterTransactionsByAddresses(addresses, txResults)
+	walletTxs := s.filterTransactionsByAddresses(addresses, txResults, blockchainInfo.Headers)
 
 	txs := []types.Transaction{}
 	for _, txn := range walletTxs {
 		block := blockFromTxResult(txn)
-		tx, err := s.GetTransaction(txn.TxID, block)
+		tx, err := s.GetTransaction(txn.TxID, block, blockchainInfo.Headers)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
@@ -53,7 +58,7 @@ func (s *Service) GetAddresses(addresses []string, blockHash *string) (types.Add
 }
 
 func (s *Service) filterTransactionsByAddresses(
-	addresses []string, txs []btcjson.ListTransactionsResult,
+	addresses []string, txs []btcjson.ListTransactionsResult, bestBlockHeight int32,
 ) []btcjson.ListTransactionsResult {
 	var result []btcjson.ListTransactionsResult
 	var visited []string
@@ -61,7 +66,7 @@ func (s *Service) filterTransactionsByAddresses(
 	for _, tx := range txs {
 		if tx.Category == "send" {
 			block := blockFromTxResult(tx)
-			tx2, err := s.GetTransaction(tx.TxID, block)
+			tx2, err := s.GetTransaction(tx.TxID, block, bestBlockHeight)
 			if err != nil {
 				log.WithFields(log.Fields{
 					"error":    err,

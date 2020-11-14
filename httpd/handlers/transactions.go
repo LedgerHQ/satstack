@@ -3,28 +3,10 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/ledgerhq/satstack/httpd/svc"
-	"github.com/ledgerhq/satstack/types"
-
 	"github.com/gin-gonic/gin"
+	"github.com/ledgerhq/satstack/httpd/svc"
 	log "github.com/sirupsen/logrus"
 )
-
-// GetTransaction is a gin handler (factory) to query transaction details
-// by hash parameter.
-func GetTransaction(s svc.TransactionsService) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		txHash := ctx.Param("hash")
-
-		transaction, err := s.GetTransaction(txHash, nil)
-		if err != nil {
-			ctx.JSON(http.StatusNotFound, err)
-			return
-		}
-
-		ctx.JSON(http.StatusOK, []*types.Transaction{transaction})
-	}
-}
 
 // GetTransactionHex is a gin handler (factory) to query transaction hex
 // by hash parameter.

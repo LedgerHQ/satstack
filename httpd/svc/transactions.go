@@ -13,7 +13,7 @@ import (
 
 // GetTransaction is a service function to query transaction details
 // by transaction hash.
-func (s *Service) GetTransaction(hash string, block *types.Block) (*types.Transaction, error) {
+func (s *Service) GetTransaction(hash string, block *types.Block, bestBlockHeight int32) (*types.Transaction, error) {
 	chainHash, err := utils.ParseChainHash(hash)
 	if err != nil {
 		return nil, err
@@ -24,20 +24,15 @@ func (s *Service) GetTransaction(hash string, block *types.Block) (*types.Transa
 		return nil, err
 	}
 
-	utxos, err := s.buildUTXOs(tx.Vin)
+	utxos, err := s.buildUTXOs(tx.Inputs)
 	if err != nil {
 		return nil, err
 	}
 
-	transaction := buildTx(tx, utxos)
+	tx.Block = block
+	buildTx(tx, utxos, bestBlockHeight)
 
-	if block == nil {
-		transaction.Block = s.getTransactionBlock(tx)
-	} else {
-		transaction.Block = block
-	}
-
-	return transaction, nil
+	return tx, nil
 }
 
 // GetTransactionHex is a service function to get hex encoded raw
@@ -48,11 +43,7 @@ func (s *Service) GetTransactionHex(hash string) (string, error) {
 		return "", err
 	}
 
-	tx, err := s.Bus.GetTransaction(chainHash)
-	if err != nil {
-		return "", err
-	}
-	return tx.Hex, nil
+	return s.Bus.GetTransactionHex(chainHash)
 }
 
 func (s *Service) SendTransaction(tx string) (*string, error) {
@@ -85,21 +76,25 @@ func (s *Service) getTransactionBlock(tx *btcjson.TxRawResult) *types.Block {
 	}
 }
 
-func (s *Service) buildUTXOs(vin []btcjson.Vin) (types.UTXOs, error) {
-	utxos := make(types.UTXOs)
-	utxoResults := make(map[types.OutputIdentifier]*btcjson.TxRawResult)
+func (s *Service) buildUTXOs(vin []types.Input) (types.UTXOs, error) {
+	utxoMap := make(types.UTXOs)
 
 	for _, inputRaw := range vin {
-		if inputRaw.IsCoinBase() {
+		if len(inputRaw.Coinbase) > 0 {
 			continue
 		}
 
-		utxoHash, err := utils.ParseChainHash(inputRaw.Txid)
+		utxoID := types.OutputIdentifier{
+			Hash:  inputRaw.OutputHash,
+			Index: *inputRaw.OutputIndex, // FIXME: can panic
+		}
+
+		utxoHash, err := utils.ParseChainHash(utxoID.Hash)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
-				"hash":  inputRaw.Txid,
-				"vout":  inputRaw.Vout,
+				"hash":  utxoID.Hash,
+				"vout":  utxoID.Index,
 			}).Error("Could not parse UTXO hash")
 			continue
 		}
@@ -108,151 +103,63 @@ func (s *Service) buildUTXOs(vin []btcjson.Vin) (types.UTXOs, error) {
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
-				"hash":  inputRaw.Txid,
-				"vout":  inputRaw.Vout,
-			}).Warn("Encountered non-wallet Vout")
+				"hash":  utxoID.Hash,
+				"vout":  utxoID.Index,
+			}).Debug("Encountered non-wallet Vout")
 			continue
 		}
 
-		utxoResults[types.OutputIdentifier{Hash: inputRaw.Txid, Index: inputRaw.Vout}] = utxo
-	}
-
-	for utxoID, utxoResult := range utxoResults {
-		utxo, err := parseUTXO(utxoResult, utxoID.Index)
-		if err != nil {
-			return nil, err
+		utxoMap[utxoID] = types.UTXOData{
+			Value:   *utxo.Outputs[utxoID.Index].Value, // FIXME: can panic
+			Address: utxo.Outputs[utxoID.Index].Address,
 		}
-
-		utxos[utxoID] = *utxo
 	}
 
-	return utxos, nil
+	return utxoMap, nil
 }
 
-func parseUTXO(tx *btcjson.TxRawResult, outputIndex uint32) (*types.UTXOData, error) {
-	utxoRaw := tx.Vout[outputIndex]
-
-	switch addresses := utxoRaw.ScriptPubKey.Addresses; len(addresses) {
-	case 0:
-		// TODO: Document when this happens
-		return &types.UTXOData{
-			Value:   utils.ParseSatoshi(utxoRaw.Value), // !FIXME: Can panic
-			Address: "",                                // Will be omitted by the JSON serializer
-		}, nil
-	case 1:
-		return &types.UTXOData{
-			Value:   utils.ParseSatoshi(utxoRaw.Value),
-			Address: addresses[0], // ?XXX: Investigate why we do this
-		}, nil
-	default:
-		value := utils.ParseSatoshi(utxoRaw.Value) // !FIXME: Can panic
-		log.WithFields(log.Fields{
-			"addresses":   addresses,
-			"value":       value,
-			"outputIndex": outputIndex,
-		}).Warn("Multisig transaction detected.")
-
-		return &types.UTXOData{
-			Value:   value,
-			Address: addresses[0],
-		}, nil
-	}
-}
-
-func buildTx(rawTx *btcjson.TxRawResult, utxos types.UTXOs) *types.Transaction {
-	txn := new(types.Transaction)
-	txn.ID = rawTx.Txid
-	txn.Hash = rawTx.Txid // !FIXME: Use rawTx.Hash, which can differ for witness transactions
-	txn.LockTime = rawTx.LockTime
-
-	vin := make([]types.Input, len(rawTx.Vin))
+func buildTx(tx *types.Transaction, utxoMap types.UTXOs, bestBlockHeight int32) {
 	sumVinValues := btcutil.Amount(0)
 	vinHasCoinbase := false
 
-	for idx, rawVin := range rawTx.Vin {
-		inputIndex := idx
-
-		if rawVin.IsCoinBase() {
-			vin[idx] = types.Input{
-				Coinbase:   rawVin.Coinbase,
-				InputIndex: &inputIndex,
-				Sequence:   rawVin.Sequence,
-			}
-
+	for idx, vin := range tx.Inputs {
+		if len(vin.Coinbase) > 0 {
 			vinHasCoinbase = true
-		} else {
-			utxo := utxos[types.OutputIdentifier{Hash: rawVin.Txid, Index: rawVin.Vout}]
-			outputIndex := rawVin.Vout
-
-			vin[idx] = types.Input{
-				OutputHash:  rawVin.Txid,
-				OutputIndex: &outputIndex,
-				InputIndex:  &inputIndex, // TODO: Find out if the order matters
-				Value:       &utxo.Value,
-				Address:     utxo.Address,
-				ScriptSig:   &rawVin.ScriptSig.Hex,
-				Sequence:    rawVin.Sequence,
-			}
-			if rawVin.HasWitness() {
-				witness := rawVin.Witness
-				vin[idx].Witness = &witness
-			} else {
-				vin[idx].Witness = &[]string{} // !FIXME: Coinbase txn can also have witness
-			}
-
-			sumVinValues += *vin[idx].Value
+			continue
 		}
-	}
-	txn.Inputs = vin
 
-	vout := make([]types.Output, len(rawTx.Vout))
+		utxoID := types.OutputIdentifier{
+			Hash:  vin.OutputHash,
+			Index: *vin.OutputIndex,
+		}
+
+		utxo := utxoMap[utxoID]
+
+		tx.Inputs[idx].Address = utxo.Address // mutate the vins in tx
+		tx.Inputs[idx].Value = &utxo.Value
+
+		sumVinValues += utxo.Value
+	}
+
 	sumVoutValues := btcutil.Amount(0)
 
-	for idx, rawVout := range rawTx.Vout {
-		outputValue := utils.ParseSatoshi(rawVout.Value) // !FIXME: Can panic
-		outputIndex := rawVout.N
-		vout[idx] = types.Output{
-			OutputIndex: &outputIndex,
-			Value:       &outputValue,
-			ScriptHex:   rawVout.ScriptPubKey.Hex,
-		}
-
-		if len(rawVout.ScriptPubKey.Addresses) > 1 {
-			// ScriptPubKey can have multiple addresses for multisig txns.
-			//
-			// Ref: https://bitcoin.stackexchange.com/a/4693/106367
-			log.WithFields(log.Fields{
-				"addresses":   rawVout.ScriptPubKey.Addresses,
-				"value":       outputValue,
-				"outputIndex": rawVout.N,
-			}).Warnf("Multisig transaction detected.")
-			vout[idx].Address = rawVout.ScriptPubKey.Addresses[0]
-		} else if len(rawVout.ScriptPubKey.Addresses) == 1 {
-			vout[idx].Address = rawVout.ScriptPubKey.Addresses[0]
-		} else {
-			log.WithFields(log.Fields{
-				"value":       outputValue,
-				"outputIndex": rawVout.N,
-			}).Warn("No address in scriptPubKey")
-		}
-
-		sumVoutValues += *vout[idx].Value
+	for _, vout := range tx.Outputs {
+		sumVoutValues += *vout.Value
 	}
-	txn.Outputs = vout
 
-	txn.Confirmations = rawTx.Confirmations
-
-	if txn.Confirmations == 0 {
-		// rawTx.Time is 0 if transaction is unconfirmed
-		txn.ReceivedAt = utils.ParseUnixTimestamp(time.Now().Unix())
+	if tx.Block != nil {
+		tx.Confirmations = uint64(int64(bestBlockHeight)-tx.Block.Height) + 1
+		tx.ReceivedAt = tx.Block.Time
 	} else {
-		txn.ReceivedAt = utils.ParseUnixTimestamp(rawTx.Time)
+		// Handle the case of unconfirmed transaction.
+		tx.Confirmations = 0
+		tx.ReceivedAt = utils.ParseUnixTimestamp(time.Now().Unix())
 	}
 
 	var fees btcutil.Amount
 
 	if vinHasCoinbase {
-		// Coinbase transaction have no fees
+		// Coinbase transactions have no fees
 		fees = btcutil.Amount(0)
 	} else {
 		fees = sumVinValues - sumVoutValues
@@ -264,11 +171,9 @@ func buildTx(rawTx *btcjson.TxRawResult, utxos types.UTXOs) *types.Transaction {
 		fees = 0
 	}
 
-	txn.Fees = &fees
+	tx.Fees = &fees
 
 	// In Ledger Blockchain Explorer v2, the Amount field is the sum of all
 	// Vout values.
-	txn.Amount = &sumVoutValues
-
-	return txn
+	tx.Amount = &sumVoutValues
 }

@@ -39,7 +39,6 @@ func GetRouter(s *svc.Service) *gin.Engine {
 
 	transactionsRouter := currencyRouter.Group("/transactions")
 	{
-		transactionsRouter.GET(":hash", handlers.GetTransaction(s))
 		transactionsRouter.GET(":hash/hex", handlers.GetTransactionHex(s))
 		transactionsRouter.POST("send", handlers.SendTransaction(s))
 	}

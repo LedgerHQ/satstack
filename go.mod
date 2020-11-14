@@ -5,6 +5,7 @@ go 1.15
 require (
 	github.com/btcsuite/btcd v0.21.0-beta.0.20201111163734-9fd26cf79530
 	github.com/btcsuite/btcutil v1.0.2
+	github.com/davecgh/go-spew v1.1.1
 	github.com/gin-gonic/gin v1.6.3
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/magefile/mage v1.10.0

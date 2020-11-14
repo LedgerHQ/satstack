@@ -7,7 +7,7 @@ import (
 )
 
 type TransactionsService interface {
-	GetTransaction(hash string, block *types.Block) (*types.Transaction, error)
+	GetTransaction(hash string, block *types.Block, bestBlockHeight int32) (*types.Transaction, error)
 	GetTransactionHex(hash string) (string, error)
 	SendTransaction(tx string) (*string, error)
 }

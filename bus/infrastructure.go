@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/btcsuite/btcd/chaincfg"
+
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
@@ -56,6 +58,12 @@ type Bus struct {
 
 	// Connection pool management infrastructure
 	connChan chan *rpcclient.Client
+
+	// RPC client for batched JSON-RPC requests.
+	batchClient *rpcclient.Client
+
+	// btcd network params
+	Params *chaincfg.Params
 }
 
 type descriptor struct {
@@ -138,8 +146,19 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 		}).Info("Loaded existing wallet")
 	}
 
+	batchClient, err := rpcclient.New(connCfg, nil)
+	if err != nil {
+		return nil, err // error ctx not required
+	}
+
+	params, err := ChainParams(info.Chain)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get chain params: %w", err)
+	}
+
 	b := &Bus{
 		connChan:    pool,
+		batchClient: batchClient.Batch(),
 		Pruned:      info.Pruned,
 		Chain:       info.Chain,
 		BlockFilter: blockFilter,
@@ -147,6 +166,7 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 		Currency:    currency,
 		Cache:       nil, // Disabled by default
 		Status:      Initializing,
+		Params:      params,
 	}
 
 	return b, nil
@@ -167,6 +187,7 @@ func (b *Bus) Close() {
 	}).Info("Unloaded wallet successfully")
 
 	close(b.connChan)
+	b.batchClient.Shutdown()
 }
 
 func (b *Bus) getClient() *rpcclient.Client {
@@ -175,6 +196,10 @@ func (b *Bus) getClient() *rpcclient.Client {
 
 func (b *Bus) recycleClient(client *rpcclient.Client) {
 	b.connChan <- client
+}
+
+func (b *Bus) getBatchClient() *rpcclient.Client {
+	return b.batchClient
 }
 
 // Currency represents the currency type (btc) and the network params
@@ -196,6 +221,24 @@ func CurrencyFromChain(chain string) (Currency, error) {
 		return Mainnet, nil
 	default:
 		return "", ErrUnrecognizedChain
+	}
+}
+
+// ChainParams returns the *chaincfg.Params instance corresponding to the
+// network that the underlying node is connected to.
+//
+// This value is useful for several operations in btcd, and can be accessed
+// via the Bus struct.
+func ChainParams(chain string) (*chaincfg.Params, error) {
+	switch chain {
+	case "regtest":
+		return &chaincfg.RegressionNetParams, nil
+	case "test":
+		return &chaincfg.TestNet3Params, nil
+	case "main":
+		return &chaincfg.MainNetParams, nil
+	default:
+		return nil, ErrUnrecognizedChain
 	}
 }
 
