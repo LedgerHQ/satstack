@@ -20,10 +20,31 @@ and/or **Goroutines** are probably going to have the biggest impact.
 
 * **Ops** = Number of operations (`libcore` abstraction for transactions)
 * **LBE** = Ledger Blockchain Explorer
-* **LSS** = Ledger Sat Stack
+* **LSS** = Ledger SatStack
 * **reset** = reset libcore DB and sync from scratch
 
-#### With `txindex=1` + Bus Cache
+
+#### 🗄️ Benchmarks archived for posterity
+
+#### With `txindex=0`
+
+Commit [`ecb0fc0`](https://github.com/onyb/sat-stack/tree/ecb0fc0).
+
+| xpub                  | Ops | LBE (reset) | LSS (reset) | LBE         | LSS         |
+| :--------------------:|----:|------------:|------------:|------------:|------------:|
+| `tpubDDTG...FeF6mSjZ` | 5   | 9.67s       | 12.20s      | 3.31s       | 10.37s      |
+| `tpubDDbk...auTWxMLC` | 15  | 5.38s       | 12.85s      | 3.04s       | 9.89s       |
+| `tpubDDTG...H9UNPw4s` | 13  | 8.36s       | 18.52s      | 3.07s       | 18.32s      |
+| `tpubDDAt...tHEHYUnt` | 28  | 6.35s       | 13.70s      | 2.97s       | 12.83s      |
+| `tpubDCHC...9mFJejwC` | 40  | 6.42s       | 11.90s      | 5.83s       | 10.82s      |
+| `tpubDCkv...kFk9DBpZ` | 44  | 5.53s       | 14.69s      | 3.43s       | 10.65s      |
+| `tpubDCuo...wrhHqhsW` | 934 | 31.55s      | 76.51s      | 11.24s      | 67.87s      |
+
+
+##### With `txindex=1` + Bus Cache
+
+Commit [`ecb0fc0`](https://github.com/onyb/sat-stack/tree/ecb0fc0).
+
 
 | xpub                  | Ops | LBE (reset) | LSS (reset) | LBE         | LSS         |
 | :--------------------:|----:|------------:|------------:|------------:|------------:|
@@ -33,12 +54,12 @@ and/or **Goroutines** are probably going to have the biggest impact.
 | `tpubDDAt...tHEHYUnt` | 18  | 6.67s       | 8.87s       | 3.57s       | 5.31s       |
 | `tpubDCHC...9mFJejwC` | 30  | 6.19s       | 8.21s       | 3.68s       | 4.67s       |
 | `tpubDCkv...kFk9DBpZ` | 36  | 6.15s       | 8.17s       | 3.67s       | 4.99s       |
-| `tpubDCuo...wrhHqhsW` | 928 | 33.13s      | 41.50s      | 13.04s      | 15.99s       |
+| `tpubDCuo...wrhHqhsW` | 928 | 33.13s      | 41.50s      | 13.04s      | 15.99s      |
 
 
-#### With `txindex=1` + Bus Cache disabled
+##### With `txindex=1` + Bus Cache disabled
 
-🗄️ Benchmark only for posterity; archived as of commit [4cbae0d](https://github.com/onyb/sat-stack/tree/4cbae0db8f2a862d9b280601940af8b5662e99a3).
+Commit [`4cbae0d`](https://github.com/ledgerhq/satstack/tree/4cbae0d).
 
 | xpub                  | Ops | LBE (reset) | LSS (reset) | LBE         | LSS         |
 | :--------------------:|----:|------------:|------------:|------------:|------------:|
