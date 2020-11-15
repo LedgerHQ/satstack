@@ -6,7 +6,6 @@ import (
 	"github.com/ledgerhq/satstack/types"
 	"github.com/ledgerhq/satstack/utils"
 
-	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcutil"
 	log "github.com/sirupsen/logrus"
 )
@@ -52,28 +51,6 @@ func (s *Service) SendTransaction(tx string) (string, error) {
 		return "", err
 	}
 	return hash.String(), nil
-}
-
-func (s *Service) getTransactionBlock(tx *btcjson.TxRawResult) *types.Block {
-	if tx.BlockHash == "" {
-		return nil
-	}
-
-	chainHash, err := utils.ParseChainHash(tx.BlockHash)
-	if err != nil {
-		return nil
-	}
-
-	block, err := s.Bus.GetBlock(chainHash)
-	if err != nil {
-		return nil
-	}
-
-	return &types.Block{
-		Hash:   tx.BlockHash,
-		Height: block.Height,
-		Time:   utils.ParseUnixTimestamp(tx.Blocktime),
-	}
 }
 
 func (s *Service) buildUTXOs(vin []types.Input) (types.UTXOs, error) {
