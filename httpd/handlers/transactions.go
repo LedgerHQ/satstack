@@ -48,7 +48,7 @@ func SendTransaction(s svc.TransactionsService) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, gin.H{
-			"result": *txHash,
+			"result": txHash,
 		})
 	}
 }

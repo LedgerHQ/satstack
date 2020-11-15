@@ -46,12 +46,12 @@ func (s *Service) GetTransactionHex(hash string) (string, error) {
 	return s.Bus.GetTransactionHex(chainHash)
 }
 
-func (s *Service) SendTransaction(tx string) (*string, error) {
+func (s *Service) SendTransaction(tx string) (string, error) {
 	hash, err := s.Bus.SendTransaction(tx)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return utils.ToStringPointer(hash.String()), nil
+	return hash.String(), nil
 }
 
 func (s *Service) getTransactionBlock(tx *btcjson.TxRawResult) *types.Block {
