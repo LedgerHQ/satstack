@@ -10,6 +10,7 @@ import (
 
 	"github.com/ledgerhq/satstack/bus"
 	"github.com/ledgerhq/satstack/config"
+	"github.com/ledgerhq/satstack/fortunes"
 	"github.com/ledgerhq/satstack/httpd"
 	"github.com/ledgerhq/satstack/httpd/svc"
 	"github.com/ledgerhq/satstack/version"
@@ -31,6 +32,8 @@ func startup() *svc.Service {
 		"runtime": version.GoVersion,
 		"arch":    version.OsArch,
 	}).Infof("Ledger SatStack (lss) %s", version.Version)
+
+	fortunes.Fortune()
 
 	configuration, err := config.Load()
 	if err != nil {
