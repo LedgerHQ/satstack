@@ -109,14 +109,19 @@ func (b *Bus) ImportDescriptors(descriptors []descriptor) error {
 	return nil
 }
 
-func (b *Bus) GetTransaction(hash *chainhash.Hash) (*types.Transaction, error) {
+func (b *Bus) GetTransaction(hash string) (*types.Transaction, error) {
 	if b.Cache != nil { // Cache has been enabled at the svc level
-		if tx, found := b.Cache.Get(hash.String()); found {
+		if tx, found := b.Cache.Get(hash); found {
 			return tx.(*types.Transaction), nil
 		}
 	}
 
-	txRaw, err := b.mainClient.GetTransactionWatchOnly(hash, true)
+	chainHash, err := utils.ParseChainHash(hash)
+	if err != nil {
+		return nil, err
+	}
+
+	txRaw, err := b.mainClient.GetTransactionWatchOnly(chainHash, true)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +132,7 @@ func (b *Bus) GetTransaction(hash *chainhash.Hash) (*types.Transaction, error) {
 	}
 
 	if b.Cache != nil {
-		b.Cache.Set(hash.String(), tx, cache.NoExpiration)
+		b.Cache.Set(hash, tx, cache.NoExpiration)
 	}
 
 	return tx, nil

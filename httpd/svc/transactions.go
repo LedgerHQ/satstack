@@ -13,12 +13,7 @@ import (
 // GetTransaction is a service function to query transaction details
 // by transaction hash.
 func (s *Service) GetTransaction(hash string, block *types.Block, bestBlockHeight int32) (*types.Transaction, error) {
-	chainHash, err := utils.ParseChainHash(hash)
-	if err != nil {
-		return nil, err
-	}
-
-	tx, err := s.Bus.GetTransaction(chainHash)
+	tx, err := s.Bus.GetTransaction(hash)
 	if err != nil {
 		return nil, err
 	}
@@ -66,17 +61,7 @@ func (s *Service) buildUTXOs(vin []types.Input) (types.UTXOs, error) {
 			Index: *inputRaw.OutputIndex, // FIXME: can panic
 		}
 
-		utxoHash, err := utils.ParseChainHash(utxoID.Hash)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-				"hash":  utxoID.Hash,
-				"vout":  utxoID.Index,
-			}).Error("Could not parse UTXO hash")
-			continue
-		}
-
-		utxo, err := s.Bus.GetTransaction(utxoHash)
+		utxo, err := s.Bus.GetTransaction(utxoID.Hash)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
