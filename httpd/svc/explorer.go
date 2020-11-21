@@ -35,19 +35,23 @@ func (s *Service) GetFees(targets []int64, mode string) map[string]interface{} {
 }
 
 func (s *Service) GetStatus() *bus.ExplorerStatus {
-	client, err := s.Bus.ClientFactory()
-	if err != nil {
-		return nil
-	}
-
-	defer client.Shutdown()
-
 	status := bus.ExplorerStatus{
 		TxIndex:  s.Bus.TxIndex,
 		Pruned:   s.Bus.Pruned,
 		Chain:    s.Bus.Chain,
 		Currency: s.Bus.Currency,
 	}
+
+	client, err := s.Bus.ClientFactory()
+	if err != nil {
+		log.WithField(
+			"err", fmt.Errorf("%s: %w", bus.ErrBitcoindUnreachable, err),
+		).Error("Failed to query status")
+		status.Status = bus.NodeDisconnected
+		return &status
+	}
+
+	defer client.Shutdown()
 
 	// Case 1: bitcoind is unreachable
 	blockChainInfo, err := client.GetBlockChainInfo()
