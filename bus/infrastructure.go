@@ -51,13 +51,16 @@ type Bus struct {
 	TxIndex     bool
 	BlockFilter bool
 	Currency    Currency // Based on Chain value, for interoperability with libcore
-	Status      Status
 
 	// Thread-safe Bus cache, to query results typically by hash
 	Cache *cache.Cache
 
-	// Connection pool management infrastructure
-	connChan chan *rpcclient.Client
+	// Config to use for creating new connections on-demand.
+	connCfg *rpcclient.ConnConfig
+
+	// Primary RPC client for JSON-RPC requests. This does NOT allow batch
+	// requests (use batchClient for that).
+	mainClient *rpcclient.Client
 
 	// RPC client for batched JSON-RPC requests.
 	batchClient *rpcclient.Client
@@ -84,30 +87,23 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 		DisableTLS:   noTLS,
 	}
 
-	// Initialize a buffered channel of *rpcclient.Client objects with capacity
-	// of connPoolSize.
-	pool := make(chan *rpcclient.Client, connPoolSize)
-
-	// Prefill the buffered channel with *rpcclient.Client objects in advance.
-	for i := 0; i < cap(pool); i++ {
-		client, err := rpcclient.New(connCfg, nil)
-		if err != nil {
-			return nil, err // error ctx not required
-		}
-		pool <- client
+	// Initialize RPC clients.
+	mainClient, err := rpcclient.New(connCfg, nil)
+	if err != nil {
+		return nil, err // error ctx not required
 	}
 
-	// Obtain one client from the channel to perform connectivity checks and
-	// extract information required for initializing the Bus struct.
-	client := <-pool
-	defer func() { pool <- client }()
+	batchClient, err := rpcclient.New(connCfg, nil)
+	if err != nil {
+		return nil, err // error ctx not required
+	}
 
-	info, err := client.GetBlockChainInfo()
+	info, err := mainClient.GetBlockChainInfo()
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrBitcoindUnreachable, err)
 	}
 
-	networkInfo, err := client.GetNetworkInfo()
+	networkInfo, err := mainClient.GetNetworkInfo()
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrBitcoindUnreachable, err)
 	}
@@ -116,12 +112,12 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 		return nil, fmt.Errorf("%s: %d", ErrUnsupportedBitcoindVersion, v)
 	}
 
-	blockFilter, err := blockFilterEnabled(client, info.BestBlockHash)
+	blockFilter, err := blockFilterEnabled(mainClient, info.BestBlockHash)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrFailedToDetectBlockFilter, err)
 	}
 
-	txIndex, err := txIndexEnabled(client)
+	txIndex, err := txIndexEnabled(mainClient)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrFailedToDetectTxIndex, err)
 	}
@@ -131,7 +127,7 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 		return nil, err
 	}
 
-	isNewWallet, err := loadOrCreateWallet(client)
+	isNewWallet, err := loadOrCreateWallet(mainClient)
 	if err != nil {
 		return nil, err
 	}
@@ -146,18 +142,14 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 		}).Info("Loaded existing wallet")
 	}
 
-	batchClient, err := rpcclient.New(connCfg, nil)
-	if err != nil {
-		return nil, err // error ctx not required
-	}
-
 	params, err := ChainParams(info.Chain)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get chain params: %w", err)
 	}
 
 	b := &Bus{
-		connChan:    pool,
+		connCfg:     connCfg,
+		mainClient:  mainClient,
 		batchClient: batchClient.Batch(),
 		Pruned:      info.Pruned,
 		Chain:       info.Chain,
@@ -165,7 +157,6 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 		TxIndex:     txIndex,
 		Currency:    currency,
 		Cache:       nil, // Disabled by default
-		Status:      Initializing,
 		Params:      params,
 	}
 
@@ -186,20 +177,12 @@ func (b *Bus) Close() {
 		"wallet": walletName,
 	}).Info("Unloaded wallet successfully")
 
-	close(b.connChan)
+	b.mainClient.Shutdown()
 	b.batchClient.Shutdown()
 }
 
-func (b *Bus) getClient() *rpcclient.Client {
-	return <-b.connChan
-}
-
-func (b *Bus) recycleClient(client *rpcclient.Client) {
-	b.connChan <- client
-}
-
-func (b *Bus) getBatchClient() *rpcclient.Client {
-	return b.batchClient
+func (b *Bus) ClientFactory() (*rpcclient.Client, error) {
+	return rpcclient.New(b.connCfg, nil)
 }
 
 // Currency represents the currency type (btc) and the network params
@@ -351,12 +334,8 @@ func blockFilterEnabled(client *rpcclient.Client, hash string) (bool, error) {
 }
 
 func (b *Bus) WaitForNodeSync() error {
-	client := b.getClient()
-	defer b.recycleClient(client)
-
-	b.Status = Syncing
 	for {
-		info, err := client.GetBlockChainInfo()
+		info, err := b.mainClient.GetBlockChainInfo()
 		if err != nil {
 			return err
 		}
@@ -380,8 +359,6 @@ func (b *Bus) WaitForNodeSync() error {
 // ImportAccounts will import the descriptors corresponding to the accounts
 // into the Bitcoin Core wallet. This is a blocking operation.
 func (b *Bus) ImportAccounts(accounts []config.Account) error {
-	b.Status = Scanning
-
 	var allDescriptors []descriptor
 	for _, account := range accounts {
 		accountDescriptors, err := b.descriptors(account)
@@ -464,12 +441,9 @@ func (b *Bus) descriptors(account config.Account) ([]descriptor, error) {
 // It does NOT perform any equality comparison between expected and actual
 // supply.
 func (b *Bus) RunTheNumbers() error {
-	client := b.getClient()
-	defer b.recycleClient(client)
-
 	log.Info("Running inflation checks...")
 
-	info, err := client.GetTxOutSetInfo()
+	info, err := b.mainClient.GetTxOutSetInfo()
 	if err != nil {
 		return err
 	}
@@ -504,8 +478,5 @@ func (b *Bus) RunTheNumbers() error {
 }
 
 func (b *Bus) unloadWallet() error {
-	client := b.getClient()
-	defer b.recycleClient(client)
-
-	return client.UnloadWallet(nil)
+	return b.mainClient.UnloadWallet(nil)
 }

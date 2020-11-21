@@ -22,7 +22,7 @@ type AddressesService interface {
 
 type ExplorerService interface {
 	GetHealth() error
-	GetStatus() (*bus.ExplorerStatus, error)
+	GetStatus() *bus.ExplorerStatus
 	GetFees(targets []int64, mode string) map[string]interface{}
 }
 

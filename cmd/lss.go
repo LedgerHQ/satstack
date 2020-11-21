@@ -71,8 +71,6 @@ func startup() *svc.Service {
 			}).Fatal("Failed during node sync")
 		}
 
-		b.Status = bus.PendingScan
-
 		if err := b.RunTheNumbers(); err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
@@ -90,8 +88,6 @@ func startup() *svc.Service {
 				"error": err,
 			}).Fatal("Failed to import accounts")
 		}
-
-		b.Status = bus.Ready
 	}()
 
 	return s

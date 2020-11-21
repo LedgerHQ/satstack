@@ -17,9 +17,6 @@ import (
 )
 
 func (b *Bus) ListTransactions(blockHash *string) ([]btcjson.ListTransactionsResult, error) {
-	client := b.getClient()
-	defer b.recycleClient(client)
-
 	var blockHashNative *chainhash.Hash
 	if blockHash != nil {
 		var err error
@@ -29,7 +26,7 @@ func (b *Bus) ListTransactions(blockHash *string) ([]btcjson.ListTransactionsRes
 		}
 	}
 
-	txs, err := client.ListSinceBlockMinConfWatchOnly(blockHashNative, 1, true)
+	txs, err := b.mainClient.ListSinceBlockMinConfWatchOnly(blockHashNative, 1, true)
 	if err != nil {
 		return nil, err
 	}
@@ -38,10 +35,7 @@ func (b *Bus) ListTransactions(blockHash *string) ([]btcjson.ListTransactionsRes
 }
 
 func (b *Bus) GetTransactionHex(hash *chainhash.Hash) (string, error) {
-	client := b.getClient()
-	defer b.recycleClient(client)
-
-	tx, err := client.GetTransactionWatchOnly(hash, true)
+	tx, err := b.mainClient.GetTransactionWatchOnly(hash, true)
 	if err != nil {
 		return "", err
 	}
@@ -50,17 +44,11 @@ func (b *Bus) GetTransactionHex(hash *chainhash.Hash) (string, error) {
 }
 
 func (b *Bus) GetAddressInfo(address string) (*btcjson.GetAddressInfoResult, error) {
-	client := b.getClient()
-	defer b.recycleClient(client)
-
-	return client.GetAddressInfo(address)
+	return b.mainClient.GetAddressInfo(address)
 }
 
 func (b *Bus) GetWalletInfo() (*btcjson.GetWalletInfoResult, error) {
-	client := b.getClient()
-	defer b.recycleClient(client)
-
-	return client.GetWalletInfo()
+	return b.mainClient.GetWalletInfo()
 }
 
 func (b *Bus) ImportDescriptors(descriptors []descriptor) error {
@@ -81,10 +69,7 @@ func (b *Bus) ImportDescriptors(descriptors []descriptor) error {
 		"N":      len(requests),
 	}).Info("Importing descriptors")
 
-	client := b.getClient()
-	defer b.recycleClient(client)
-
-	results, err := client.ImportMulti(requests, &btcjson.ImportMultiOptions{Rescan: true})
+	results, err := b.mainClient.ImportMulti(requests, &btcjson.ImportMultiOptions{Rescan: true})
 	if err != nil {
 		return err
 	}
@@ -131,10 +116,7 @@ func (b *Bus) GetTransaction(hash *chainhash.Hash) (*types.Transaction, error) {
 		}
 	}
 
-	client := b.getClient()
-	defer b.recycleClient(client)
-
-	txRaw, err := client.GetTransactionWatchOnly(hash, true)
+	txRaw, err := b.mainClient.GetTransactionWatchOnly(hash, true)
 	if err != nil {
 		return nil, err
 	}

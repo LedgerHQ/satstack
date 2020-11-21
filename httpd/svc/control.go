@@ -1,7 +1,6 @@
 package svc
 
 import (
-	"github.com/ledgerhq/satstack/bus"
 	"github.com/ledgerhq/satstack/config"
 	log "github.com/sirupsen/logrus"
 )
@@ -14,6 +13,4 @@ func (s *Service) ImportAccounts(accounts []config.Account) {
 			}).Error("Failed to import accounts")
 		}
 	}()
-
-	s.Bus.Status = bus.Ready
 }

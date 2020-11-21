@@ -31,10 +31,7 @@ func (b *Bus) SendTransaction(tx string) (*chainhash.Hash, error) {
 		return nil, err
 	}
 
-	client := <-b.connChan
-	defer func() { b.connChan <- client }()
-
-	chainHash, err := client.SendRawTransaction(&msgTx, true)
+	chainHash, err := b.mainClient.SendRawTransaction(&msgTx, true)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"hex":   tx,

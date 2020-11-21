@@ -1,8 +1,11 @@
 package svc
 
 import (
+	"fmt"
 	"strconv"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/ledgerhq/satstack/bus"
 
@@ -31,37 +34,59 @@ func (s *Service) GetFees(targets []int64, mode string) map[string]interface{} {
 	return result
 }
 
-func (s *Service) GetStatus() (*bus.ExplorerStatus, error) {
-	var syncProgress *float64
-	if s.Bus.Status == bus.Syncing {
-		info, err := s.Bus.GetBlockChainInfo()
-		if err != nil {
-			return nil, err
-		}
-
-		syncProgress = btcjson.Float64(info.VerificationProgress * 100)
+func (s *Service) GetStatus() *bus.ExplorerStatus {
+	client, err := s.Bus.ClientFactory()
+	if err != nil {
+		return nil
 	}
 
-	var scanProgress *float64
-	if s.Bus.Status == bus.Scanning {
-		info, err := s.Bus.GetWalletInfo()
-		if err != nil {
-			return nil, err
-		}
+	defer client.Shutdown()
 
-		switch v := info.Scanning.Value.(type) {
-		case btcjson.ScanProgress:
-			scanProgress = btcjson.Float64(v.Progress * 100)
-		}
+	status := bus.ExplorerStatus{
+		TxIndex:  s.Bus.TxIndex,
+		Pruned:   s.Bus.Pruned,
+		Chain:    s.Bus.Chain,
+		Currency: s.Bus.Currency,
 	}
 
-	return &bus.ExplorerStatus{
-		TxIndex:      s.Bus.TxIndex,
-		Pruned:       s.Bus.Pruned,
-		Chain:        s.Bus.Chain,
-		Currency:     s.Bus.Currency,
-		Status:       s.Bus.Status,
-		SyncProgress: syncProgress,
-		ScanProgress: scanProgress,
-	}, nil
+	// Case 1: bitcoind is unreachable
+	blockChainInfo, err := client.GetBlockChainInfo()
+	if err != nil {
+		log.WithField(
+			"err", fmt.Errorf("%s: %w", bus.ErrBitcoindUnreachable, err),
+		).Error("Failed to query status")
+
+		status.Status = bus.NodeDisconnected
+		return &status
+	}
+
+	// Case 2: bitcoind is currently catching up on new blocks.
+	if blockChainInfo.Blocks != blockChainInfo.Headers {
+		status.Status = bus.Syncing
+		status.SyncProgress = btcjson.Float64(
+			blockChainInfo.VerificationProgress * 100)
+		return &status
+	}
+
+	// Case 3: bitcoind is currently importing descriptors
+	walletInfo, err := client.GetWalletInfo()
+	if err != nil {
+		log.WithField(
+			"err", fmt.Errorf("%s: %w", bus.ErrBitcoindUnreachable, err),
+		).Error("Failed to query status")
+
+		status.Status = bus.NodeDisconnected
+		return &status
+	}
+
+	switch v := walletInfo.Scanning.Value.(type) {
+	case btcjson.ScanProgress:
+		status.Status = bus.Scanning
+		status.ScanProgress = btcjson.Float64(v.Progress * 100)
+		return &status
+	}
+
+	// Case 4: bitcoind is ready to be used with satstack.
+	status.Status = bus.Ready
+	return &status
 }
