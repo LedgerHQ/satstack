@@ -7,7 +7,6 @@ import (
 	"github.com/ledgerhq/satstack/utils"
 
 	"github.com/btcsuite/btcutil"
-	log "github.com/sirupsen/logrus"
 )
 
 // GetTransaction is a service function to query transaction details
@@ -51,6 +50,8 @@ func (s *Service) SendTransaction(tx string) (string, error) {
 func (s *Service) buildUTXOs(vin []types.Input) (types.UTXOs, error) {
 	utxoMap := make(types.UTXOs)
 
+	var utxoIDs []types.OutputIdentifier
+
 	for _, inputRaw := range vin {
 		if len(inputRaw.Coinbase) > 0 {
 			continue
@@ -61,19 +62,23 @@ func (s *Service) buildUTXOs(vin []types.Input) (types.UTXOs, error) {
 			Index: *inputRaw.OutputIndex, // FIXME: can panic
 		}
 
-		utxo, err := s.Bus.GetTransaction(utxoID.Hash)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-				"hash":  utxoID.Hash,
-				"vout":  utxoID.Index,
-			}).Debug("Encountered non-wallet Vout")
-			continue
-		}
+		utxoIDs = append(utxoIDs, utxoID)
+	}
 
-		utxoMap[utxoID] = types.UTXOData{
-			Value:   *utxo.Outputs[utxoID.Index].Value, // FIXME: can panic
-			Address: utxo.Outputs[utxoID.Index].Address,
+	var txInIDs []string
+
+	for _, utxoID := range utxoIDs {
+		txInIDs = append(txInIDs, utxoID.Hash)
+	}
+
+	txnMap := s.Bus.GetTransactionBatch(txInIDs)
+
+	for _, utxoID := range utxoIDs {
+		if utxo, ok := txnMap[utxoID.Hash]; ok {
+			utxoMap[utxoID] = types.UTXOData{
+				Value:   *utxo.Outputs[utxoID.Index].Value, // FIXME: can panic
+				Address: utxo.Outputs[utxoID.Index].Address,
+			}
 		}
 	}
 

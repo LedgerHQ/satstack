@@ -2,6 +2,7 @@ package bus
 
 import (
 	"errors"
+	"github.com/btcsuite/btcd/rpcclient"
 
 	"github.com/ledgerhq/satstack/protocol"
 	"github.com/ledgerhq/satstack/types"
@@ -136,4 +137,67 @@ func (b *Bus) GetTransaction(hash string) (*types.Transaction, error) {
 	}
 
 	return tx, nil
+}
+
+func (b *Bus) GetTransactionBatch(hashes []string) map[string]*types.Transaction {
+	txnMap := make(map[string]*types.Transaction)
+
+	if b.Cache != nil { // Cache has been enabled at the svc level
+		for _, hash := range hashes {
+			if tx, found := b.Cache.Get(hash); found {
+				txnMap[hash] = tx.(*types.Transaction)
+			}
+		}
+	}
+
+	var txnFutures []rpcclient.FutureGetTransactionResult
+
+	for _, hash := range hashes {
+		if _, ok := txnMap[hash]; !ok {
+			chainHash, err := utils.ParseChainHash(hash)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"err":  err,
+					"hash": hash,
+				}).Error("Failed to parse transaction hash")
+				continue
+			}
+
+			txnFuture := b.batchClient.GetTransactionWatchOnlyAsync(
+				chainHash, true)
+			txnFutures = append(txnFutures, txnFuture)
+		}
+	}
+
+	if err := b.batchClient.Send(); err != nil {
+		log.WithField("err", err).Error("Failed to send batch RPC call")
+		return txnMap
+	}
+
+	for _, txnFuture := range txnFutures {
+		txRaw, err := txnFuture.Receive()
+		if err != nil {
+			log.WithFields(log.Fields{
+				"err": err,
+			}).Error("Failed to parse transaction future")
+			continue
+		}
+
+		tx, err := protocol.DecodeRawTransaction(txRaw.Hex, b.Params)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"err": err,
+				"hex": txRaw.Hex,
+			}).Error("Failed to parse raw transaction hex")
+			continue
+		}
+
+		txnMap[tx.ID] = tx
+
+		if b.Cache != nil {
+			b.Cache.Set(tx.ID, tx, cache.NoExpiration)
+		}
+	}
+
+	return txnMap
 }
