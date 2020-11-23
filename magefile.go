@@ -45,7 +45,6 @@ func Lint() error {
 		"--disable-all",
 		"--enable=govet",
 		"--enable=gofmt",
-		"--enable=gosec",
 	}
 
 	if err := sh.Run("golangci-lint", linterArgs...); err != nil {
