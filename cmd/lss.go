@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -32,8 +31,6 @@ func startup() *svc.Service {
 		"runtime": version.GoVersion,
 		"arch":    version.OsArch,
 	}).Infof("Ledger SatStack (lss) %s", version.Version)
-
-	fortunes.Fortune()
 
 	configuration, err := config.Load()
 	if err != nil {
@@ -67,31 +64,9 @@ func startup() *svc.Service {
 		Bus: b,
 	}
 
-	go func() {
-		if err := b.WaitForNodeSync(); err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-			}).Fatal("Failed during node sync")
-		}
+	fortunes.Fortune()
 
-		if err := b.RunTheNumbers(); err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-			}).Fatal("Inflation checks failed")
-		}
-
-		// Skip import of descriptors, if no account config found. SatStack
-		// will run in zero-configuration mode.
-		if configuration.Accounts == nil {
-			return
-		}
-
-		if err := b.ImportAccounts(configuration.Accounts); err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-			}).Fatal("Failed to import accounts")
-		}
-	}()
+	s.Bus.Worker(configuration)
 
 	return s
 }
@@ -118,16 +93,32 @@ func main() {
 	// a timeout of 5 seconds.
 	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt)
+
 	<-quit
 
-	fmt.Println()
-	log.Info("Shutting down server...")
+	log.Info("Shutdown server: in progress")
 
-	s.Bus.Close()
+	{
+		// Scoped block to disconnect all connections, and stop all goroutines.
+		// If not successful within 5s, drop a nuclear bomb and fail with a
+		// FATAL error.
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal("Server Shutdown:", err)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		s.Bus.Close(ctx)
+	}
+
+	{
+		// Scoped block to gracefully shutdown Gin-Gonic server within 10s.
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		if err := srv.Shutdown(ctx); err != nil {
+			log.WithField("error", err).Fatal("Failed to shutdown server")
+		}
+
+		log.Info("Shutdown server: done")
 	}
 }

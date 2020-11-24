@@ -35,6 +35,7 @@ func (s *Service) GetFees(targets []int64, mode string) map[string]interface{} {
 }
 
 func (s *Service) GetStatus() *bus.ExplorerStatus {
+	// Prepare base bus.ExplorerStatus instance.
 	status := bus.ExplorerStatus{
 		TxIndex:  s.Bus.TxIndex,
 		Pruned:   s.Bus.Pruned,
@@ -42,6 +43,13 @@ func (s *Service) GetStatus() *bus.ExplorerStatus {
 		Currency: s.Bus.Currency,
 	}
 
+	// Case 1: satstack is running the numbers.
+	if s.Bus.IsPendingScan {
+		status.Status = bus.PendingScan
+		return &status
+	}
+
+	// Case 2: Unable to initialize rpcclient.Client.
 	client, err := s.Bus.ClientFactory()
 	if err != nil {
 		log.WithField(
@@ -53,7 +61,7 @@ func (s *Service) GetStatus() *bus.ExplorerStatus {
 
 	defer client.Shutdown()
 
-	// Case 1: bitcoind is unreachable
+	// Case 3: bitcoind is unreachable - chain RPC failed.
 	blockChainInfo, err := client.GetBlockChainInfo()
 	if err != nil {
 		log.WithField(
@@ -64,7 +72,7 @@ func (s *Service) GetStatus() *bus.ExplorerStatus {
 		return &status
 	}
 
-	// Case 2: bitcoind is currently catching up on new blocks.
+	// Case 4: bitcoind is currently catching up on new blocks.
 	if blockChainInfo.Blocks != blockChainInfo.Headers {
 		status.Status = bus.Syncing
 		status.SyncProgress = btcjson.Float64(
@@ -72,7 +80,7 @@ func (s *Service) GetStatus() *bus.ExplorerStatus {
 		return &status
 	}
 
-	// Case 3: bitcoind is currently importing descriptors
+	// Case 5: bitcoind is currently importing descriptors
 	walletInfo, err := client.GetWalletInfo()
 	if err != nil {
 		log.WithField(
@@ -90,7 +98,7 @@ func (s *Service) GetStatus() *bus.ExplorerStatus {
 		return &status
 	}
 
-	// Case 4: bitcoind is ready to be used with satstack.
+	// Case 6: bitcoind is ready to be used with satstack.
 	status.Status = bus.Ready
 	return &status
 }

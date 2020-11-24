@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -59,4 +60,34 @@ func Contains(s []string, e string) bool {
 
 func ToStringPointer(value string) *string {
 	return btcjson.String(value)
+}
+
+const (
+	day  = time.Minute * 60 * 24
+	year = 365 * day
+)
+
+// HumanizeDuration converts a time.Duration into something readable.
+// Taken from: https://gist.github.com/harshavardhana/327e0577c4fed9211f65
+//
+// Example:
+// 	HumanizeDuration(time.Duration())
+func HumanizeDuration(d time.Duration) string {
+	if d < day {
+		return d.String()
+	}
+
+	var b strings.Builder
+
+	if d >= year {
+		years := d / year
+		fmt.Fprintf(&b, "%dy", years)
+		d -= years * year
+	}
+
+	days := d / day
+	d -= days * day
+	fmt.Fprintf(&b, "%dd%s", days, d)
+
+	return b.String()
 }

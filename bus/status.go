@@ -5,6 +5,10 @@ package bus
 type Status string
 
 const (
+	// Initializing is a Status to indicate the initial state of LSS, while it
+	// is warming up.
+	Initializing Status = "initializing"
+
 	// NodeDisconnected is a Status to indicate that the bitcoind instance is
 	// unreachable. This is typically returned in the response of the status
 	// endpoint.
@@ -17,6 +21,13 @@ const (
 	// Syncing is a Status to indicate that the Bitcoin Core node is currently
 	// downloading and validating blocks.
 	Syncing Status = "syncing"
+
+	// PendingScan is a Status to indicate that the worker is awaiting import
+	// of descriptors. This is typically the case when LSS is launched, while it
+	// is "running the numbers".
+	//
+	// Use this Status when Bus.IsPendingScan is set to true.
+	PendingScan Status = "pending-scan"
 
 	// Scanning is a Status to indicate that the Bitcoin Core node is currently
 	// importing account descriptors into its wallet.

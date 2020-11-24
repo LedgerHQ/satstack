@@ -1,17 +1,15 @@
 package bus
 
 import (
+	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/btcsuite/btcd/chaincfg"
 
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
-	"github.com/btcsuite/btcutil"
-	"github.com/ledgerhq/satstack/config"
 	"github.com/ledgerhq/satstack/utils"
 	"github.com/patrickmn/go-cache"
 	log "github.com/sirupsen/logrus"
@@ -59,14 +57,25 @@ type Bus struct {
 	connCfg *rpcclient.ConnConfig
 
 	// Primary RPC client for JSON-RPC requests. This does NOT allow batch
-	// requests (use batchClient for that).
+	// requests.
 	mainClient *rpcclient.Client
 
-	// RPC client for batched JSON-RPC requests.
-	batchClient *rpcclient.Client
+	// Secondary RPC client for JSON-RPC requests. Use when mainClient is busy.
+	secondaryClient *rpcclient.Client
+
+	// RPC client reserved for performing RPC-based cleanups.
+	janitorClient *rpcclient.Client
 
 	// btcd network params
 	Params *chaincfg.Params
+
+	// IsPendingScan is a boolean field to indicate if satstack is currently
+	// waiting for descriptors to be scanned. One such example is when satstack
+	// is "running the numbers".
+	//
+	// This value can be exported for use by other packages to avoid making
+	// explorer requests before satstack is able to serve them.
+	IsPendingScan bool
 }
 
 type descriptor struct {
@@ -77,6 +86,8 @@ type descriptor struct {
 
 // New initializes a Bus struct that embeds a btcd RPC client.
 func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
+	log.Info("Warming up...")
+
 	// Prepare the connection config to initialize the rpcclient.Client
 	// pool with.
 	connCfg := &rpcclient.ConnConfig{
@@ -93,7 +104,12 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 		return nil, err // error ctx not required
 	}
 
-	batchClient, err := rpcclient.New(connCfg, nil)
+	secondaryClient, err := rpcclient.New(connCfg, nil)
+	if err != nil {
+		return nil, err // error ctx not required
+	}
+
+	janitorClient, err := rpcclient.New(connCfg, nil)
 	if err != nil {
 		return nil, err // error ctx not required
 	}
@@ -148,37 +164,50 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 	}
 
 	b := &Bus{
-		connCfg:     connCfg,
-		mainClient:  mainClient,
-		batchClient: batchClient.Batch(),
-		Pruned:      info.Pruned,
-		Chain:       info.Chain,
-		BlockFilter: blockFilter,
-		TxIndex:     txIndex,
-		Currency:    currency,
-		Cache:       nil, // Disabled by default
-		Params:      params,
+		connCfg:         connCfg,
+		mainClient:      mainClient,
+		secondaryClient: secondaryClient,
+		janitorClient:   janitorClient,
+		Pruned:          info.Pruned,
+		Chain:           info.Chain,
+		BlockFilter:     blockFilter,
+		TxIndex:         txIndex,
+		Currency:        currency,
+		Cache:           nil, // Disabled by default
+		Params:          params,
+		IsPendingScan:   true,
 	}
 
 	return b, nil
 }
 
 // Close performs cleanup operations on the Bus, notably shutting down the
-// rpcclient connections.
-func (b *Bus) Close() {
-	if err := b.unloadWallet(); err != nil {
-		log.WithFields(log.Fields{
-			"wallet": walletName,
-			"error":  err,
-		}).Warn("Unable to unload wallet")
+// rpcclient.Client connections.
+//
+// The cleanup must be performed within a timeout set by the passed context,
+// to prevent hanging on connections indefinitely held by bitcoind.
+func (b *Bus) Close(ctx context.Context) {
+	done := make(chan bool)
+
+	go func() {
+		b.mainClient.Shutdown()
+		b.secondaryClient.Shutdown()
+
+		b.UnloadWallet()
+		done <- true
+	}()
+
+	select {
+	case <-ctx.Done():
+		// Chernobyl nuclear disaster.
+
+		b.janitorClient.Shutdown()
+		log.WithField("error", ctx.Err()).Fatal("Shutdown server: force")
+	case <-done:
+		// The control rods have been lowered into the nuclear core, and the
+		// chain reaction has gracefully stopped.
 	}
 
-	log.WithFields(log.Fields{
-		"wallet": walletName,
-	}).Info("Unloaded wallet successfully")
-
-	b.mainClient.Shutdown()
-	b.batchClient.Shutdown()
 }
 
 func (b *Bus) ClientFactory() (*rpcclient.Client, error) {
@@ -333,150 +362,18 @@ func blockFilterEnabled(client *rpcclient.Client, hash string) (bool, error) {
 	return true, nil
 }
 
-func (b *Bus) WaitForNodeSync() error {
-	for {
-		info, err := b.mainClient.GetBlockChainInfo()
-		if err != nil {
-			return err
-		}
-
+func (b *Bus) UnloadWallet() {
+	if err := b.janitorClient.UnloadWallet(nil); err != nil {
 		log.WithFields(log.Fields{
-			"progress": fmt.Sprintf("%.2f%%", info.VerificationProgress*100),
-		}).Info("Sychronizing node")
-
-		if info.Blocks == info.Headers {
-			log.WithFields(log.Fields{
-				"blockHeight": info.Blocks,
-				"blockHash":   info.BestBlockHash,
-			}).Info("Sychronization complete")
-			return nil
-		}
-
-		time.Sleep(10 * time.Second)
-	}
-}
-
-// ImportAccounts will import the descriptors corresponding to the accounts
-// into the Bitcoin Core wallet. This is a blocking operation.
-func (b *Bus) ImportAccounts(accounts []config.Account) error {
-	var allDescriptors []descriptor
-	for _, account := range accounts {
-		accountDescriptors, err := b.descriptors(account)
-		if err != nil {
-			return err // return bare error, since it already has a ctx
-		}
-
-		allDescriptors = append(allDescriptors, accountDescriptors...)
-	}
-
-	var descriptorsToImport []descriptor
-	for _, descriptor := range allDescriptors {
-		address, err := b.DeriveAddress(descriptor.Value, descriptor.Depth)
-		if err != nil {
-			return fmt.Errorf("%s (%s - #%d): %w",
-				ErrDeriveAddress, descriptor.Value, descriptor.Depth, err)
-		}
-
-		addressInfo, err := b.GetAddressInfo(*address)
-		if err != nil {
-			return fmt.Errorf("%s (%s): %w", ErrAddressInfo, *address, err)
-		}
-
-		if !addressInfo.IsWatchOnly {
-			descriptorsToImport = append(descriptorsToImport, descriptor)
-		}
-	}
-
-	if len(descriptorsToImport) == 0 {
-		log.Warn("No (new) addresses to import")
-		return nil
-	}
-
-	return b.ImportDescriptors(descriptorsToImport)
-}
-
-// descriptors returns canonical descriptors from the account configuration.
-func (b *Bus) descriptors(account config.Account) ([]descriptor, error) {
-	var ret []descriptor
-
-	var depth int
-	switch account.Depth {
-	case nil:
-		depth = defaultAccountDepth
-	default:
-		depth = *account.Depth
-	}
-
-	var age uint32
-	switch account.Birthday {
-	case nil:
-		age = uint32(config.BIP0039Genesis.Unix())
-	default:
-		age = uint32(account.Birthday.Unix())
-	}
-
-	rawDescs := []string{
-		strings.Split(*account.External, "#")[0], // strip out the checksum
-		strings.Split(*account.Internal, "#")[0], // strip out the checksum
-	}
-
-	for _, desc := range rawDescs {
-		canonicalDesc, err := b.GetCanonicalDescriptor(desc)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", ErrInvalidDescriptor, err)
-		}
-
-		ret = append(ret, descriptor{
-			Value: *canonicalDesc,
-			Depth: depth,
-			Age:   age,
-		})
-	}
-
-	return ret, nil
-}
-
-// RunTheNumbers performs inflation checks against the connected full node.
-//
-// It does NOT perform any equality comparison between expected and actual
-// supply.
-func (b *Bus) RunTheNumbers() error {
-	log.Info("Running inflation checks...")
-
-	info, err := b.mainClient.GetTxOutSetInfo()
-	if err != nil {
-		return err
-	}
-
-	const halvingBlocks = 210000
-
-	var (
-		subsidy float64 = 50
-		supply  float64 = 0
-	)
-
-	i := int64(0)
-	for ; i < info.Height/halvingBlocks; i++ {
-		supply += halvingBlocks * subsidy
-		subsidy /= 2
-	}
-
-	supply += subsidy * float64(info.Height-(halvingBlocks*i))
-
-	supplyBTC, err := btcutil.NewAmount(supply)
-	if err != nil {
-		return err
+			"wallet": walletName,
+			"error":  err,
+		}).Warn("Unable to unload wallet")
+		return
 	}
 
 	log.WithFields(log.Fields{
-		"height":         info.Height,
-		"expectedSupply": supplyBTC,
-		"actualSupply":   info.TotalAmount,
-	}).Info("RunTheNumbers successful")
+		"wallet": walletName,
+	}).Info("Unloaded wallet successfully")
 
-	return nil
-}
-
-func (b *Bus) unloadWallet() error {
-	return b.mainClient.UnloadWallet(nil)
+	b.janitorClient.Shutdown()
 }

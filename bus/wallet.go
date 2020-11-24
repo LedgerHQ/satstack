@@ -1,7 +1,7 @@
 package bus
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/ledgerhq/satstack/protocol"
 	"github.com/ledgerhq/satstack/types"
@@ -64,46 +64,32 @@ func (b *Bus) ImportDescriptors(descriptors []descriptor) error {
 		})
 	}
 
-	log.WithFields(log.Fields{
-		"rescan": true,
-		"N":      len(requests),
-	}).Info("Importing descriptors")
+	opts := &btcjson.ImportMultiOptions{Rescan: true}
 
-	results, err := b.mainClient.ImportMulti(requests, &btcjson.ImportMultiOptions{Rescan: true})
+	results, err := b.mainClient.ImportMulti(requests, opts)
 	if err != nil {
 		return err
 	}
 
-	hasErrors := false
+	var hasError bool
 
 	for idx, result := range results {
-		if result.Error != nil {
-			log.WithFields(log.Fields{
-				"descriptor": *requests[idx].Descriptor,
-				"range":      requests[idx].Range.Value,
-				"error":      result.Error,
-			}).Error("Failed to import descriptor")
-			hasErrors = true
-		}
+		fields := log.WithFields(log.Fields{
+			"descriptor": *requests[idx].Descriptor,
+		})
 
-		if result.Warnings != nil {
-			log.WithFields(log.Fields{
-				"descriptor": *requests[idx].Descriptor,
-				"range":      requests[idx].Range.Value,
-				"warnings":   result.Warnings,
-			}).Warn("Import output descriptor")
+		if result.Error != nil {
+			fields.Error("Failed to import descriptor")
+			hasError = true
 		}
 
 		if result.Success {
-			log.WithFields(log.Fields{
-				"descriptor": *requests[idx].Descriptor,
-				"range":      requests[idx].Range.Value,
-			}).Info("Import descriptor successful")
+			fields.Debug("Import descriptor successfully")
 		}
 	}
 
-	if hasErrors {
-		return errors.New("importmulti RPC command failed")
+	if hasError {
+		return fmt.Errorf("importmulti RPC failed")
 	}
 
 	return nil
