@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/ledgerhq/satstack/utils"
+
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -13,6 +15,60 @@ import (
 	"github.com/btcsuite/btcutil"
 	"github.com/ledgerhq/satstack/types"
 )
+
+func ParseVerboseTransaction(txRaw *btcjson.TxRawResult) *types.Transaction {
+	var inputs []types.Input
+	for i, input := range txRaw.Vin {
+		var scriptSig *string
+		if input.ScriptSig != nil {
+			scriptSig = &input.ScriptSig.Hex
+		}
+
+		inputs = append(inputs, types.Input{
+			Coinbase:    input.Coinbase,
+			OutputHash:  input.Txid,
+			OutputIndex: &input.Vout,
+			ScriptSig:   scriptSig,
+			Witness:     input.Witness,
+			InputIndex:  &i,
+			Sequence:    input.Sequence,
+		})
+	}
+
+	var outputs []types.Output
+	for _, output := range txRaw.Vout {
+		val := utils.ParseSatoshi(output.Value)
+		var addr string
+		if addrs := output.ScriptPubKey.Addresses; len(addrs) > 0 {
+			addr = addrs[0]
+		}
+
+		outputs = append(outputs, types.Output{
+			OutputIndex: &output.N,
+			Value:       &val,
+			ScriptHex:   output.ScriptPubKey.Hex,
+			Address:     addr,
+		})
+	}
+
+	return &types.Transaction{
+		ID:       txRaw.Hash,
+		Hash:     txRaw.Hash,
+		LockTime: txRaw.LockTime,
+		Inputs:   inputs,
+		Outputs:  nil,
+	}
+}
+
+func DecodeMsgTx(msgTx *wire.MsgTx, params *chaincfg.Params) *types.Transaction {
+	return &types.Transaction{
+		ID:       msgTx.TxHash().String(),
+		Hash:     msgTx.TxHash().String(),
+		LockTime: msgTx.LockTime,
+		Inputs:   createVinList(msgTx),
+		Outputs:  createVoutList(msgTx, params),
+	}
+}
 
 func DecodeRawTransaction(txnHex string, params *chaincfg.Params) (*types.Transaction, error) {
 	hexStr := txnHex
@@ -34,13 +90,7 @@ func DecodeRawTransaction(txnHex string, params *chaincfg.Params) (*types.Transa
 		return nil, fmt.Errorf("%s: %w: %s", ErrMsgTxDeserialize, err, txnHex)
 	}
 
-	return &types.Transaction{
-		ID:       mtx.TxHash().String(),
-		Hash:     mtx.TxHash().String(),
-		LockTime: mtx.LockTime,
-		Inputs:   createVinList(&mtx),
-		Outputs:  createVoutList(&mtx, params),
-	}, nil
+	return DecodeMsgTx(&mtx, params), nil
 }
 
 // createVinList returns a slice of JSON objects for the inputs of the passed

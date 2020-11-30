@@ -107,14 +107,27 @@ func (b *Bus) GetTransaction(hash string) (*types.Transaction, error) {
 		return nil, err
 	}
 
-	txRaw, err := b.mainClient.GetTransactionWatchOnly(chainHash, true)
-	if err != nil {
-		return nil, err
-	}
+	var tx *types.Transaction
 
-	tx, err := protocol.DecodeRawTransaction(txRaw.Hex, b.Params)
-	if err != nil {
-		return nil, err
+	switch b.TxIndex {
+	case true:
+		txRaw, err := b.mainClient.GetRawTransaction(chainHash)
+		if err != nil {
+			return nil, err
+		}
+
+		tx = protocol.DecodeMsgTx(txRaw.MsgTx(), b.Params)
+
+	case false:
+		txRaw, err := b.mainClient.GetTransactionWatchOnly(chainHash, true)
+		if err != nil {
+			return nil, err
+		}
+
+		tx, err = protocol.DecodeRawTransaction(txRaw.Hex, b.Params)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if b.Cache != nil {
