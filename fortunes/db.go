@@ -205,4 +205,12 @@ var bitcoinFortunes = []string{
 	`Commerce on the Internet has come to rely almost exclusively on financial institutions serving as trusted third parties to process electronic payments. While the system works well enough for most transactions, it still suffers from the inherent weaknesses of the trust based model.
 
 	-- Satoshi Nakamoto, 2008`,
+
+	`Bitcoin is outdated technology - almost prehistoric by crypto standards.
+
+	-- Mike Hearn, 2011`,
+
+	`Despite knowing that bitcoin could fail all along, the now inescapable conclusion that it has failed still saddens me greatly.
+
+	-- Mike Hearn, 2011`,
 }
