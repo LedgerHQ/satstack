@@ -5,9 +5,9 @@ CYAN='\033[0;36m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
-pkh="^pkh\(.*(tpub[a-zA-Z0-9]+).*"
-wpkh="^wpkh\(.*(tpub[a-zA-Z0-9]+).*"
-sh_wpkh="^sh\(wpkh\(.*(tpub[a-zA-Z0-9]+).*"
+pkh="^pkh\(.*([xt]pub[a-zA-Z0-9]+).*"
+wpkh="^wpkh\(.*([xt]pub[a-zA-Z0-9]+).*"
+sh_wpkh="^sh\(wpkh\(.*([xt]pub[a-zA-Z0-9]+).*"
 
 
 for descriptor in $(jq -r ".accounts[] | [.external] | @csv" < lss.json | sed "s/\"//g")
@@ -25,11 +25,20 @@ do
       exit 1
     fi
 
+    if [[ $xpub == *"xpub"* ]]; then
+      currency="bitcoin"
+    elif [[ $xpub == *"tpub"* ]]; then
+      currency="bitcoin_testnet"
+    else
+      exit 1
+    fi
+
     echo -e ""
     echo -e "${CYAN}SCHEME:${NC}         ${scheme}"
+    echo -e "${CYAN}CURRENCY:${NC}       ${currency}"
     echo -e "${CYAN}XPUB:${NC}           ${xpub}"
 
-    cmd="time ledger-live sync --xpub $xpub -c bitcoin_testnet -s $scheme -f stats"
+    cmd="time ledger-live sync --xpub $xpub -c $currency -s $scheme -f stats"
 
     ledger-live libcoreReset
     echo -e "${CYAN}SYNC NOCACHE:${NC}   explorers.api.live.ledger.com"
