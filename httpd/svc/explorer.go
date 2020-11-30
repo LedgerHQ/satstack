@@ -5,11 +5,10 @@ import (
 	"strconv"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
-	"github.com/ledgerhq/satstack/bus"
-
 	"github.com/btcsuite/btcd/btcjson"
+	"github.com/ledgerhq/satstack/bus"
+	"github.com/ledgerhq/satstack/version"
+	log "github.com/sirupsen/logrus"
 )
 
 func (s *Service) GetHealth() error {
@@ -37,6 +36,7 @@ func (s *Service) GetFees(targets []int64, mode string) map[string]interface{} {
 func (s *Service) GetStatus() *bus.ExplorerStatus {
 	// Prepare base bus.ExplorerStatus instance.
 	status := bus.ExplorerStatus{
+		Version:  version.Version,
 		TxIndex:  s.Bus.TxIndex,
 		Pruned:   s.Bus.Pruned,
 		Chain:    s.Bus.Chain,

@@ -37,6 +37,7 @@ const (
 // ExplorerStatus represents the structure of payload returned by GetStatus
 // service method.
 type ExplorerStatus struct {
+	Version      string   `json:"version"`
 	TxIndex      bool     `json:"txindex"`
 	BlockFilter  bool     `json:"block_filter"`
 	Pruned       bool     `json:"pruned"`
