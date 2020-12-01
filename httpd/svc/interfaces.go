@@ -28,6 +28,7 @@ type ExplorerService interface {
 
 type ControlService interface {
 	ImportAccounts(accounts []config.Account)
+	HasDescriptor(descriptor string) (bool, error)
 }
 
 type ServiceInterface interface {

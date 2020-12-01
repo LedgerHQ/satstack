@@ -7,6 +7,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/btcsuite/btcd/rpcclient"
+
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcutil"
 	"github.com/ledgerhq/satstack/config"
@@ -74,9 +76,16 @@ func (b *Bus) ImportAccounts(accounts []config.Account) error {
 		return nil
 	}
 
+	client, err := b.ClientFactory()
+	if err != nil {
+		return err
+	}
+
+	defer client.Shutdown()
+
 	var allDescriptors []descriptor
 	for _, account := range accounts {
-		accountDescriptors, err := b.descriptors(account)
+		accountDescriptors, err := descriptors(client, account)
 		if err != nil {
 			return err // return bare error, since it already has a ctx
 		}
@@ -86,13 +95,13 @@ func (b *Bus) ImportAccounts(accounts []config.Account) error {
 
 	var descriptorsToImport []descriptor
 	for _, descriptor := range allDescriptors {
-		address, err := b.DeriveAddress(descriptor.Value, descriptor.Depth)
+		address, err := DeriveAddress(client, descriptor.Value, descriptor.Depth)
 		if err != nil {
 			return fmt.Errorf("%s (%s - #%d): %w",
 				ErrDeriveAddress, descriptor.Value, descriptor.Depth, err)
 		}
 
-		addressInfo, err := b.GetAddressInfo(*address)
+		addressInfo, err := client.GetAddressInfo(*address)
 		if err != nil {
 			return fmt.Errorf("%s (%s): %w", ErrAddressInfo, *address, err)
 		}
@@ -109,11 +118,11 @@ func (b *Bus) ImportAccounts(accounts []config.Account) error {
 		return nil
 	}
 
-	return b.ImportDescriptors(descriptorsToImport)
+	return ImportDescriptors(client, descriptorsToImport)
 }
 
 // descriptors returns canonical descriptors from the account configuration.
-func (b *Bus) descriptors(account config.Account) ([]descriptor, error) {
+func descriptors(client *rpcclient.Client, account config.Account) ([]descriptor, error) {
 	var ret []descriptor
 
 	var depth int
@@ -138,7 +147,7 @@ func (b *Bus) descriptors(account config.Account) ([]descriptor, error) {
 	}
 
 	for _, desc := range rawDescs {
-		canonicalDesc, err := b.GetCanonicalDescriptor(desc)
+		canonicalDesc, err := GetCanonicalDescriptor(client, desc)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", ErrInvalidDescriptor, err)
 		}

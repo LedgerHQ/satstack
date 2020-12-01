@@ -1,10 +1,10 @@
 package bus
 
 import (
-	"github.com/ledgerhq/satstack/utils"
-
 	"github.com/btcsuite/btcd/btcjson"
+	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcutil"
+	"github.com/ledgerhq/satstack/utils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -39,8 +39,8 @@ func (b *Bus) EstimateSmartFee(target int64, mode string) btcutil.Amount {
 	return utils.ParseSatoshi(*fee.FeeRate)
 }
 
-func (b *Bus) DeriveAddress(descriptor string, index int) (*string, error) {
-	addresses, err := b.mainClient.DeriveAddresses(
+func DeriveAddress(client *rpcclient.Client, descriptor string, index int) (*string, error) {
+	addresses, err := client.DeriveAddresses(
 		descriptor,
 
 		// Since we're interested in only the address at addressIndex,
@@ -62,8 +62,8 @@ func (b *Bus) DeriveAddress(descriptor string, index int) (*string, error) {
 
 // GetCanonicalDescriptor returns the descriptor in canonical form, along with
 // its computed checksum.
-func (b *Bus) GetCanonicalDescriptor(descriptor string) (*string, error) {
-	info, err := b.mainClient.GetDescriptorInfo(descriptor)
+func GetCanonicalDescriptor(client *rpcclient.Client, descriptor string) (*string, error) {
+	info, err := client.GetDescriptorInfo(descriptor)
 	if err != nil {
 		return nil, err
 	}

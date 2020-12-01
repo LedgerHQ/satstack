@@ -16,7 +16,8 @@ func GetRouter(s *svc.Service) *gin.Engine {
 	// control SatStack (for ex, from Ledger Live).
 	controlRouter := engine.Group("control")
 	{
-		controlRouter.GET("import", handlers.ImportAccounts(s))
+		controlRouter.GET("descriptors/import", handlers.ImportAccounts(s))
+		controlRouter.POST("descriptors/has", handlers.HasDescriptor(s))
 	}
 
 	// We support both Ledger Blockchain Explorer v2 and v3. The version here

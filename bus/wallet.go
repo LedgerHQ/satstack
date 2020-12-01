@@ -3,6 +3,8 @@ package bus
 import (
 	"fmt"
 
+	"github.com/btcsuite/btcd/rpcclient"
+
 	"github.com/ledgerhq/satstack/protocol"
 	"github.com/ledgerhq/satstack/types"
 
@@ -43,15 +45,7 @@ func (b *Bus) GetTransactionHex(hash *chainhash.Hash) (string, error) {
 	return tx.Hex, nil
 }
 
-func (b *Bus) GetAddressInfo(address string) (*btcjson.GetAddressInfoResult, error) {
-	return b.mainClient.GetAddressInfo(address)
-}
-
-func (b *Bus) GetWalletInfo() (*btcjson.GetWalletInfoResult, error) {
-	return b.mainClient.GetWalletInfo()
-}
-
-func (b *Bus) ImportDescriptors(descriptors []descriptor) error {
+func ImportDescriptors(client *rpcclient.Client, descriptors []descriptor) error {
 	var requests []btcjson.ImportMultiRequest
 	for _, descriptor := range descriptors {
 		requests = append(requests, btcjson.ImportMultiRequest{
@@ -66,7 +60,7 @@ func (b *Bus) ImportDescriptors(descriptors []descriptor) error {
 
 	opts := &btcjson.ImportMultiOptions{Rescan: true}
 
-	results, err := b.mainClient.ImportMulti(requests, opts)
+	results, err := client.ImportMulti(requests, opts)
 	if err != nil {
 		return err
 	}
