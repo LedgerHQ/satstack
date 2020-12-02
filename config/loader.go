@@ -7,6 +7,8 @@ import (
 	"path"
 	"runtime"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/mitchellh/go-homedir"
 )
 
@@ -36,6 +38,8 @@ func Load() (*Configuration, error) {
 	if configPath == "" {
 		return nil, ErrConfigFileNotFound
 	}
+
+	log.WithField("path", configPath).Info("Config file detected")
 
 	configuration, err := loadFromPath(configPath)
 	if err != nil {
@@ -90,7 +94,7 @@ func configLookupPaths() ([]string, error) {
 	}
 
 	return []string{
-		liveUserDataFolder(home),
+		path.Join(liveUserDataFolder(home), "lss.json"),
 		"lss.json",
 		path.Join(home, "lss.json"),
 	}, nil
