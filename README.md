@@ -13,7 +13,7 @@ Ledger SatStack is a lightweight bridge to connect Ledger Live with your persona
   <img src="https://img.shields.io/badge/Go-%3E%3D1.15-04ADD8.svg" />
 </p>
 
-<img src="share/txindex_enabled.gif" align="center" />
+<img src="share/screenshot.png" align="center" />
 
 
 # Table of Contents
@@ -44,18 +44,19 @@ Ledger SatStack is a standalone Go application, that acts as a bridge between th
 ## Requirements
 
 - Bitcoin Core **`0.20.0+`**.
-- Ledger Live (desktop) **`2.5.0+`**.
+- Ledger Live (desktop) **`2.18.0+`**.
+- `txindex=1` in `bitcoin.conf` is not mandatory, but recommended.
 
-## Usage
+## Usage (recommended way)
+
+The easiest way of getting started is to use the dedicated setup flow directly on Ledger Live.
+A detailed guide is available [here](https://support.ledger.com/hc/en-us/articles/360017551659).
+
+## Usage (advanced) 
 
 #### Retrieve descriptors from device
 
-(coming soon) You'll soon be able to find this information directly on Ledger Live,
-in your account settings.
-
-If you are a first-time user of Ledger Live, you should retrieve your account xPubs
-directly from your Ledger device, in order to avoid leaking your privacy. Simply follow
-these steps:
+Simply follow these steps:
 
 1. Plug in your Ledger device via USB.
 2. Enter your PIN code on the device, and open the Bitcoin app.
@@ -91,11 +92,15 @@ Refer to the table below for a list of safe wallet birthdays to choose from.
 #### Launch Bitcoin full node
 
 Make sure you've read the [requirements](#requirements) first, and that your node is configured properly.
-Here's an example `bitcoin.conf`:
+Here's the recommended configuration for `bitcoin.conf`:
 
 ```
 # Enable RPC server
 server=1
+
+# Enable indexes
+txindex=1
+blockfilterindex=1
 
 # Set RPC credentials
 rpcuser=<user>
@@ -131,19 +136,12 @@ and import your accounts. This can take a while.
 #### Launch Ledger Live Desktop
 
 ```sh
-$ git clone https://github.com/ledgerhq/ledger-live-desktop
-$ cd ledger-live-desktop
-$ yarn
-$ EXPLORER=http://0.0.0.0:20000 yarn start
+$ EXPLORER=http://0.0.0.0:20000 <Ledger Live executable>
 ```
 
 ## Community
 
-If you liked this project, show us some love by tweeting to us
-[@Ledger](https://twitter.com/Ledger) and [@onybose](https://twitter.com/onybose).
+For support, please tag [@onybose](https://twitter.com/onybose) and [@Ledger](https://twitter.com/Ledger) on Twitter.
 
 Contributions in the form of code improvements, documentation, tutorials,
 and feedback are most welcome.
-
-Beta testers who want to test the full node are invited to send their feedback by contacting their program manager.
-If you are not part of the Ledger beta program and you want to join, register to [this form](https://www.ledger.com/ledger-beta-testing-program).
