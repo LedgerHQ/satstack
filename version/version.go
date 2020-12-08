@@ -9,7 +9,7 @@ import (
 var GitCommit string
 
 // Version returns the main version number that is being run at the moment.
-const Version = "v0.11.1-beta"
+const Version = "v0.12.0"
 
 // Build indicates whether the build was a development or a production build.
 var Build string
