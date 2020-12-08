@@ -147,9 +147,9 @@ $ EXPLORER=http://0.0.0.0:20000 <Ledger Live executable>
 
 | Title   |      Source      |
 |:----------|:-------------:|
-| [Personal sovereignty with Ledger SatStack](https://blog.ledger.com/satstack) |  [blog.ledger.com](https://blog.ledger.com) |
-| [Ledger SatStack: un pont entre Bitcoin Core et votre Ledger Wallet](https://bitcoin.fr/ledger-sat-stack-un-pont-entre-bitcoin-core-et-votre-ledger-wallet/) |    [bitcoin.fr](https://bitcoin.fr)   |
-| [Votre propre coffre-fort à bitcoins… inviolable – Ledger annonce l’arrivée des full nodes Bitcoin](https://journalducoin.com/actualites/coffre-fort-bitcoins-inviolable-ledger-annonce-noeuds-complets-bitcoin) | [Journal du Coin](https://journalducoin.com) |
+| 🇬🇧 [Personal sovereignty with Ledger SatStack](https://blog.ledger.com/satstack) |  [blog.ledger.com](https://blog.ledger.com) |
+| 🇫🇷 [Ledger SatStack: un pont entre Bitcoin Core et votre Ledger Wallet](https://bitcoin.fr/ledger-sat-stack-un-pont-entre-bitcoin-core-et-votre-ledger-wallet/) |    [bitcoin.fr](https://bitcoin.fr)   |
+| 🇫🇷 [Votre propre coffre-fort à bitcoins… inviolable – Ledger annonce l’arrivée des full nodes Bitcoin](https://journalducoin.com/actualites/coffre-fort-bitcoins-inviolable-ledger-annonce-noeuds-complets-bitcoin) | [Journal du Coin](https://journalducoin.com) |
 
 ## Community
 
