@@ -22,7 +22,8 @@ Ledger SatStack is a lightweight bridge to connect Ledger Live with your persona
 - [Architecture](#architecture)
 - [Requirements](#requirements)
 - [Usage](#usage)
-- [Contribute](#contribute)
+- [In the Press](#in-the-press)
+- [Community](#community)
 
 ## Background
 
@@ -47,12 +48,14 @@ Ledger SatStack is a standalone Go application, that acts as a bridge between th
 - Ledger Live (desktop) **`2.18.0+`**.
 - `txindex=1` in `bitcoin.conf` is not mandatory, but recommended.
 
-## Usage (recommended way)
+## Usage
+
+### Setup Ledger Live (recommended way)
 
 The easiest way of getting started is to use the dedicated setup flow directly on Ledger Live.
 A detailed guide is available [here](https://support.ledger.com/hc/en-us/articles/360017551659).
 
-## Usage (advanced) 
+### Manual setup (for advanced users)
 
 #### Retrieve descriptors from device
 
@@ -68,7 +71,8 @@ $ python3 -m venv venv  # ensure Python 3.7+
 $ source venv/bin/activate
 (venv) $ pip install -r requirements.txt
 (venv) $ ./getdescriptor --scheme native_segwit --chain main --account 3
-wpkh([6e6a1271/84'/0'/3']xpubDCHCguj...mFJejwC/0/*)
+External: wpkh([b91fb6c1/84'/0'/3']xpub6D1gvTP...VeMLtH6/0/*)
+Internal: wpkh([b91fb6c1/84'/0'/3']xpub6D1gvTP...VeMLtH6/1/*)
 ```
 
 #### Create configuration file
@@ -139,9 +143,17 @@ and import your accounts. This can take a while.
 $ EXPLORER=http://0.0.0.0:20000 <Ledger Live executable>
 ```
 
+## In the press
+
+| Title   |      Source      |
+|:----------|:-------------:|
+| [Personal sovereignty with Ledger SatStack](https://blog.ledger.com/satstack) |  [blog.ledger.com](https://blog.ledger.com) |
+| [Ledger SatStack: un pont entre Bitcoin Core et votre Ledger Wallet](https://bitcoin.fr/ledger-sat-stack-un-pont-entre-bitcoin-core-et-votre-ledger-wallet/) |    [bitcoin.fr](https://bitcoin.fr)   |
+| [Votre propre coffre-fort à bitcoins… inviolable – Ledger annonce l’arrivée des full nodes Bitcoin](https://journalducoin.com/actualites/coffre-fort-bitcoins-inviolable-ledger-annonce-noeuds-complets-bitcoin) | [Journal du Coin](https://journalducoin.com) |
+
 ## Community
 
-For support, please tag [@onybose](https://twitter.com/onybose) and [@Ledger](https://twitter.com/Ledger) on Twitter.
+For feedback or support, please tag [@onybose](https://twitter.com/onybose) and [@Ledger](https://twitter.com/Ledger) on Twitter.
 
 Contributions in the form of code improvements, documentation, tutorials,
 and feedback are most welcome.
