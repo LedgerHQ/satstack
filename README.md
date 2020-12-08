@@ -47,6 +47,7 @@ Ledger SatStack is a standalone Go application, that acts as a bridge between th
 - Bitcoin Core **`0.20.0+`**.
 - Ledger Live (desktop) **`2.18.0+`**.
 - `txindex=1` in `bitcoin.conf` is not mandatory, but recommended.
+- Wallet should **NOT** be disabled (attn. Raspiblitz users).
 
 ## Usage
 
