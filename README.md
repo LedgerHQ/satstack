@@ -24,6 +24,7 @@ Ledger SatStack is a lightweight bridge to connect Ledger Live with your persona
 - [Usage](#usage)
 - [In the Press](#in-the-press)
 - [Community](#community)
+- [Contributing](#contributing)
 
 ## Background
 
@@ -155,7 +156,25 @@ $ EXPLORER=http://0.0.0.0:20000 <Ledger Live executable>
 
 ## Community
 
-For feedback or support, please tag [@onybose](https://twitter.com/onybose) and [@Ledger](https://twitter.com/Ledger) on Twitter.
+For feedback or support, please tag [@onybose](https://twitter.com/onybose) and [@Ledger](https://twitter.com/Ledger) on Twitter. To report any bugs related to full node on Ledger Live, you can create issues on this repository.
 
-Contributions in the form of code improvements, documentation, tutorials,
-and feedback are most welcome.
+## Contributing
+
+Contributions in the form of code improvements, documentation, tutorials, and feedback are most welcome.
+
+For contributions to the code, we recommend [these guidelines](https://github.com/btcsuite/btcd/blob/master/docs/code_contribution_guidelines.md).
+
+### Call for Cowsay contributions
+
+On startup, satstack will display a message about Bitcoin, randomly picked from a curated collection of interesting quotes, facts, email excerpts, etc. You are welcome to contribute by creating a [pull request](https://docs.github.com/en/free-pro-team@latest/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request) modifying [this file](fortunes/db.go) (includes guidelines for editing the file). Here's an example of how it is rendered:
+
+<img src="/share/cowsay.png" width="300">
+
+#### Cowsay ideas:
+
+- Extracts from [The Complete Satoshi](https://satoshi.nakamotoinstitute.org) by the [Nakamoto Institute](https://nakamotoinstitute.org).
+- Quotes by Satoshi, Hal Finney.
+- Excerpts from bitcointalk.org, email lists, etc.
+- Public criticisms of Bitcoin by famous people, media, etc. [Bitcoin Obituaries](https://99bitcoins.com/bitcoin-obituaries) is a great source.
+
+Please mention the source when you make a contribution, so we can attribute the original author(s) and include a copy of the license if required.
