@@ -94,6 +94,11 @@ Refer to the table below for a list of safe wallet birthdays to choose from.
   | BIP0039 proposal created | 2013/09/10 (default) |
   | First ever BIP39 compatible Ledger device (Nano) shipped | 2014/11/24 |
   | First ever Ledger Nano S shipped | 2016/07/28 |
+  
+
+###### Optional fields
+
+- **`torproxy`**: set a local Socks proxy to be used. Needed to connect to a Tor node. Example `socks5://127.0.0.1:9050`.
 
 #### Launch Bitcoin full node
 
