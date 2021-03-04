@@ -85,7 +85,7 @@ type descriptor struct {
 }
 
 // New initializes a Bus struct that embeds a btcd RPC client.
-func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
+func New(host string, user string, pass string, proxy string, noTLS bool) (*Bus, error) {
 	log.Info("Warming up...")
 
 	// Prepare the connection config to initialize the rpcclient.Client
@@ -94,6 +94,7 @@ func New(host string, user string, pass string, noTLS bool) (*Bus, error) {
 		Host:         fmt.Sprintf("%s/wallet/%s", host, walletName),
 		User:         user,
 		Pass:         pass,
+		Proxy:        proxy,
 		HTTPPostMode: true,
 		DisableTLS:   noTLS,
 	}

@@ -23,6 +23,7 @@ type Configuration struct {
 	RPCURL      *string   `json:"rpcurl"`
 	RPCUser     *string   `json:"rpcuser"`
 	RPCPassword *string   `json:"rpcpass"`
+	TorProxy    *string   `json:"torproxy"`
 	NoTLS       bool      `json:"notls"`
 	Accounts    []Account `json:"accounts"`
 }

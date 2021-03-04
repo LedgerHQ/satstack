@@ -44,6 +44,7 @@ func startup() *svc.Service {
 		*configuration.RPCURL,
 		*configuration.RPCUser,
 		*configuration.RPCPassword,
+		*configuration.TorProxy,
 		configuration.NoTLS,
 	)
 	if err != nil {
