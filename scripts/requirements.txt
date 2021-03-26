@@ -1,6 +1,6 @@
 base58
 click
-construct
+construct==2.10.61
 ecdsa
 ledgerwallet
 protobuf
