@@ -36,6 +36,7 @@ const (
 	walletName = "satstack"
 
 	errDuplicateWalletLoadMsg = "Duplicate -wallet filename specified."
+	errWalletAlreadyLoadedMsg = "Wallet file verification failed. Refusing to load database. Data file"
 )
 
 // Bus represents a transport allowing access to Bitcoin RPC methods.
@@ -282,6 +283,11 @@ func loadOrCreateWallet(client *rpcclient.Client) (bool, error) {
 	}
 
 	if rpcErr.Code == btcjson.ErrRPCWallet && strings.Contains(rpcErr.Message, errDuplicateWalletLoadMsg) {
+		// wallet already loaded. Ignore the error and return.
+		return false, nil
+	}
+
+	if rpcErr.Code == btcjson.ErrRPCWallet && strings.Contains(rpcErr.Message, errWalletAlreadyLoadedMsg) {
 		// wallet already loaded. Ignore the error and return.
 		return false, nil
 	}
