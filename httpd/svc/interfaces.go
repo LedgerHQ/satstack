@@ -21,20 +21,21 @@ type AddressesService interface {
 }
 
 type ExplorerService interface {
-	GetHealth() error
-	GetStatus() *bus.ExplorerStatus
 	GetFees(targets []int64, mode string) map[string]interface{}
+	GetHealth() error
+	GetNetwork() *bus.Network
+	GetStatus() *bus.ExplorerStatus
 }
 
 type ControlService interface {
-	ImportAccounts(accounts []config.Account)
 	HasDescriptor(descriptor string) (bool, error)
+	ImportAccounts(accounts []config.Account)
 }
 
 type ServiceInterface interface {
-	BlocksService
-	TransactionsService
 	AddressesService
-	ExplorerService
+	BlocksService
 	ControlService
+	ExplorerService
+	TransactionsService
 }

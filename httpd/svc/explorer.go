@@ -102,3 +102,31 @@ func (s *Service) GetStatus() *bus.ExplorerStatus {
 	status.Status = bus.Ready
 	return &status
 }
+
+func (s *Service) GetNetwork() (network *bus.Network) {
+	client, err := s.Bus.ClientFactory()
+	if err != nil {
+		log.WithField("err", fmt.Errorf("%s: %w", bus.ErrBitcoindUnreachable, err)).
+			Error("Failed to query status")
+
+		network = new(bus.Network)
+		return network
+	}
+
+	var networkInfo *btcjson.GetNetworkInfoResult
+	if networkInfo, err = client.GetNetworkInfo(); err != nil {
+		log.WithField("err", fmt.Errorf("%s: %w", bus.ErrBitcoindUnreachable, err)).
+			Error("Failed to query status")
+
+		network = new(bus.Network)
+		return network
+	}
+
+	network = &bus.Network{
+		RelayFee:       networkInfo.RelayFee,
+		IncrementalFee: networkInfo.IncrementalFee,
+		Version:        networkInfo.Version,
+		Subversion:     network.Subversion,
+	}
+	return network
+}

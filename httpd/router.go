@@ -1,10 +1,9 @@
 package httpd
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/ledgerhq/satstack/httpd/handlers"
 	"github.com/ledgerhq/satstack/httpd/svc"
-
-	"github.com/gin-gonic/gin"
 )
 
 func GetRouter(s *svc.Service) *gin.Engine {
@@ -26,6 +25,7 @@ func GetRouter(s *svc.Service) *gin.Engine {
 	{
 		baseRouter.GET("explorer/_health", handlers.GetHealth(s))
 		baseRouter.GET("explorer/status", handlers.GetStatus(s))
+		baseRouter.GET("btc/network", handlers.GetNetwork(s))
 	}
 
 	currencyRouter := baseRouter.Group(s.Bus.Currency)
