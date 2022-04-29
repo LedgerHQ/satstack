@@ -126,7 +126,7 @@ func (s *Service) GetNetwork() (network *bus.Network) {
 		RelayFee:       networkInfo.RelayFee,
 		IncrementalFee: networkInfo.IncrementalFee,
 		Version:        networkInfo.Version,
-		Subversion:     network.Subversion,
+		Subversion:     networkInfo.SubVersion,
 	}
 	return network
 }
