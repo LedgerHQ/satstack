@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/btcsuite/btcd v0.21.0-beta.0.20201114000516-e9c7a5ac6401
 	github.com/btcsuite/btcutil v1.0.2
-	github.com/gin-gonic/gin v1.6.3
+	github.com/gin-gonic/gin v1.7.0
 	github.com/magefile/mage v1.10.0
 	github.com/mattn/go-runewidth v0.0.9
 	github.com/mitchellh/go-homedir v1.1.0
@@ -22,7 +22,7 @@ require (
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.13.0 // indirect
 	github.com/go-playground/universal-translator v0.17.0 // indirect
-	github.com/go-playground/validator/v10 v10.2.0 // indirect
+	github.com/go-playground/validator/v10 v10.4.1 // indirect
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/json-iterator/go v1.1.9 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.3 // indirect
