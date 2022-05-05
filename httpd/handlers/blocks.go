@@ -23,7 +23,7 @@ func GetBlock(s svc.BlocksService) gin.HandlerFunc {
 
 		block, err := s.GetBlock(blockRef)
 		if err != nil {
-			ctx.JSON(http.StatusNotFound, err)
+			ctx.String(http.StatusNotFound, "text/plain", []byte(err.Error()))
 			return
 		}
 

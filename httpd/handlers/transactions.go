@@ -16,7 +16,7 @@ func GetTransactionHex(s svc.TransactionsService) gin.HandlerFunc {
 
 		txHex, err := s.GetTransactionHex(txHash)
 		if err != nil {
-			ctx.JSON(http.StatusNotFound, err)
+			ctx.String(http.StatusNotFound, "text/plain", []byte(err.Error()))
 			return
 		}
 

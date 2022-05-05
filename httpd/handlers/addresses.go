@@ -25,7 +25,7 @@ func GetAddresses(s svc.AddressesService) gin.HandlerFunc {
 
 		addresses, err := s.GetAddresses(addressList, blockHash)
 		if err != nil {
-			ctx.JSON(http.StatusNotFound, err)
+			ctx.String(http.StatusNotFound, "text/plain", []byte(err.Error()))
 			return
 		}
 
