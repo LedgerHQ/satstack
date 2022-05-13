@@ -3,6 +3,7 @@ package bus
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/btcsuite/btcd/chaincfg"
@@ -85,7 +86,7 @@ type descriptor struct {
 }
 
 // New initializes a Bus struct that embeds a btcd RPC client.
-func New(host string, user string, pass string, proxy string, noTLS bool) (*Bus, error) {
+func New(host string, user string, pass string, proxy string, noTLS bool, unloadWallet bool) (*Bus, error) {
 	log.Info("Warming up...")
 
 	// Prepare the connection config to initialize the rpcclient.Client
@@ -142,6 +143,15 @@ func New(host string, user string, pass string, proxy string, noTLS bool) (*Bus,
 	currency, err := CurrencyFromChain(info.Chain)
 	if err != nil {
 		return nil, err
+	}
+
+	if unloadWallet {
+		if err = mainClient.UnloadWallet(nil); err != nil {
+			return nil, err
+		}
+
+		log.Info("Unload wallet: done")
+		os.Exit(1)
 	}
 
 	isNewWallet, err := loadOrCreateWallet(mainClient)
