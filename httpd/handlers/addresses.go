@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/ledgerhq/satstack/httpd/svc"
@@ -15,6 +16,7 @@ func GetAddresses(s svc.AddressesService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		param := ctx.Param("addresses")
 		blockHashQuery := ctx.Query("block_hash")
+		blockHeightQuery := ctx.Query("block_height")
 
 		addressList := strings.Split(param, ",")
 
@@ -23,7 +25,14 @@ func GetAddresses(s svc.AddressesService) gin.HandlerFunc {
 			blockHash = &blockHashQuery
 		}
 
-		addresses, err := s.GetAddresses(addressList, blockHash)
+		var blockHeight *int32
+		if blockHeightQuery != "" {
+			n, _ := strconv.ParseInt(blockHeightQuery, 10, 32)
+			i32 := int32(n)
+			blockHeight = &i32
+		}
+
+		addresses, err := s.GetAddresses(addressList, blockHash, blockHeight)
 		if err != nil {
 			ctx.String(http.StatusNotFound, "text/plain", []byte(err.Error()))
 			return
