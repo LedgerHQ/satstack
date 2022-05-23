@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (s *Service) GetAddresses(addresses []string, blockHash *string) (types.Addresses, error) {
+func (s *Service) GetAddresses(addresses []string, blockHash *string, blockHeight *int32) (types.Addresses, error) {
 	// Cache the results of GetTransaction calls against the TxID. The avoids
 	// wasteful querying of the Bitcoin node for the same TxID, within the
 	// lifecycle of this function invocation.
@@ -27,11 +27,19 @@ func (s *Service) GetAddresses(addresses []string, blockHash *string) (types.Add
 			"error":     err,
 			"blockHash": nil,
 		}).Error("Unable to fetch transaction")
+		return types.Addresses{}, err
 	}
+
 	walletTxs := s.filterTransactionsByAddresses(addresses, txResults, blockchainInfo.Headers)
 
-	txs := []types.Transaction{}
+	txs := make([]types.Transaction, 0, len(walletTxs))
 	for _, txn := range walletTxs {
+		if blockHeight != nil {
+			if !(txn.BlockHeight != nil || *txn.BlockHeight == *blockHeight) {
+				continue
+			}
+		}
+
 		block := blockFromTxResult(txn)
 		tx, err := s.GetTransaction(txn.TxID, block, blockchainInfo.Headers)
 		if err != nil {
