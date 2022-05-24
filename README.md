@@ -70,7 +70,7 @@ Simply follow these steps:
 
 ```bash
 $ cd scripts
-$ python3 -m venv venv  # ensure Python 3.7+
+$ python3 -m venv venv  # ensure Python 3.8+
 $ source venv/bin/activate
 (venv) $ pip install -r requirements.txt
 (venv) $ ./getdescriptor --scheme native_segwit --chain main --account 3
