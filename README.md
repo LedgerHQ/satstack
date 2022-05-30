@@ -143,9 +143,9 @@ and import your accounts. This can take a while.
 #### Launch Ledger Live Desktop
 
 ```sh
-# environment variable `EXPLORER_SATSTACK` should point at the address
+# environment variables `EXPLORER` and `EXPLORER_SATSTACK` should point at the address
 # where `lss` is listening (can be a differnet computer/server)
-$ EXPLORER_SATSTACK=http://127.0.0.1:20000 <Ledger Live executable>
+$ EXPLORER_SATSTACK=http://127.0.0.1:20000,EXPLORER=http://127.0.0.1:20000 <Ledger Live executable>
 ```
 
 ## In the press
