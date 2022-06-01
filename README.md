@@ -83,6 +83,9 @@ Internal: wpkh([b91fb6c1/84'/0'/3']xpub6D1gvTP...VeMLtH6/1/*)
 Create a config file **`lss.json`** in your home directory.
 You can use [this](https://github.com/ledgerhq/satstack/blob/master/lss.mainnet.json) sample config file as a template.
 
+Add ```"torproxy": "socks5://127.0.0.1:9050",``` to connect to a Tor client running locally so that satstack can reach a full node behind Tor.
+Replace the ```rpcurl``` with the .onion address of your node.
+
 ###### Optional account fields
 
 - **`depth`**: override the number of addresses to derive and import in the Bitcoin wallet. Defaults to `1000`.
