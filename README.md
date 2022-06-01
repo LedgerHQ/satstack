@@ -10,7 +10,7 @@ Ledger SatStack is a lightweight bridge to connect Ledger Live with your persona
   <img src="https://github.com/ledgerhq/satstack/workflows/Build/badge.svg" />
   <img src="https://img.shields.io/github/v/release/ledgerhq/satstack?include_prereleases" />
   <img src="https://img.shields.io/github/downloads/ledgerhq/satstack/total">
-  <img src="https://img.shields.io/badge/Go-%3E%3D1.15-04ADD8.svg" />
+  <img src="https://img.shields.io/badge/Go-%3E%3D1.17-04ADD8.svg" />
 </p>
 
 <img src="share/screenshot.png" align="center" />
