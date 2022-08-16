@@ -20,7 +20,7 @@ import (
 
 func init() {
 	rootCmd.PersistentFlags().String("port", "20000", "Port")
-	rootCmd.PersistentFlags().Bool("unload-wallet", false, "Whether SatStack should unload wallet")
+	rootCmd.PersistentFlags().Bool("unload-wallet", false, "whether SatStack should unload wallet")
 }
 
 var rootCmd = &cobra.Command{
@@ -94,6 +94,9 @@ func Execute() {
 }
 
 func startup(unloadWallet bool) *svc.Service {
+
+	// log.SetLevel(logrus.DebugLevel)
+
 	log.SetFormatter(&prefixed.TextFormatter{
 		TimestampFormat:  "2006/01/02 - 15:04:05",
 		FullTimestamp:    true,

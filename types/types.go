@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/btcsuite/btcutil"
+	"github.com/btcsuite/btcd/btcutil"
 )
 
 type OutputIdentifier struct {

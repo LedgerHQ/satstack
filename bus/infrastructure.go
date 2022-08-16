@@ -2,6 +2,7 @@ package bus
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -266,6 +267,11 @@ func ChainParams(chain string) (*chaincfg.Params, error) {
 	}
 }
 
+type CreateWalletResult struct {
+	Name    string `json:"name"`
+	Warning string `json:"warning"`
+}
+
 // loadOrCreateWallet attempts to load the default SatStack wallet, and if not
 // found, creates the same.
 //
@@ -304,12 +310,61 @@ func loadOrCreateWallet(client *rpcclient.Client) (bool, error) {
 
 	// Wallet to load could not be found - create it.
 	if rpcErr.Code == btcjson.ErrRPCWalletNotFound {
-		if _, err := client.CreateWallet(
-			walletName,
-			rpcclient.WithCreateWalletDisablePrivateKeys(),
-		); err != nil {
-			return false, fmt.Errorf("%s: %w", ErrCreateWallet, err)
+
+		// see https://developer.bitcoin.org/reference/rpc/createwallet.html for specs and https://github.com/btcsuite/btcd/blob/3e2d8464f12b2e534e9764b0e4d4a48217c157e0/rpcclient/chain.go#L58 for example
+		walletNameJSON, err := json.Marshal(walletName)
+		if err != nil {
+			return false, fmt.Errorf("%s: %w", "rawCreateWalletError walletNameJSON", err)
 		}
+
+		disablePrivateKeysJSON, err := json.Marshal(btcjson.Bool(true))
+		if err != nil {
+			return false, fmt.Errorf("%s: %w", "rawCreateWalletError disablePrivateKeysJSON", err)
+		}
+
+		blankJSON, err := json.Marshal(btcjson.Bool(true))
+		if err != nil {
+			return false, fmt.Errorf("%s: %w", "rawCreateWalletError blankJSON", err)
+		}
+
+		passphraseJSON, err := json.Marshal("")
+		if err != nil {
+			return false, fmt.Errorf("%s: %w", "rawCreateWalletError passphraseJSON", err)
+		}
+
+		avoidReuseJSON, err := json.Marshal(btcjson.Bool(false))
+		if err != nil {
+			return false, fmt.Errorf("%s: %w", "rawCreateWalletError avoidReuseJSON", err)
+		}
+
+		descriptorsJSON, err := json.Marshal(btcjson.Bool(true))
+		if err != nil {
+			return false, fmt.Errorf("%s: %w", "rawCreateWalletError descriptorsJSON", err)
+		}
+
+		loadOnStartupJSON, err := json.Marshal(btcjson.Bool(true))
+		if err != nil {
+			return false, fmt.Errorf("%s: %w", "rawCreateWalletError loadOnStartupJSON", err)
+		}
+
+		method := "createwallet"
+
+		result, err := client.RawRequest(method, []json.RawMessage{
+			walletNameJSON, disablePrivateKeysJSON, blankJSON, passphraseJSON, avoidReuseJSON, descriptorsJSON, loadOnStartupJSON,
+		})
+
+		if err != nil {
+			return false, fmt.Errorf("%s: %w", "rawCreateWalletError err ", err)
+		}
+
+		var createWalletResult CreateWalletResult
+		umerr := json.Unmarshal(result, &createWalletResult)
+
+		if umerr != nil {
+			return false, fmt.Errorf("%s: %w", "rawCreateWalletError umerr ", umerr)
+		}
+
+		log.Info(createWalletResult.Name + ` || ` + createWalletResult.Warning)
 
 		return true, nil
 	}

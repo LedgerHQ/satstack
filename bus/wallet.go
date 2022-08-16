@@ -1,6 +1,8 @@
 package bus
 
 import (
+	"encoding/json"
+
 	"fmt"
 
 	"github.com/btcsuite/btcd/rpcclient"
@@ -45,48 +47,88 @@ func (b *Bus) GetTransactionHex(hash *chainhash.Hash) (string, error) {
 	return tx.Hex, nil
 }
 
+//see https://developer.bitcoin.org/reference/rpc/importdescriptors.html for specs
+type ImportDesciptorRequest struct {
+	Descriptor string `json:"desc"`                 //(string, required) Descriptor to import.
+	Active     bool   `json:"active,omitempty"`     //(boolean, optional, default=false) Set this descriptor to be the active descriptor for the corresponding output type/externality
+	Range      []int  `json:"range,omitempty"`      //(numeric or array) If a ranged descriptor is used, this specifies the end or the range (in the form [begin,end]) to import
+	NextIndex  int    `json:"next_index,omitempty"` //(numeric) If a ranged descriptor is set to active, this specifies the next index to generate addresses from
+	Timestamp  uint32 `json:"timestamp"`            /*(integer / string, required) Time from which to start rescanning the blockchain for this descriptor, in UNIX epoch time
+	Use the string "now" to substitute the current synced blockchain time.
+	"now" can be specified to bypass scanning, for outputs which are known to never have been used, and
+	0 can be specified to scan the entire blockchain. Blocks up to 2 hours before the earliest timestamp
+	of all descriptors being imported will be scanned.*/
+	Internal bool `json:"internal,omitempty"` //(boolean, optional, default=false) Whether matching outputs should be treated as not incoming payments (e.g. change)
+	// Label    string `json:"label",omitempty`    //(string, optional, default='') Label to assign to the address, only allowed with internal=false
+}
+
+type ImportDescriptorResult struct {
+	Success  bool             `json:"success"`
+	Warnings []string         `json:"warnings"`
+	Error    btcjson.RPCError `json:"error"`
+}
+
 func ImportDescriptors(client *rpcclient.Client, descriptors []descriptor) error {
-	var requests []btcjson.ImportMultiRequest
+
 	for _, descriptor := range descriptors {
-		requests = append(requests, btcjson.ImportMultiRequest{
-			Descriptor: btcjson.String(descriptor.Value),
-			Range:      &btcjson.DescriptorRange{Value: []int{0, descriptor.Depth}},
-			Timestamp:  btcjson.TimestampOrNow{Value: descriptor.Age},
-			WatchOnly:  btcjson.Bool(true),
-			KeyPool:    btcjson.Bool(false),
-			Internal:   btcjson.Bool(false),
-		})
-	}
 
-	opts := &btcjson.ImportMultiOptions{Rescan: true}
+		// only 1 request per descriptor
+		var requests = new([1]ImportDesciptorRequest)
+		var params []json.RawMessage
 
-	results, err := client.ImportMulti(requests, opts)
-	if err != nil {
-		return err
-	}
+		requests[0] = ImportDesciptorRequest{
+			Descriptor: descriptor.Value,
+			Range:      []int{0, descriptor.Depth},
+			Timestamp:  descriptor.Age,
+		}
 
-	var hasError bool
+		myIn, mErr := json.Marshal(requests)
 
-	for idx, result := range results {
+		if mErr != nil {
+			log.Error(`mErr`, mErr)
+			return mErr
+		}
+
+		myInRaw := json.RawMessage(myIn)
+		params = append(params, myInRaw)
+
+		method := "importdescriptors"
+
+		result, err := client.RawRequest(method, params)
+
+		if err != nil {
+			log.Error(`err `, err)
+			return err
+		}
+
+		var importDescriptorResult []ImportDescriptorResult
+		umerr := json.Unmarshal(result, &importDescriptorResult)
+
+		if umerr != nil {
+			log.Error(`umerr `, umerr)
+			return umerr
+		}
+
+		var hasError bool
+
 		fields := log.WithFields(log.Fields{
-			"descriptor": *requests[idx].Descriptor,
+			"descriptor": descriptor.Value,
 		})
 
-		if result.Error != nil {
-			fields.Error("Failed to import descriptor")
+		if importDescriptorResult[0].Success == false {
+			fields.Error("ImportDescriptors - Failed to import descriptor" + " || " + importDescriptorResult[0].Error.Message + importDescriptorResult[0].Error.Error())
 			hasError = true
+		} else {
+			fields.Debug("ImportDescriptors - Import descriptor successfully")
 		}
 
-		if result.Success {
-			fields.Debug("Import descriptor successfully")
+		if hasError {
+			return fmt.Errorf("ImportDescriptors - importdescriptor RPC failed")
 		}
-	}
-
-	if hasError {
-		return fmt.Errorf("importmulti RPC failed")
 	}
 
 	return nil
+
 }
 
 func (b *Bus) GetTransaction(hash string) (*types.Transaction, error) {

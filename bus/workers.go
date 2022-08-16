@@ -10,7 +10,7 @@ import (
 	"github.com/btcsuite/btcd/rpcclient"
 
 	"github.com/btcsuite/btcd/btcjson"
-	"github.com/btcsuite/btcutil"
+	"github.com/btcsuite/btcd/btcutil"
 	"github.com/ledgerhq/satstack/config"
 	"github.com/ledgerhq/satstack/utils"
 	log "github.com/sirupsen/logrus"

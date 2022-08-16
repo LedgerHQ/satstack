@@ -6,7 +6,7 @@ import (
 	"github.com/ledgerhq/satstack/types"
 	"github.com/ledgerhq/satstack/utils"
 
-	"github.com/btcsuite/btcutil"
+	"github.com/btcsuite/btcd/btcutil"
 	log "github.com/sirupsen/logrus"
 )
 

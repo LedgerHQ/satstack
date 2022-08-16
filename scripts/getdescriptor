@@ -19,7 +19,7 @@ BIP32_HD_VERSION = {
     "regtest": 0x043587CF,
 }
 BIP32_HARDEN_BIT = 0x80000000
-SCHEME = Literal["legacy", "segwit", "native_segwit"]
+SCHEME = Literal["legacy", "segwit", "native_segwit", "taproot"]
 CHAIN = Literal["main", "test", "regtest"]
 
 GetPubKey = Struct(
@@ -116,6 +116,8 @@ class ExtendedPublicKey:
             return f"sh(wpkh({fragment}))"
         elif scheme == "native_segwit":
             return f"wpkh({fragment})"
+        elif scheme == "taproot":
+            return f"tr({fragment})"
 
         raise ValueError(f"Invalid scheme: {scheme}")
 
@@ -194,6 +196,8 @@ def get_derivation_from_scheme(
         return m / Level(49).h() / Level(chain_level).h() / Level(account).h()
     elif scheme == "native_segwit":
         return m / Level(84).h() / Level(chain_level).h() / Level(account).h()
+    elif scheme == "taproot":
+        return m / Level(86).h() / Level(chain_level).h() / Level(account).h()
 
     raise ValueError(f"Bad derivation scheme: {scheme}")
 
