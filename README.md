@@ -53,7 +53,7 @@ Ledger SatStack is a standalone Go application, that acts as a bridge between th
 
 ## Usage
 
-### Setup Ledger Live (recommended way)
+### Setup Ledger Live (recommended way but only works without Tor)
 
 The easiest way of getting started is to use the dedicated setup flow directly on Ledger Live.
 A detailed guide is available [here](https://support.ledger.com/hc/en-us/articles/360017551659).
@@ -77,6 +77,7 @@ $ source venv/bin/activate
 External: wpkh([b91fb6c1/84'/0'/3']xpub6D1gvTP...VeMLtH6/0/*)
 Internal: wpkh([b91fb6c1/84'/0'/3']xpub6D1gvTP...VeMLtH6/1/*)
 ```
+if you get an ``unsupported hash type ripemd160`` error, please see [this](https://stackoverflow.com/questions/72409563/unsupported-hash-type-ripemd160-with-hashlib-in-python)
 
 #### Create configuration file
 
