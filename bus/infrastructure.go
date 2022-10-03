@@ -31,7 +31,7 @@ const (
 
 	// minimumSupportedBitcoindVersion indicates the minimum version that is
 	// supported by SatStack.
-	minSupportedBitcoindVersion = 200000
+	minSupportedBitcoindVersion = 220000
 
 	// walletName indicates the name of the wallet created by SatStack in
 	// bitcoind's wallet.
