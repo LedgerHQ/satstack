@@ -15,18 +15,18 @@ Ledger SatStack is a lightweight bridge to connect Ledger Live with your persona
 
 <img src="share/screenshot.png" align="center" />
 
-
-# Table of Contents
+## Table of Contents
 
 - [Background](#background)
 - [Architecture](#architecture)
 - [Requirements](#requirements)
 - [Usage](#usage)
+- [Misc](#misc)
 - [In the Press](#in-the-press)
 - [Community](#community)
 - [Contributing](#contributing)
 
-## Background
+### Background
 
 Running a full node is the only way you can use Bitcoin in a completely trustless way. A full node downloads the entire blockchain, and checks it against Bitcoin's consensus rules, and contributes to the decentralization and economic strength of Bitcoin. However, a far more compelling reason to run your own node is **privacy**. [...read more](https://en.bitcoin.it/wiki/Full_node).
 
@@ -34,8 +34,7 @@ Running a node can be difficult for some users, and has [associated costs](https
 
 SatStack aims to render Ledger's infrastructure dispensable, by allowing users to connect Ledger Live with their personal Bitcoin full node.
 
-
-## Architecture
+### Architecture
 
 Ledger SatStack is a standalone Go application, that acts as a bridge between the [Ledger Live](http://ledger.com/live) application and a Bitcoin Core full-node. It exposes a REST interface to the open-source JS library embedded by Live, and communicates to the Bitcoin node over RPC. It utilizes the transport layer and data-structures of [btcd](https://github.com/btcsuite/btcd).
 
@@ -43,7 +42,7 @@ Ledger SatStack is a standalone Go application, that acts as a bridge between th
   <img src="/share/architecture.svg"/>
 </p>
 
-## Requirements
+### Requirements
 
 - Bitcoin Nano app **`2+`**
 - Bitcoin Core **`0.22.0+`**.
@@ -51,16 +50,16 @@ Ledger SatStack is a standalone Go application, that acts as a bridge between th
 - `txindex=1` in `bitcoin.conf` is not mandatory, but recommended.
 - Wallet should **NOT** be disabled (attn. Raspiblitz users).
 
-## Usage
+### Usage
 
-### Setup Ledger Live (recommended way but only works without Tor)
+#### Setup Ledger Live (recommended way but only works without Tor)
 
 The easiest way of getting started is to use the dedicated setup flow directly on Ledger Live.
 A detailed guide is available [here](https://support.ledger.com/hc/en-us/articles/360017551659).
 
-### Manual setup (for advanced users)
+#### Manual setup (for advanced users)
 
-#### Retrieve descriptors from device
+##### Retrieve descriptors from device
 
 Simply follow these steps:
 
@@ -77,9 +76,10 @@ $ source venv/bin/activate
 External: wpkh([b91fb6c1/84'/0'/3']xpub6D1gvTP...VeMLtH6/0/*)
 Internal: wpkh([b91fb6c1/84'/0'/3']xpub6D1gvTP...VeMLtH6/1/*)
 ```
+
 if you get an ``unsupported hash type ripemd160`` error, please see [this](https://stackoverflow.com/questions/72409563/unsupported-hash-type-ripemd160-with-hashlib-in-python)
 
-#### Create configuration file
+##### Create configuration file
 
 Create a config file **`lss.json`** in your home directory.
 You can use [this](https://github.com/ledgerhq/satstack/blob/master/lss.mainnet.json) sample config file as a template.
@@ -100,12 +100,12 @@ Refer to the table below for a list of safe wallet birthdays to choose from.
   | First ever BIP39 compatible Ledger device (Nano) shipped | 2014/11/24 |
   | First ever Ledger Nano S shipped | 2016/07/28 |
 
-#### Launch Bitcoin full node
+##### Launch Bitcoin full node
 
 Make sure you've read the [requirements](#requirements) first, and that your node is configured properly.
 Here's the recommended configuration for `bitcoin.conf`:
 
-```
+```config
 # Enable RPC server
 server=1
 
@@ -121,16 +121,16 @@ rpcpassword=<password>
 Then launch `bitcoind` like this:
 
 ```bash
-$ bitcoind
+bitcoind
 ```
 
-#### Launch SatStack
+##### Launch SatStack
 
 Pre-built binaries are available for download on the [releases](https://github.com/ledgerhq/satstack/releases)
 page (Linux, Windows, MacOS). Extract the tarball, and launch it as:
 
 ```sh
-$ ./lss
+./lss
 ```
 
 If you want to build `lss` yourself, just do the following:
@@ -138,13 +138,13 @@ If you want to build `lss` yourself, just do the following:
 (make sure you have [mage](https://magefile.org) installed first)
 
 ```sh
-$ mage release  # or "mage build" for a development build
+mage release  # or "mage build" for a development build
 ```
 
 On startup, SatStack will wait for the Bitcoin node to be fully synced,
 and import your accounts. This can take a while.
 
-#### Launch Ledger Live Desktop
+##### Launch Ledger Live Desktop
 
 ```sh
 # environment variables `EXPLORER` and `EXPLORER_SATSTACK` should point at the address
@@ -152,7 +152,11 @@ and import your accounts. This can take a while.
 $ EXPLORER=http://127.0.0.1:20000 <Ledger Live executable>
 ```
 
-## In the press
+### Misc
+
+If you get ```error=failed to load wallet: -4: Wallet file verification failed. SQLiteDatabase: Unable to obtain an exclusive lock on the database, is it being used by another bitcoind?``` maybe this is because you have bitcoind windows opened, if this is the case, please try closing them and restart lss.
+
+### In the press
 
 | Title   |      Source      |
 |:----------|:-------------:|
@@ -163,23 +167,23 @@ $ EXPLORER=http://127.0.0.1:20000 <Ledger Live executable>
 | 🇪🇸 [Ledger Live será compatible con nodos propios de Bitcoin](https://www.criptonoticias.com/tecnologia/ledger-live-sera-compatible-nodos-propios-bitcoin) | [CriptoNoticias](https://www.criptonoticias.com) |
 | 🇬🇧 [Bitcoin Tech Talk #218: Curing Monetary Stockholm Syndrome](https://jimmysong.substack.com/p/curing-monetary-stockholm-syndrome) (mention) | [Jimmy Song](https://jimmysong.substack.com) |
 
-## Community
+### Community
 
 For feedback or support, please tag [@adrien_lacombe](https://twitter.com/adrien_lacombe) and [@Ledger](https://twitter.com/Ledger) on Twitter. To report any bugs related to full node on Ledger Live, you can create issues on this repository.
 
-## Contributing
+### Contributing
 
 Contributions in the form of code improvements, documentation, tutorials, and feedback are most welcome.
 
 For contributions to the code, we recommend [these guidelines](https://github.com/btcsuite/btcd/blob/master/docs/code_contribution_guidelines.md).
 
-### Call for Cowsay contributions
+#### Call for Cowsay contributions
 
 On startup, satstack will display a message about Bitcoin, randomly picked from a curated collection of interesting quotes, facts, email excerpts, etc. You are welcome to contribute by creating a [pull request](https://docs.github.com/en/free-pro-team@latest/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request) modifying [this file](fortunes/db.go) (includes guidelines for editing the file). Here's an example of how it is rendered:
 
 <img src="/share/cowsay.png" width="300">
 
-#### Cowsay ideas:
+##### Cowsay ideas
 
 - Extracts from [The Complete Satoshi](https://satoshi.nakamotoinstitute.org) by the [Nakamoto Institute](https://nakamotoinstitute.org).
 - Quotes by Satoshi, Hal Finney.
