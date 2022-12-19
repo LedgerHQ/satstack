@@ -47,7 +47,7 @@ func (b *Bus) GetTransactionHex(hash *chainhash.Hash) (string, error) {
 	return tx.Hex, nil
 }
 
-//see https://developer.bitcoin.org/reference/rpc/importdescriptors.html for specs
+// see https://developer.bitcoin.org/reference/rpc/importdescriptors.html for specs
 type ImportDesciptorRequest struct {
 	Descriptor string `json:"desc"`                 //(string, required) Descriptor to import.
 	Active     bool   `json:"active,omitempty"`     //(boolean, optional, default=false) Set this descriptor to be the active descriptor for the corresponding output type/externality
@@ -70,61 +70,67 @@ type ImportDescriptorResult struct {
 
 func ImportDescriptors(client *rpcclient.Client, descriptors []descriptor) error {
 
+	// We are going to import all descriptors together which saves us a lot of time
+
+	var requestDescriptors []ImportDesciptorRequest
+	var params []json.RawMessage
+
 	for _, descriptor := range descriptors {
 
-		// only 1 request per descriptor
-		var requests = new([1]ImportDesciptorRequest)
-		var params []json.RawMessage
-
-		requests[0] = ImportDesciptorRequest{
+		requests := ImportDesciptorRequest{
 			Descriptor: descriptor.Value,
+			Active:     true,
 			Range:      []int{0, descriptor.Depth},
 			Timestamp:  descriptor.Age,
 		}
 
-		myIn, mErr := json.Marshal(requests)
+		requestDescriptors = append(requestDescriptors, requests)
 
-		if mErr != nil {
-			log.Error(`mErr`, mErr)
-			return mErr
-		}
+	}
 
-		myInRaw := json.RawMessage(myIn)
-		params = append(params, myInRaw)
+	myIn, mErr := json.Marshal(requestDescriptors)
 
-		method := "importdescriptors"
+	if mErr != nil {
+		log.Error(`mErr`, mErr)
+		return mErr
+	}
 
-		result, err := client.RawRequest(method, params)
+	myInRaw := json.RawMessage(myIn)
+	params = append(params, myInRaw)
 
-		if err != nil {
-			log.Error(`err `, err)
-			return err
-		}
+	method := "importdescriptors"
 
-		var importDescriptorResult []ImportDescriptorResult
-		umerr := json.Unmarshal(result, &importDescriptorResult)
+	result, err := client.RawRequest(method, params)
 
-		if umerr != nil {
-			log.Error(`umerr `, umerr)
-			return umerr
-		}
+	if err != nil {
+		log.Error(`err `, err)
+		return err
+	}
 
-		var hasError bool
+	var importDescriptorResult []ImportDescriptorResult
+	umerr := json.Unmarshal(result, &importDescriptorResult)
 
-		fields := log.WithFields(log.Fields{
-			"descriptor": descriptor.Value,
-		})
+	if umerr != nil {
+		log.Error(`umerr `, umerr)
+		return umerr
+	}
 
-		if importDescriptorResult[0].Success == false {
-			fields.Error("ImportDescriptors - Failed to import descriptor" + " || " + importDescriptorResult[0].Error.Message + importDescriptorResult[0].Error.Error())
-			hasError = true
-		} else {
-			fields.Debug("ImportDescriptors - Import descriptor successfully")
-		}
+	var hasError bool
 
-		if hasError {
-			return fmt.Errorf("ImportDescriptors - importdescriptor RPC failed")
-		}
+	fields := log.WithFields(log.Fields{
+		"NumofDescriptor": len(requestDescriptors),
+	})
+
+	if !importDescriptorResult[0].Success {
+
+		fields.Error("ImportDescriptors - Failed to import descriptor" + " || " + importDescriptorResult[0].Error.Error())
+		hasError = true
+	} else {
+		fields.Debug("ImportDescriptors - Import descriptor successfully")
+	}
+
+	if hasError {
+		return fmt.Errorf("ImportDescriptors - importdescriptor RPC failed")
 	}
 
 	return nil
