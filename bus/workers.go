@@ -204,7 +204,7 @@ func runTheNumbers(b *Bus) error {
 	return nil
 }
 
-func (b *Bus) Worker(config *config.Configuration) {
+func (b *Bus) Worker(config *config.Configuration, skipCirculationCheck bool) {
 	importDone := make(chan bool)
 
 	sendInterruptSignal := func() {
@@ -239,19 +239,22 @@ func (b *Bus) Worker(config *config.Configuration) {
 			return
 		}
 
-		b.IsPendingScan = true
+		if !skipCirculationCheck {
+			b.IsPendingScan = true
 
-		if err := runTheNumbers(b); err != nil {
-			log.WithFields(log.Fields{
-				"prefix": "worker",
-				"error":  err,
-			}).Error("Failed while running the numbers")
+			if err := runTheNumbers(b); err != nil {
+				log.WithFields(log.Fields{
+					"prefix": "worker",
+					"error":  err,
+				}).Error("Failed while running the numbers")
 
-			sendInterruptSignal()
-			return
+				sendInterruptSignal()
+				return
+			}
+
+			b.IsPendingScan = false
+
 		}
-
-		b.IsPendingScan = false
 
 		if err := b.ImportAccounts(config.Accounts); err != nil {
 			log.WithFields(log.Fields{

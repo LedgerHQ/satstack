@@ -21,6 +21,8 @@ import (
 func init() {
 	rootCmd.PersistentFlags().String("port", "20000", "Port")
 	rootCmd.PersistentFlags().Bool("unload-wallet", false, "whether SatStack should unload wallet")
+	rootCmd.PersistentFlags().Bool("skip-circulation-check", false, "skip the circulation check")
+
 }
 
 var rootCmd = &cobra.Command{
@@ -30,8 +32,9 @@ var rootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		port, _ := cmd.Flags().GetString("port")
 		unloadWallet, _ := cmd.Flags().GetBool("unload-wallet")
+		skipCirculationCheck, _ := cmd.Flags().GetBool("skip-circulation-check")
 
-		s := startup(unloadWallet)
+		s := startup(unloadWallet, skipCirculationCheck)
 		if s == nil {
 			return
 		}
@@ -93,7 +96,7 @@ func Execute() {
 	}
 }
 
-func startup(unloadWallet bool) *svc.Service {
+func startup(unloadWallet bool, skipCirculationCheck bool) *svc.Service {
 
 	// log.SetLevel(logrus.DebugLevel)
 
@@ -147,7 +150,7 @@ func startup(unloadWallet bool) *svc.Service {
 
 	fortunes.Fortune()
 
-	s.Bus.Worker(configuration)
+	s.Bus.Worker(configuration, skipCirculationCheck)
 
 	return s
 }
