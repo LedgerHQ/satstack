@@ -37,8 +37,10 @@ const (
 	// bitcoind's wallet.
 	walletName = "satstack"
 
-	errDuplicateWalletLoadMsg = "Duplicate -wallet filename specified."
-	errWalletAlreadyLoadedMsg = "Wallet file verification failed. Refusing to load database. Data file"
+	errDuplicateWalletLoadMsg    = "Duplicate -wallet filename specified."
+	errWalletAlreadyLoadedMsgOld = "Wallet file verification failed. Refusing to load database. Data file"
+	// Cores Responds changes so adding the new one but keeping the old for backwards compatibility
+	errWalletAlreadyLoadedMsgNew = "Wallet file verification failed. SQLiteDatabase: Unable to obtain an exclusive lock on the database"
 )
 
 // Bus represents a transport allowing access to Bitcoin RPC methods.
@@ -303,7 +305,12 @@ func loadOrCreateWallet(client *rpcclient.Client) (bool, error) {
 		return false, nil
 	}
 
-	if rpcErr.Code == btcjson.ErrRPCWallet && strings.Contains(rpcErr.Message, errWalletAlreadyLoadedMsg) {
+	if rpcErr.Code == btcjson.ErrRPCWallet && strings.Contains(rpcErr.Message, errWalletAlreadyLoadedMsgOld) {
+		// wallet already loaded. Ignore the error and return.
+		return false, nil
+	}
+
+	if rpcErr.Code == btcjson.ErrRPCWallet && strings.Contains(rpcErr.Message, errWalletAlreadyLoadedMsgNew) {
 		// wallet already loaded. Ignore the error and return.
 		return false, nil
 	}
