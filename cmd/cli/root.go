@@ -22,6 +22,7 @@ func init() {
 	rootCmd.PersistentFlags().String("port", "20000", "Port")
 	rootCmd.PersistentFlags().Bool("unload-wallet", false, "whether SatStack should unload wallet")
 	rootCmd.PersistentFlags().Bool("skip-circulation-check", false, "skip the circulation check")
+	rootCmd.PersistentFlags().Bool("force-importdescriptors", false, "this will force importing descriptors although the wallet does already exist")
 
 }
 
@@ -33,8 +34,9 @@ var rootCmd = &cobra.Command{
 		port, _ := cmd.Flags().GetString("port")
 		unloadWallet, _ := cmd.Flags().GetBool("unload-wallet")
 		skipCirculationCheck, _ := cmd.Flags().GetBool("skip-circulation-check")
+		forceImportDesc, _ := cmd.Flags().GetBool("force-importdescriptors")
 
-		s := startup(unloadWallet, skipCirculationCheck)
+		s := startup(unloadWallet, skipCirculationCheck, forceImportDesc)
 		if s == nil {
 			return
 		}
@@ -65,6 +67,30 @@ var rootCmd = &cobra.Command{
 		log.Info("Shutdown server: in progress")
 
 		{
+
+			// In case we are scanning the wallet, we have to abort the wallet
+			// because unloading the wallet while scanning will result in a timeout
+			// and a non recoverable state. This will be fixed by
+			// https://github.com/bitcoin/bitcoin/pull/26618
+
+			if s.Bus.IsPendingScan {
+
+				err := s.Bus.AbortRescan()
+				if err != nil {
+					log.WithFields(log.Fields{
+						"error": err,
+					}).Error("Failed to abort rescan")
+				}
+			} else {
+				err := s.Bus.DumpLatestRescanTime()
+				if err != nil {
+					log.WithFields(log.Fields{
+						"prefix": "worker",
+						"error":  err,
+					}).Error("Failed to dump latest block into file")
+				}
+			}
+
 			// Scoped block to disconnect all connections, and stop all goroutines.
 			// If not successful within 5s, drop a nuclear bomb and fail with a
 			// FATAL error.
@@ -96,7 +122,7 @@ func Execute() {
 	}
 }
 
-func startup(unloadWallet bool, skipCirculationCheck bool) *svc.Service {
+func startup(unloadWallet bool, skipCirculationCheck bool, forceImportDesc bool) *svc.Service {
 
 	if version.Build == "development" {
 		log.SetLevel(log.DebugLevel)
@@ -152,7 +178,7 @@ func startup(unloadWallet bool, skipCirculationCheck bool) *svc.Service {
 
 	fortunes.Fortune()
 
-	s.Bus.Worker(configuration, skipCirculationCheck)
+	s.Bus.Worker(configuration, skipCirculationCheck, forceImportDesc)
 
 	return s
 }

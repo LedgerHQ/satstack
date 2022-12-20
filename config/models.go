@@ -28,6 +28,15 @@ type Configuration struct {
 	Accounts    []Account `json:"accounts"`
 }
 
+// Type for saving the Rescan time to avoid scanning the wallet
+// always from the beginning
+type ConfigurationRescan struct {
+	LastSyncTime    string `json:"last_synctime"`
+	TimeStamp       string `json:"timestamp"`
+	LastBlock       int64  `json:"last_block"`
+	SatstackVersion string `json:"satstack_version"`
+}
+
 type date struct {
 	time.Time
 }

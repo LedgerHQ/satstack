@@ -2,6 +2,7 @@ package bus
 
 import (
 	"encoding/json"
+	"time"
 
 	"fmt"
 
@@ -45,6 +46,11 @@ func (b *Bus) GetTransactionHex(hash *chainhash.Hash) (string, error) {
 	}
 
 	return tx.Hex, nil
+}
+
+type RescanResult struct {
+	StartHeight uint32 `json:"start_height"`
+	StopHeight  uint32 `json:"stop_height"`
 }
 
 // see https://developer.bitcoin.org/reference/rpc/importdescriptors.html for specs
@@ -177,4 +183,143 @@ func (b *Bus) GetTransaction(hash string) (*types.Transaction, error) {
 	}
 
 	return tx, nil
+}
+
+func (b *Bus) checkWalletSyncStatus() error {
+
+	client, err := b.ClientFactory()
+	if err != nil {
+		return err
+	}
+
+	defer client.Shutdown()
+
+	log.Debug("checkWalletSyncStatus")
+
+	walletInfo, err := client.GetWalletInfo()
+	if err != nil {
+		return err
+	}
+
+	switch v := walletInfo.Scanning.Value.(type) {
+	case btcjson.ScanProgress:
+		log.WithFields(log.Fields{
+			"progress": fmt.Sprintf("%.2f%%", v.Progress*100),
+			"duration": utils.HumanizeDuration(
+				time.Duration(v.Duration) * time.Second),
+		}).Debug("satsstack wallet is syncing")
+		b.IsPendingScan = true
+	default:
+		// Not scanning currently, or scan is complete.
+		log.Debug("wallet is not syncing")
+		b.IsPendingScan = false
+	}
+
+	return nil
+}
+
+// Triggers the bitcoind api to rescan the wallet, in case the wallet
+// satstack already existed
+func (b *Bus) rescanWallet(startHeight int64, endHeight int64) error {
+
+	client, err := b.ClientFactory()
+	if err != nil {
+		return err
+	}
+
+	defer client.Shutdown()
+
+	log.WithFields(log.Fields{
+		"prefix": "RescanWallet",
+	}).Infof("Rescanning Wallet start_height: %d, end_height %d", startHeight, endHeight)
+
+	b.IsPendingScan = true
+
+	var params []json.RawMessage
+	var rescanResult RescanResult
+
+	myIn, mErr := json.Marshal(startHeight)
+
+	if mErr != nil {
+		log.Error(`mErr`, mErr)
+		return mErr
+	}
+
+	myInRaw := json.RawMessage(myIn)
+	params = append(params, myInRaw)
+
+	myIn, mErr = json.Marshal(uint32(endHeight))
+
+	if mErr != nil {
+		log.Error(`mErr`, mErr)
+		return mErr
+	}
+
+	myInRaw = json.RawMessage(myIn)
+	params = append(params, myInRaw)
+
+	result, err := client.RawRequest("rescanblockchain", params)
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"prefix": "RescanWallet",
+			"error":  err,
+		}).Error("Failed to Rescan Blockchain")
+
+		return err
+	}
+
+	umerr := json.Unmarshal(result, &rescanResult)
+
+	if umerr != nil {
+		log.Error(`umerr`, umerr)
+		return umerr
+	}
+
+	log.WithFields(log.Fields{
+		"prefix": "RescanWallet",
+	}).Infof("Rescan wallet was successful:  start_height: %d, stop_height: %d", rescanResult.StartHeight, rescanResult.StopHeight)
+
+	b.IsPendingScan = false
+
+	return nil
+
+}
+
+func (b *Bus) AbortRescan() error {
+
+	var params []json.RawMessage
+	var abortRescan bool
+
+	client, err := b.ClientFactory()
+	if err != nil {
+		return err
+	}
+
+	defer client.Shutdown()
+
+	result, err := client.RawRequest("abortrescan", params)
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"prefix": "AbortRescan",
+			"error":  err,
+		}).Error("Failed to abort wallet rescan")
+
+		return err
+	}
+
+	umerr := json.Unmarshal(result, &abortRescan)
+
+	if umerr != nil {
+		log.Error(`umerr`, umerr)
+		return umerr
+	}
+
+	log.WithFields(log.Fields{
+		"prefix": "AbortRescan",
+	}).Infof("Abort rescan successful: %t", abortRescan)
+
+	return nil
+
 }

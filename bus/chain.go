@@ -12,6 +12,11 @@ func (b *Bus) GetBestBlockHash() (*chainhash.Hash, error) {
 	return b.mainClient.GetBestBlockHash()
 }
 
+func (b *Bus) GetBlockCount() (int64, error) {
+	return b.mainClient.GetBlockCount()
+
+}
+
 func (b *Bus) GetBlockHash(height int64) (*chainhash.Hash, error) {
 	return b.mainClient.GetBlockHash(height)
 }
