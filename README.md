@@ -77,33 +77,57 @@ External: wpkh([b91fb6c1/84'/0'/3']xpub6D1gvTP...VeMLtH6/0/*)
 Internal: wpkh([b91fb6c1/84'/0'/3']xpub6D1gvTP...VeMLtH6/1/*)
 ```
 
-if you get an ``unsupported hash type ripemd160`` error, please see [this](https://stackoverflow.com/questions/72409563/unsupported-hash-type-ripemd160-with-hashlib-in-python)
+if you get an `unsupported hash type ripemd160` error, please see [this](https://stackoverflow.com/questions/72409563/unsupported-hash-type-ripemd160-with-hashlib-in-python)
 
 ##### Create configuration file
 
 Create a config file **`lss.json`** in your home directory.
 You can use [this](https://github.com/ledgerhq/satstack/blob/master/lss.mainnet.json) sample config file as a template.
 
-Add ```"torproxy": "socks5://127.0.0.1:9050",``` to connect to a Tor client running locally so that satstack can reach a full node behind Tor.
-Replace the ```rpcurl``` with the .onion address of your node.
+Add `"torproxy": "socks5://127.0.0.1:9050",` to connect to a Tor client running locally so that satstack can reach a full node behind Tor.
+Replace the `rpcurl` with the .onion address of your node.
 
 ###### Optional account fields
 
 - **`depth`**: override the number of addresses to derive and import in the Bitcoin wallet. Defaults to `1000`.
 - **`birthday`**: set the earliest known creation date (`YYYY/MM/DD` format), for faster account import.
-Defaults to `2013/09/10` ([BIP0039](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) proposal date).
-Refer to the table below for a list of safe wallet birthdays to choose from.
+  Defaults to `2013/09/10` ([BIP0039](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) proposal date).
+  Refer to the table below for a list of safe wallet birthdays to choose from.
 
-  | Event | Date (YYYY/MM/DD) |
-  |-------|-------------------|
-  | BIP0039 proposal created | 2013/09/10 (default) |
-  | First ever BIP39 compatible Ledger device (Nano) shipped | 2014/11/24 |
-  | First ever Ledger Nano S shipped | 2016/07/28 |
+  | Event                                                    | Date (YYYY/MM/DD)    |
+  | -------------------------------------------------------- | -------------------- |
+  | BIP0039 proposal created                                 | 2013/09/10 (default) |
+  | First ever BIP39 compatible Ledger device (Nano) shipped | 2014/11/24           |
+  | First ever Ledger Nano S shipped                         | 2016/07/28           |
 
 ##### Launch Bitcoin full node
 
 Make sure you've read the [requirements](#requirements) first, and that your node is configured properly.
 Here's the recommended configuration for `bitcoin.conf`:
+
+Don't use rpcuser/rpcpassword on your full node because they are insecure. Bitcoin-core changed to rpcauth.
+Get the rpcauth.py script from the bitcoin repo and create a new user for satstack.
+
+```
+wget https://raw.githubusercontent.com/bitcoin/bitcoin/master/share/rpcauth/rpcauth.py
+
+python3 rpcauth.py satstack
+
+Example Output:
+rpcauth=satstack:a14191e6892facf70686a397b126423$ddd6f7480817bd6f8083a2e07e24b93c4d74e667f3a001df26c5dd0ef5eafd0d
+Your password:
+VX3z87LBVc_X7NBLABLABLABLA
+```
+
+Copy the `rpcauth=` into your bitcoin.conf
+Note down the password and use them in your lss.json. There you will use the credentials
+
+```
+In your lss.json:
+
+"rpcuser": "satstack",
+"rpcpassword": "VX3z87LBVc_X7NBLABLABLABLA"
+```
 
 ```config
 # Enable RPC server
@@ -114,8 +138,9 @@ txindex=1
 blockfilterindex=1
 
 # Set RPC credentials
-rpcuser=<user>
-rpcpassword=<password>
+# Example Auth, replace with your own.
+# see https://bitcoin.stackexchange.com/questions/46782/rpc-cookie-authentication why we are not using normal rpcuser/password
+rpcauth=satstack:a14191e6892facf70686a397b126423$ddd6f7480817bd6f8083a2e07e24b93c4d74e667f3a001df26c5dd0ef5eafd0d
 ```
 
 Then launch `bitcoind` like this:
@@ -154,18 +179,18 @@ $ EXPLORER=http://127.0.0.1:20000 <Ledger Live executable>
 
 ### Misc
 
-If you get ```error=failed to load wallet: -4: Wallet file verification failed. SQLiteDatabase: Unable to obtain an exclusive lock on the database, is it being used by another bitcoind?``` maybe this is because you have bitcoind windows opened, if this is the case, please try closing them and restart lss.
+If you get `error=failed to load wallet: -4: Wallet file verification failed. SQLiteDatabase: Unable to obtain an exclusive lock on the database, is it being used by another bitcoind?` maybe this is because you have bitcoind windows opened, if this is the case, please try closing them and restart lss.
 
 ### In the press
 
-| Title   |      Source      |
-|:----------|:-------------:|
-| 🇬🇧 [Personal sovereignty with Ledger SatStack](https://blog.ledger.com/satstack) |  [blog.ledger.com](https://blog.ledger.com) |
-| 🇫🇷 [Ledger SatStack: un pont entre Bitcoin Core et votre Ledger Wallet](https://bitcoin.fr/ledger-sat-stack-un-pont-entre-bitcoin-core-et-votre-ledger-wallet/) |    [bitcoin.fr](https://bitcoin.fr)   |
-| 🇫🇷 [Votre propre coffre-fort à bitcoins… inviolable – Ledger annonce l’arrivée des full nodes Bitcoin](https://journalducoin.com/actualites/coffre-fort-bitcoins-inviolable-ledger-annonce-noeuds-complets-bitcoin) | [Journal du Coin](https://journalducoin.com) |
-| 🇫🇷 [Il est désormais possible d’exécuter un full node Bitcoin sur Ledger Live](https://fr.beincrypto.com/technologie/5770/full-node-bitcoin-ledger-live) | [beincrypto.com](https://beincrypto.com) |
-| 🇪🇸 [Ledger Live será compatible con nodos propios de Bitcoin](https://www.criptonoticias.com/tecnologia/ledger-live-sera-compatible-nodos-propios-bitcoin) | [CriptoNoticias](https://www.criptonoticias.com) |
-| 🇬🇧 [Bitcoin Tech Talk #218: Curing Monetary Stockholm Syndrome](https://jimmysong.substack.com/p/curing-monetary-stockholm-syndrome) (mention) | [Jimmy Song](https://jimmysong.substack.com) |
+| Title                                                                                                                                                                                                               |                      Source                      |
+| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :----------------------------------------------: |
+| 🇬🇧 [Personal sovereignty with Ledger SatStack](https://blog.ledger.com/satstack)                                                                                                                                    |    [blog.ledger.com](https://blog.ledger.com)    |
+| 🇫🇷 [Ledger SatStack: un pont entre Bitcoin Core et votre Ledger Wallet](https://bitcoin.fr/ledger-sat-stack-un-pont-entre-bitcoin-core-et-votre-ledger-wallet/)                                                     |         [bitcoin.fr](https://bitcoin.fr)         |
+| 🇫🇷 [Votre propre coffre-fort à bitcoins… inviolable – Ledger annonce l’arrivée des full nodes Bitcoin](https://journalducoin.com/actualites/coffre-fort-bitcoins-inviolable-ledger-annonce-noeuds-complets-bitcoin) |   [Journal du Coin](https://journalducoin.com)   |
+| 🇫🇷 [Il est désormais possible d’exécuter un full node Bitcoin sur Ledger Live](https://fr.beincrypto.com/technologie/5770/full-node-bitcoin-ledger-live)                                                            |     [beincrypto.com](https://beincrypto.com)     |
+| 🇪🇸 [Ledger Live será compatible con nodos propios de Bitcoin](https://www.criptonoticias.com/tecnologia/ledger-live-sera-compatible-nodos-propios-bitcoin)                                                          | [CriptoNoticias](https://www.criptonoticias.com) |
+| 🇬🇧 [Bitcoin Tech Talk #218: Curing Monetary Stockholm Syndrome](https://jimmysong.substack.com/p/curing-monetary-stockholm-syndrome) (mention)                                                                      |   [Jimmy Song](https://jimmysong.substack.com)   |
 
 ### Community
 
