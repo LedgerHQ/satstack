@@ -1,3 +1,4 @@
+//go:build mage
 // +build mage
 
 package main
@@ -63,7 +64,7 @@ func flagEnv() map[string]string {
 	}
 
 	return map[string]string{
-		"PACKAGE":     "satstack",
+		"PACKAGE":     "github.com/ledgerhq/satstack",
 		"COMMIT_HASH": hash,
 		"BUILD":       build,
 	}

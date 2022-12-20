@@ -98,7 +98,9 @@ func Execute() {
 
 func startup(unloadWallet bool, skipCirculationCheck bool) *svc.Service {
 
-	// log.SetLevel(logrus.DebugLevel)
+	if version.Build == "development" {
+		log.SetLevel(log.DebugLevel)
+	}
 
 	log.SetFormatter(&prefixed.TextFormatter{
 		TimestampFormat:  "2006/01/02 - 15:04:05",

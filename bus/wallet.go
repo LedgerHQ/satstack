@@ -118,7 +118,7 @@ func ImportDescriptors(client *rpcclient.Client, descriptors []descriptor) error
 	var hasError bool
 
 	fields := log.WithFields(log.Fields{
-		"NumofDescriptor": len(requestDescriptors),
+		"NumofDescriptors": len(requestDescriptors),
 	})
 
 	if !importDescriptorResult[0].Success {
