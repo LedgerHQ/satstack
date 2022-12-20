@@ -5,14 +5,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/btcsuite/btcd/chaincfg"
 
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
+	"github.com/ledgerhq/satstack/config"
 	"github.com/ledgerhq/satstack/utils"
+	"github.com/ledgerhq/satstack/version"
 	"github.com/patrickmn/go-cache"
 	log "github.com/sirupsen/logrus"
 )
@@ -41,6 +45,12 @@ const (
 	errWalletAlreadyLoadedMsgOld = "Wallet file verification failed. Refusing to load database. Data file"
 	// Cores Responds changes so adding the new one but keeping the old for backwards compatibility
 	errWalletAlreadyLoadedMsgNew = "Wallet file verification failed. SQLiteDatabase: Unable to obtain an exclusive lock on the database"
+)
+
+var (
+	// A new wallet needs to import the descriptors therefore
+	// we need this information when starting the import worker
+	isNewWallet bool
 )
 
 // Bus represents a transport allowing access to Bitcoin RPC methods.
@@ -75,8 +85,8 @@ type Bus struct {
 	Params *chaincfg.Params
 
 	// IsPendingScan is a boolean field to indicate if satstack is currently
-	// waiting for descriptors to be scanned. One such example is when satstack
-	// is "running the numbers".
+	// waiting for descriptors to be scanned or other initial operations like "running the numbers"
+	// before the bridge can operate correctly
 	//
 	// This value can be exported for use by other packages to avoid making
 	// explorer requests before satstack is able to serve them.
@@ -158,7 +168,7 @@ func New(host string, user string, pass string, proxy string, noTLS bool, unload
 		os.Exit(1)
 	}
 
-	isNewWallet, err := loadOrCreateWallet(mainClient)
+	isNewWallet, err = loadOrCreateWallet(mainClient)
 	if err != nil {
 		return nil, err
 	}
@@ -455,4 +465,33 @@ func (b *Bus) UnloadWallet() {
 	}).Info("Unloaded wallet successfully")
 
 	b.janitorClient.Shutdown()
+}
+
+func (b *Bus) DumpLatestRescanTime() error {
+
+	currentHeight, err := b.GetBlockCount()
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"prefix": "worker",
+		}).Error("Error fetching blockheight: %s", err)
+		return err
+
+	}
+	data := &config.ConfigurationRescan{
+		TimeStamp:       strconv.Itoa(int(time.Now().Unix())),
+		LastSyncTime:    time.Now().Format(time.ANSIC),
+		LastBlock:       currentHeight,
+		SatstackVersion: version.Version,
+	}
+	err = config.WriteRescanConf(data)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"prefix": "worker",
+		}).Error("Error savng last timestamp to file: %s", err)
+		return err
+	}
+
+	return nil
+
 }

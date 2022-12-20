@@ -121,6 +121,19 @@ func (b *Bus) ImportAccounts(accounts []config.Account) error {
 	return ImportDescriptors(client, descriptorsToImport)
 }
 
+func getPreviousRescanBlock() (int64, error) {
+
+	configRescan, err := config.LoadRescanConf()
+
+	if err != nil {
+		log.Errorf("loading rescan config: %s", err)
+		return -1, err
+	}
+
+	return configRescan.LastBlock, nil
+
+}
+
 // descriptors returns canonical descriptors from the account configuration.
 func descriptors(client *rpcclient.Client, account config.Account) ([]descriptor, error) {
 	var ret []descriptor
@@ -204,7 +217,8 @@ func runTheNumbers(b *Bus) error {
 	return nil
 }
 
-func (b *Bus) Worker(config *config.Configuration, skipCirculationCheck bool) {
+func (b *Bus) Worker(config *config.Configuration, skipCirculationCheck bool,
+	forceImportDesc bool) {
 	importDone := make(chan bool)
 
 	sendInterruptSignal := func() {
@@ -256,14 +270,124 @@ func (b *Bus) Worker(config *config.Configuration, skipCirculationCheck bool) {
 
 		}
 
-		if err := b.ImportAccounts(config.Accounts); err != nil {
+		// We allow the user to force an import of all descriptors
+		// which will trigger a rescan automatically using the timestamp
+		// in the importDescriptorRequest
+		if forceImportDesc || isNewWallet {
+
+			// updates status of the wallet
+			// if wallet is syncing we do not want
+			// to kill the syncing otherwise the importDescriptor call
+			// will fail
+			if forceImportDesc {
+				err := b.checkWalletSyncStatus()
+
+				if err != nil {
+					log.WithFields(log.Fields{
+						"prefix": "worker",
+						"error":  err,
+					}).Error("failed to check wallet status")
+
+					sendInterruptSignal()
+					return
+
+				}
+
+				if b.IsPendingScan {
+					// Interrupt Scan
+					err = b.AbortRescan()
+					if err != nil {
+						sendInterruptSignal()
+						return
+					}
+				}
+			}
+
+			// The ImportDescriptor call is a blocking operation
+			// and will automatically trigger a wallet scan
+			b.IsPendingScan = true
+
+			if err := b.ImportAccounts(config.Accounts); err != nil {
+				log.WithFields(log.Fields{
+					"prefix": "worker",
+					"error":  err,
+				}).Error("Failed while importing descriptors")
+
+				sendInterruptSignal()
+				return
+			}
+
+			b.IsPendingScan = false
+
+		} else {
+			// wallet is loaded
+			err := b.checkWalletSyncStatus()
+			if err != nil {
+				log.WithFields(log.Fields{
+					"prefix": "worker",
+					"error":  err,
+				}).Error("failed to check wallet status")
+
+				sendInterruptSignal()
+				return
+			}
+
+			if b.IsPendingScan {
+
+				for {
+					err := b.checkWalletSyncStatus()
+					if err != nil {
+						log.WithFields(log.Fields{
+							"prefix": "worker",
+							"error":  err,
+						}).Error("failed to check wallet status")
+
+						sendInterruptSignal()
+						return
+					}
+
+					if !b.IsPendingScan {
+						log.WithFields(log.Fields{
+							"prefix": "worker",
+						}).Info("Wallet Rescan finished")
+						break
+					}
+					time.Sleep(1 * time.Second)
+				}
+
+			} else {
+				// wallet is not scanning but we need to
+				// catch up with history so we need to rescan the
+				// wallet from the last time satstack was shut down
+
+				startHeight, err := getPreviousRescanBlock()
+
+				if err != nil {
+					// no rescanning necessary
+					log.Info("In case you run satstack for the first this error can be ignored: ", err)
+					return
+				}
+
+				endHeight, _ := b.GetBlockCount()
+
+				// Begin Starting rescan, this is a blocking call
+				err = b.rescanWallet(startHeight, endHeight)
+				if err != nil {
+					log.WithFields(log.Fields{
+						"prefix": "worker",
+						"error":  err,
+					}).Error("Failed to rescan blocks")
+					sendInterruptSignal()
+					return
+				}
+			}
+		}
+		err := b.DumpLatestRescanTime()
+		if err != nil {
 			log.WithFields(log.Fields{
 				"prefix": "worker",
 				"error":  err,
-			}).Error("Failed while importing descriptors")
-
-			sendInterruptSignal()
-			return
+			}).Error("Failed to dump latest block into")
 		}
 
 		importDone <- true
