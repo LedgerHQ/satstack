@@ -320,6 +320,8 @@ func (b *Bus) AbortRescan() error {
 		"prefix": "AbortRescan",
 	}).Infof("Abort rescan successful: %t", abortRescan)
 
+	b.IsPendingScan = false
+
 	return nil
 
 }

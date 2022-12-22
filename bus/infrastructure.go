@@ -218,7 +218,11 @@ func (b *Bus) Close(ctx context.Context) {
 		b.mainClient.Shutdown()
 		b.secondaryClient.Shutdown()
 
-		b.UnloadWallet()
+		// Only unload wallet if we are not in a pending scan
+		// otherwise the nuclear timeout corrupts the wallet state
+		if !b.IsPendingScan {
+			b.UnloadWallet()
+		}
 		done <- true
 	}()
 
