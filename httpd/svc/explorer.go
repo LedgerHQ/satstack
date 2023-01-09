@@ -44,6 +44,7 @@ func (s *Service) GetStatus() *bus.ExplorerStatus {
 	}
 
 	// Case 1: satstack is running the numbers.
+	// or rescanning the wallet
 	if s.Bus.IsPendingScan {
 		status.Status = bus.PendingScan
 		return &status
