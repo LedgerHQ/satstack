@@ -3,7 +3,7 @@ module github.com/ledgerhq/satstack
 go 1.17
 
 require (
-	github.com/btcsuite/btcd v0.23.1
+	github.com/btcsuite/btcd v0.23.2
 	github.com/btcsuite/btcd/btcutil v1.1.2
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
 	github.com/gin-gonic/gin v1.8.1
