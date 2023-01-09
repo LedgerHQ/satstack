@@ -1,5 +1,4 @@
-base58
 click
 ecdsa
-ledgerwallet
+ledger_bitcoin[hid]
 protobuf

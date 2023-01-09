@@ -5,28 +5,12 @@ from dataclasses import dataclass, field
 from enum import IntEnum
 from typing import Callable, List, Literal
 
-import base58
 import click
-from construct import Bytes, GreedyBytes, Int8ub, PascalString, Prefixed, Struct
-from ledgerwallet.client import LedgerClient
-from ledgerwallet.params import Bip32Path as bip32_path
-from ledgerwallet.transport import enumerate_devices
+from ledger_bitcoin import createClient, Client, Chain as ClientChain
 
-BTCHIP_INS_GET_WALLET_PUBLIC_KEY = 0x40
-BIP32_HD_VERSION = {
-    "main": 0x0488B21E,
-    "test": 0x043587CF,
-    "regtest": 0x043587CF,
-}
 BIP32_HARDEN_BIT = 0x80000000
 SCHEME = Literal["legacy", "segwit", "native_segwit", "taproot"]
-CHAIN = Literal["main", "test", "regtest"]
-
-GetPubKey = Struct(
-    public_key=Prefixed(Int8ub, GreedyBytes),
-    address=PascalString(Int8ub, "utf-8"),
-    chain_code=Bytes(32),
-)
+CHAIN = Literal["main", "test", "regtest", "signet"]
 
 
 class Change(IntEnum):
@@ -78,48 +62,25 @@ class Level:
         return f"{self._value}"
 
 
-@dataclass
-class ExtendedPublicKey:
-    version: int  # 4 bytes
-    depth: int  # 1 byte
-    parent_fingerprint: bytes  # 4 bytes
-    child_num: int  # 4 bytes
-    chaincode: bytes  # 32 bytes
-    pubkey: bytes  # 32 bytes
+def make_descriptor(
+    fingerprint: bytes,
+    xpub: str,
+    scheme: SCHEME, derivation: Derivation, change: Change
+) -> str:
+    key_origin = f"{fingerprint.hex()}/{derivation.path}"
 
-    def serialize(self) -> str:
-        version = self.version.to_bytes(length=4, byteorder="big")
-        depth = self.depth.to_bytes(length=1, byteorder="big")
-        child_num = self.child_num.to_bytes(length=4, byteorder="big")
+    fragment = f"[{key_origin}]{xpub}/{change}/*"
 
-        extended_key_bytes = (
-            version
-            + depth
-            + self.parent_fingerprint
-            + child_num
-            + self.chaincode
-            + self.pubkey
-        )
-        checksum = hash256(extended_key_bytes)[:4]
-        return base58.b58encode(extended_key_bytes + checksum).decode()
+    if scheme == "legacy":
+        return f"pkh({fragment})"
+    elif scheme == "segwit":
+        return f"sh(wpkh({fragment}))"
+    elif scheme == "native_segwit":
+        return f"wpkh({fragment})"
+    elif scheme == "taproot":
+        return f"tr({fragment})"
 
-    def to_descriptor(
-        self, scheme: SCHEME, derivation: Derivation, change: Change
-    ) -> str:
-        key_origin = f"{self.parent_fingerprint.hex()}/{derivation.path}"
-
-        fragment = f"[{key_origin}]{self.serialize()}/{change}/*"
-
-        if scheme == "legacy":
-            return f"pkh({fragment})"
-        elif scheme == "segwit":
-            return f"sh(wpkh({fragment}))"
-        elif scheme == "native_segwit":
-            return f"wpkh({fragment})"
-        elif scheme == "taproot":
-            return f"tr({fragment})"
-
-        raise ValueError(f"Invalid scheme: {scheme}")
+    raise ValueError(f"Invalid scheme: {scheme}")
 
 
 def sha256(s) -> bytes:
@@ -151,38 +112,6 @@ def compress_public_key(public_key: bytes) -> bytes:
         raise ValueError("Invalid public key format")
 
 
-def get_pubkey_from_path(client: LedgerClient, derivation: Derivation):
-    response = client.apdu_exchange(
-        BTCHIP_INS_GET_WALLET_PUBLIC_KEY, bip32_path.build(derivation.path)
-    )
-    r = GetPubKey.parse(response)
-    pubkey = compress_public_key(r.public_key)
-    chain_code = r.chain_code
-    return pubkey, chain_code
-
-
-def derive_extended_public_key(
-    client: LedgerClient, chain: CHAIN, derivation: Derivation
-) -> ExtendedPublicKey:
-    pubkey, chain_code = get_pubkey_from_path(client, derivation)
-    parent_pubkey, _ = get_pubkey_from_path(client, derivation.parent)
-
-    return ExtendedPublicKey(
-        version=BIP32_HD_VERSION[chain],
-        depth=derivation.depth,
-        parent_fingerprint=hash160(parent_pubkey)[:4],
-        child_num=derivation.account,
-        chaincode=chain_code,
-        pubkey=pubkey,
-    )
-
-
-def get_client() -> LedgerClient:
-    for device in enumerate_devices():
-        return LedgerClient(device)
-    raise ConnectionError("No Ledger device has been found.")
-
-
 def get_derivation_from_scheme(
     scheme: SCHEME, chain: CHAIN, account: int
 ) -> Derivation:
@@ -203,15 +132,14 @@ def get_derivation_from_scheme(
 
 
 def derive_output_descriptors(
-    client: LedgerClient, scheme: SCHEME, chain: CHAIN, account: int
+    client: Client, scheme: SCHEME, chain: CHAIN, account: int
 ) -> Callable[[Change], str]:
     derivation = get_derivation_from_scheme(scheme, chain, account)
-    extended_key = derive_extended_public_key(client, chain, derivation)
+    fingerprint = client.get_master_fingerprint()
+    xpub = client.get_extended_pubkey(derivation.path)
 
     def g(change: Change):
-        return extended_key.to_descriptor(
-            scheme=scheme, derivation=derivation, change=change
-        )
+        return make_descriptor(fingerprint, xpub, scheme, derivation, change)
 
     return g
 
@@ -229,10 +157,23 @@ def derive_output_descriptors(
 )
 @click.option("--account", type=int, required=True)
 def main(scheme: SCHEME, chain: CHAIN, account):
-    client = get_client()
+    if chain == 'main':
+        client_chain = ClientChain.MAIN
+    elif chain == 'test':
+        client_chain = ClientChain.TEST
+    elif chain == 'regtest':
+        client_chain = ClientChain.REGTEST
+    elif chain == 'signet':
+        client_chain = ClientChain.SIGNET
+    else:
+        raise ValueError(f"Invaid chain: {chain}")
+
+    client = createClient(chain=client_chain)
     descriptor_factory = derive_output_descriptors(client, scheme, chain, account)
     click.echo(f"External: {descriptor_factory(Change.External)}")
     click.echo(f"Internal: {descriptor_factory(Change.Internal)}")
+
+    client.stop()
 
 
 if __name__ == "__main__":
