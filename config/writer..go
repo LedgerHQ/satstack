@@ -7,6 +7,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// WriteRescanConf writes the rescan information into a file
+// when it does not exist it saves it to the same location
+// where the lss.json is stored
 func WriteRescanConf(data *ConfigurationRescan) error {
 	paths, err := configRescanLookupPaths()
 	if err != nil {
@@ -24,7 +27,7 @@ func WriteRescanConf(data *ConfigurationRescan) error {
 	if configPath == "" {
 		// if the file does not exist, save to home dir
 		// check where the lss.json lies and take the same path
-		lssPath, err := configRescanLookupPaths()
+		lssPath, err := configLookupPaths()
 		if err != nil {
 			return err
 		}

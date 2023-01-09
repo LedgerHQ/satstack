@@ -492,7 +492,7 @@ func (b *Bus) DumpLatestRescanTime() error {
 	if err != nil {
 		log.WithFields(log.Fields{
 			"prefix": "worker",
-		}).Error("Error savng last timestamp to file: %s", err)
+		}).Errorf("Error saving last timestamp to file: %s", err)
 		return err
 	}
 

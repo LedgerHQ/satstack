@@ -148,6 +148,7 @@ func configLookupPaths() ([]string, error) {
 	return []string{
 		path.Join(liveUserDataFolder(home), "lss.json"),
 		"lss.json",
+		path.Join(home, ".satstack", "lss.json"),
 		path.Join(home, "lss.json"),
 	}, nil
 }
@@ -161,6 +162,7 @@ func configRescanLookupPaths() ([]string, error) {
 	return []string{
 		path.Join(liveUserDataFolder(home), "lss_rescan.json"),
 		"lss_rescan.json",
+		path.Join(home, ".satstack", "lss_rescan.json"),
 		path.Join(home, "lss_rescan.json"),
 	}, nil
 }

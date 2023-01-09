@@ -126,7 +126,6 @@ func getPreviousRescanBlock() (int64, error) {
 	configRescan, err := config.LoadRescanConf()
 
 	if err != nil {
-		log.Errorf("loading rescan config: %s", err)
 		return -1, err
 	}
 
@@ -270,15 +269,20 @@ func (b *Bus) Worker(config *config.Configuration, skipCirculationCheck bool,
 
 		}
 
+		// We check whether the lss_rescan.json exists
+		startHeight, err := getPreviousRescanBlock()
+		if err != nil {
+			log.Debugf("No lss_rescan.json file found %s", err)
+		}
+
 		// We allow the user to force an import of all descriptors
 		// which will trigger a rescan automatically using the timestamp
 		// in the importDescriptorRequest
-		if forceImportDesc || isNewWallet {
+		if forceImportDesc || isNewWallet || startHeight == -1 {
 
-			// updates status of the wallet
-			// if wallet is syncing we do not want
-			// to kill the syncing otherwise the importDescriptor call
-			// will fail
+			// Check whether the wallet is syncing in the background
+			// if so, the sync is aborted so that we can import the
+			// descriptors in the next step
 			if forceImportDesc {
 				err := b.checkWalletSyncStatus()
 
@@ -320,7 +324,7 @@ func (b *Bus) Worker(config *config.Configuration, skipCirculationCheck bool,
 			b.IsPendingScan = false
 
 		} else {
-			// wallet is loaded
+			// wallet is loaded and exists in the backend
 			err := b.checkWalletSyncStatus()
 			if err != nil {
 				log.WithFields(log.Fields{
@@ -333,56 +337,29 @@ func (b *Bus) Worker(config *config.Configuration, skipCirculationCheck bool,
 			}
 
 			if b.IsPendingScan {
-
-				for {
-					err := b.checkWalletSyncStatus()
-					if err != nil {
-						log.WithFields(log.Fields{
-							"prefix": "worker",
-							"error":  err,
-						}).Error("failed to check wallet status")
-
-						sendInterruptSignal()
-						return
-					}
-
-					if !b.IsPendingScan {
-						log.WithFields(log.Fields{
-							"prefix": "worker",
-						}).Info("Wallet Rescan finished")
-						break
-					}
-					time.Sleep(1 * time.Second)
-				}
-
-			} else {
-				// wallet is not scanning but we need to
-				// catch up with history so we need to rescan the
-				// wallet from the last time satstack was shut down
-
-				startHeight, err := getPreviousRescanBlock()
-
-				if err != nil {
-					// no rescanning necessary
-					log.Info("In case you run satstack for the first this error can be ignored: ", err)
-					return
-				}
-
-				endHeight, _ := b.GetBlockCount()
-
-				// Begin Starting rescan, this is a blocking call
-				err = b.rescanWallet(startHeight, endHeight)
+				err := b.AbortRescan()
 				if err != nil {
 					log.WithFields(log.Fields{
-						"prefix": "worker",
-						"error":  err,
-					}).Error("Failed to rescan blocks")
-					sendInterruptSignal()
-					return
+						"error": err,
+					}).Error("Failed to abort rescan")
 				}
 			}
+
+			endHeight, _ := b.GetBlockCount()
+
+			// Begin Starting rescan, this is a blocking call
+			err = b.rescanWallet(startHeight, endHeight)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"prefix": "worker",
+					"error":  err,
+				}).Error("Failed to rescan blocks")
+				sendInterruptSignal()
+				return
+			}
 		}
-		err := b.DumpLatestRescanTime()
+
+		err = b.DumpLatestRescanTime()
 		if err != nil {
 			log.WithFields(log.Fields{
 				"prefix": "worker",
