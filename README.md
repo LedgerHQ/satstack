@@ -157,6 +157,17 @@ page (Linux, Windows, MacOS). Extract the tarball, and launch it as:
 ```sh
 ./lss
 ```
+There are some cmd handle which can be useful when setting up the setup the first time you can list them with
+
+`./lss -h` or `./lss --help`
+
+When setting up a new wallet, the wallet is synced form the birthday date or your custom date set in `lss.json`
+When the initial sync sucessfully completes, satstack saves a file called `lss_rescan.json` at the exact location
+where the lss.json is stored. This file includes the latest blockheight your wallet was synced to, this allows 
+satstack on every restart to not rescan the whole wallet again but only rescan the difference between the current
+blockheight. You can also change the latest blockheight manually in the file which helps you to set the rescan delta
+manually. This file is only created when an initial wallet sync was successful. Removing the file will lead satstack
+to rescan the complete wallet again when starting up.
 
 If you want to build `lss` yourself, just do the following:
 
