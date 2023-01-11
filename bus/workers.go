@@ -216,7 +216,7 @@ func runTheNumbers(b *Bus) error {
 	return nil
 }
 
-func (b *Bus) Worker(config *config.Configuration, skipCirculationCheck bool,
+func (b *Bus) Worker(config *config.Configuration, circulationCheck bool,
 	forceImportDesc bool) {
 	importDone := make(chan bool)
 
@@ -252,7 +252,7 @@ func (b *Bus) Worker(config *config.Configuration, skipCirculationCheck bool,
 			return
 		}
 
-		if !skipCirculationCheck {
+		if circulationCheck {
 			b.IsPendingScan = true
 
 			if err := runTheNumbers(b); err != nil {
@@ -272,7 +272,7 @@ func (b *Bus) Worker(config *config.Configuration, skipCirculationCheck bool,
 		// We check whether the lss_rescan.json exists
 		startHeight, err := getPreviousRescanBlock()
 		if err != nil {
-			log.Debugf("No lss_rescan.json file found %s", err)
+			log.Debugf("No lss_rescan.json was found: %s", err)
 		}
 
 		// We allow the user to force an import of all descriptors
