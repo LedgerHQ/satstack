@@ -21,8 +21,9 @@ import (
 func init() {
 	rootCmd.PersistentFlags().String("port", "20000", "Port")
 	rootCmd.PersistentFlags().Bool("unload-wallet", false, "whether SatStack should unload wallet")
-	rootCmd.PersistentFlags().Bool("skip-circulation-check", false, "skip the circulation check")
-	rootCmd.PersistentFlags().Bool("force-importdescriptors", false, "this will force importing descriptors although the wallet does already exist")
+	rootCmd.PersistentFlags().Bool("circulation-check", false, "performs inflation checks against the connected full node")
+	rootCmd.PersistentFlags().Bool("force-importdescriptors", false, "this will force importing descriptors although the wallet does already exist "+
+		"which will force the wallet to rescan from the brithday date")
 
 }
 
@@ -33,10 +34,10 @@ var rootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		port, _ := cmd.Flags().GetString("port")
 		unloadWallet, _ := cmd.Flags().GetBool("unload-wallet")
-		skipCirculationCheck, _ := cmd.Flags().GetBool("skip-circulation-check")
+		circulationCheck, _ := cmd.Flags().GetBool("circulation-check")
 		forceImportDesc, _ := cmd.Flags().GetBool("force-importdescriptors")
 
-		s := startup(unloadWallet, skipCirculationCheck, forceImportDesc)
+		s := startup(unloadWallet, circulationCheck, forceImportDesc)
 		if s == nil {
 			return
 		}
@@ -122,7 +123,7 @@ func Execute() {
 	}
 }
 
-func startup(unloadWallet bool, skipCirculationCheck bool, forceImportDesc bool) *svc.Service {
+func startup(unloadWallet bool, circulationCheck bool, forceImportDesc bool) *svc.Service {
 
 	if version.Build == "development" {
 		log.SetLevel(log.DebugLevel)
@@ -178,7 +179,7 @@ func startup(unloadWallet bool, skipCirculationCheck bool, forceImportDesc bool)
 
 	fortunes.Fortune()
 
-	s.Bus.Worker(configuration, skipCirculationCheck, forceImportDesc)
+	s.Bus.Worker(configuration, circulationCheck, forceImportDesc)
 
 	return s
 }

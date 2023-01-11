@@ -105,7 +105,23 @@ Replace the `rpcurl` with the .onion address of your node.
 Make sure you've read the [requirements](#requirements) first, and that your node is configured properly.
 Here's the recommended configuration for `bitcoin.conf`:
 
-Don't use rpcuser/rpcpassword on your full node because they are insecure. Bitcoin-core changed to rpcauth.
+It is not recommended to use rpcuser/rpcpassword in the bitcoin.conf of your full node use rpcauth instead.
+If you still want to use it make sure the following settings are in your bitcoin.conf file:
+
+```
+# Enable RPC server
+server=1
+
+# Enable indexes
+txindex=1
+blockfilterindex=1
+
+# Set RPC credentials
+rpcuser=<user>
+rpcpassword=<password>
+```
+
+If you want to use the newest security standard recommended by the core-devs then read the following paragraph.
 Get the rpcauth.py script from the bitcoin repo and create a new user for satstack.
 
 ```
@@ -157,7 +173,7 @@ page (Linux, Windows, MacOS). Extract the tarball, and launch it as:
 ```sh
 ./lss
 ```
-There are some cmd handle which can be useful when setting up the setup the first time you can list them with
+There are some cmd handles which can be useful when configuring the setup the first time. List them with
 
 `./lss -h` or `./lss --help`
 
