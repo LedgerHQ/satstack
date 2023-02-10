@@ -45,8 +45,8 @@ Ledger SatStack is a standalone Go application, that acts as a bridge between th
 ### Requirements
 
 - Bitcoin Nano app **`2+`**
-- Bitcoin Core **`0.22.0+`**.
-- Ledger Live (desktop) **`2.44.0+`**.
+- Bitcoin Core **`0.22.0+`**
+- Ledger Live (desktop) **`2.44.0+`** but don't go as far 2.53+ that breaks satstack! https://download.live.ledger.com/ to get the latest supported i.e. 2.52.0
 - `txindex=1` in `bitcoin.conf` is not mandatory, but recommended. Pruned nodes are not currently supported.
 - Wallet should **NOT** be disabled (attn. Raspiblitz users).
 
