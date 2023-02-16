@@ -1,4 +1,4 @@
-click
-ecdsa
-ledger_bitcoin[hid]
-protobuf
+click>=8.1.3,<9.0.0
+ecdsa>=0.18.0,<1.0.0
+ledger_bitcoin[hid]==0.0.3
+protobuf>=4.21.12,<5.0.0
