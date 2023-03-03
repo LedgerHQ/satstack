@@ -204,6 +204,10 @@ and import your accounts. This can take a while.
 $ EXPLORER=http://127.0.0.1:20000 <Ledger Live executable>
 ```
 
+##### Turn SatStack into a service
+
+Once descriptors are imported, you might want to automatically start SatStack on your computer as a background task. On Linux, you can do so thanks to systemd, you will have to use the `WorkingDirectory` settings so that SatStack finds the config file. You will also have to have a tor deamon running in the background.
+
 ### Misc
 
 If you get `error=failed to load wallet: -4: Wallet file verification failed. SQLiteDatabase: Unable to obtain an exclusive lock on the database, is it being used by another bitcoind?` maybe this is because you have bitcoind windows opened, if this is the case, please try closing them and restart lss.
