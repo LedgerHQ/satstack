@@ -14,7 +14,7 @@ jobs:
           go-version: 1.20
 
       - name: Install mage
-        run: "pushd /tmp; git clone https://github.com/magefile/mage; pushd mage; go run bootstrap.go; popd; popd"
+        run: "go get github.com/magefile/mage; go run bootstrap.go"
 
       - name: Build
         run: |
