@@ -1,6 +1,6 @@
 module github.com/ledgerhq/satstack
 
-go 1.17
+go 1.20.4
 
 require (
 	github.com/btcsuite/btcd v0.23.2
