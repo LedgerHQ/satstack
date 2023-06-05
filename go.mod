@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/btcsuite/btcd v0.23.4
 	github.com/btcsuite/btcd/btcutil v1.1.3
-	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
+	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2
 	github.com/gin-gonic/gin v1.9.1
 	github.com/magefile/mage v1.14.0
 	github.com/mattn/go-runewidth v0.0.14
