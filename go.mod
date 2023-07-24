@@ -8,7 +8,7 @@ require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2
 	github.com/gin-gonic/gin v1.9.1
 	github.com/magefile/mage v1.15.0
-	github.com/mattn/go-runewidth v0.0.14
+	github.com/mattn/go-runewidth v0.0.15
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
