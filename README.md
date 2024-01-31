@@ -225,7 +225,7 @@ If you get `error=failed to load wallet: -4: Wallet file verification failed. SQ
 
 ### Community
 
-For feedback or support, please tag [@adrien_lacombe](https://twitter.com/adrien_lacombe) and [@Ledger](https://twitter.com/Ledger) on Twitter. To report any bugs related to full node on Ledger Live, you can create issues on this repository.
+For feedback or support, please tag [@Ledger](https://twitter.com/Ledger) on Twitter. To report any bugs related to full node on Ledger Live, you can create issues on this repository. For support, please reachout to [Ledger Support](https://support.ledger.com/hc).
 
 ### Contributing
 
